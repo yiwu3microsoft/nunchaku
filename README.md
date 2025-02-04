@@ -4,6 +4,7 @@ Nunchaku is an inference engine designed for 4-bit diffusion models, as demonstr
 
 ### [Paper](http://arxiv.org/abs/2411.05007) | [Project](https://hanlab.mit.edu/projects/svdquant) | [Blog](https://hanlab.mit.edu/blog/svdquant) | [Demo](https://svdquant.mit.edu)
 
+- **[2025-02-04]** **🚀 4-bit [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) is here!** Enjoy a **2-3× speedup** over the original models. Check out the [examples](./examples) for usage. **Gradio demo and ComfyUI integration are coming soon!**
 - **[2025-01-23]** 🚀 **4-bit [SANA](https://nvlabs.github.io/Sana/) support is here!** Experience a 2-3× speedup compared to the 16-bit model. Check out the [usage example](./examples/sana_1600m_pag.py) and the [deployment guide](app/sana/t2i) for more details. Explore our live demo at [svdquant.mit.edu](https://svdquant.mit.edu)!
 - **[2025-01-22]** 🎉 [**SVDQuant**](http://arxiv.org/abs/2411.05007) has been accepted to **ICLR 2025**!
 - **[2024-12-08]** Support [ComfyUI](https://github.com/comfyanonymous/ComfyUI). Please check [comfyui/README.md](comfyui/README.md) for the usage.
@@ -141,7 +142,7 @@ Please refer to [app/flux/t2i/README.md](app/flux/t2i/README.md) for instruction
 - [x] Comfy UI node
 - [ ] Customized LoRA conversion instructions
 - [ ] Customized model quantization instructions
-- [ ] FLUX.1 tools support
+- [x] FLUX.1 tools support
 - [ ] Modularization
 - [ ] IP-Adapter integration
 - [ ] Video Model support

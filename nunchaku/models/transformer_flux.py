@@ -120,6 +120,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         self,
         patch_size: int = 1,
         in_channels: int = 64,
+        out_channels: int | None = None,
         num_layers: int = 19,
         num_single_layers: int = 38,
         attention_head_dim: int = 128,
@@ -132,6 +133,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         super(NunchakuFluxTransformer2dModel, self).__init__(
             patch_size=patch_size,
             in_channels=in_channels,
+            out_channels=out_channels,
             num_layers=0,
             num_single_layers=0,
             attention_head_dim=attention_head_dim,

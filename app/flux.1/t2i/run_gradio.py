@@ -262,7 +262,7 @@ with gr.Blocks(
         fn=generate_func,
         inputs=input_args,
         outputs=[*image_results, *latency_results],
-        api_name="run",
+        api_name=False,
     )
     randomize_seed.click(
         lambda: random.randint(0, MAX_SEED), inputs=[], outputs=seed, api_name=False, queue=False
