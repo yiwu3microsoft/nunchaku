@@ -9,7 +9,14 @@ The base models are:
 * [FLUX.1-Depth-dev](https://huggingface.co/black-forest-labs/FLUX.1-Depth-dev) (preserves depth map)
 * [FLUX.1-Canny-dev](https://huggingface.co/black-forest-labs/FLUX.1-Canny-dev) (preserves Canny edge)
 
-To launch the application, run:
+First you need to install some dependencies:
+
+```shell
+pip install git+https://github.com/asomoza/image_gen_aux.git
+pip install controlnet_aux
+```
+
+Then run:
 
 ```shell
 python run_gradio.py
