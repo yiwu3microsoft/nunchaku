@@ -12,7 +12,7 @@ pipe = FluxFillPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-Fill-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
 image = pipe(
-    prompt="A wooden basked of several individual cartons of blueberries.",
+    prompt="A wooden basket of several individual cartons of blueberries.",
     image=image,
     mask_image=mask,
     height=1024,
@@ -21,4 +21,4 @@ image = pipe(
     num_inference_steps=50,
     max_sequence_length=512,
 ).images[0]
-image.save("flux.1-fill-dev-int4.png")
+image.save("flux.1-fill-dev.png")

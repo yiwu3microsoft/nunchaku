@@ -82,7 +82,7 @@ def run(image, prompt: str, prompt_template: str, sketch_guidance: float, seed: 
         image_type="sketch",
         alpha=sketch_guidance,
         prompt=prompt,
-        generator=torch.Generator().manual_seed(int(seed)),
+        generator=torch.Generator().manual_seed(seed),
     ).images[0]
 
     latency = time.time() - start_time
@@ -229,7 +229,7 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Sketch-to-Image De
         outputs=[prompt_template],
         api_name=False,
         queue=False,
-    ).then(fn=run, inputs=run_inputs, outputs=run_outputs, api_name=False)
+    )
     gr.on(
         triggers=[prompt.submit, run_button.click, canvas.change],
         fn=run,
@@ -244,4 +244,4 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Sketch-to-Image De
 
 
 if __name__ == "__main__":
-    demo.queue().launch(debug=True, share=True)
+    demo.queue().launch(debug=True, share=True, root_path=args.gradio_root_path)

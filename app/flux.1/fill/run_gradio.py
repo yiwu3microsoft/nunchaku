@@ -1,26 +1,21 @@
 # Changed from https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py
-import logging
 import os
 import random
-import tempfile
 import time
 from datetime import datetime
 
 import GPUtil
-import numpy as np
 import torch
+from diffusers import FluxFillPipeline
 from PIL import Image
 
-from diffusers import FluxFillPipeline
 from nunchaku.models.safety_checker import SafetyChecker
 from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
 from utils import get_args
-from vars import DEFAULT_GUIDANCE, DEFAULT_INFERENCE_STEP, DEFAULT_STYLE_NAME, MAX_SEED, STYLE_NAMES, STYLES
+from vars import DEFAULT_GUIDANCE, DEFAULT_INFERENCE_STEP, DEFAULT_STYLE_NAME, EXAMPLES, MAX_SEED, STYLE_NAMES, STYLES
 
 # import gradio last to avoid conflicts with other imports
 import gradio as gr
-
-blank_image = Image.new("RGB", (1024, 1024), (255, 255, 255))
 
 args = get_args()
 
@@ -47,28 +42,19 @@ else:
 safety_checker = SafetyChecker("cuda", disabled=args.no_safety_checker)
 
 
-def save_image(img):
-    if isinstance(img, dict):
-        img = img["composite"]
-    temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-    img.save(temp_file.name)
-    return temp_file.name
+def run(
+    image, prompt: str, style: str, prompt_template: str, num_inference_steps: int, guidance_scale: float, seed: int
+) -> tuple[Image, str]:
 
-
-def run(image, prompt: str, prompt_template: str, num_inference_steps: int, guidance_scale: float, seed: int) -> tuple[Image, str]:
     print(f"Prompt: {prompt}")
-    image_numpy = np.array(image["composite"].convert("RGB"))
-
-    if prompt.strip() == "" and (np.sum(image_numpy == 255) >= 3145628 or np.sum(image_numpy == 0) >= 3145628):
-        return blank_image, "Please input the prompt or draw something."
 
     is_unsafe_prompt = False
     if not safety_checker(prompt):
         is_unsafe_prompt = True
         prompt = "A peaceful world."
     prompt = prompt_template.format(prompt=prompt)
-    mask = image["layers"][0].getchannel(3) # Mask is stored in the last channel
-    pic = image["background"].convert("RGB") # This is the original photo
+    mask = image["layers"][0].getchannel(3)  # Mask is stored in the last channel
+    pic = image["background"].convert("RGB")  # This is the original photo
 
     start_time = time.time()
     result_image = pipeline(
@@ -80,7 +66,7 @@ def run(image, prompt: str, prompt_template: str, num_inference_steps: int, guid
         width=1024,
         num_inference_steps=num_inference_steps,
         max_sequence_length=512,
-        generator=torch.Generator().manual_seed(seed)
+        generator=torch.Generator().manual_seed(seed),
     ).images[0]
 
     latency = time.time() - start_time
@@ -146,12 +132,11 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-Fill-dev Sk
             gr.Markdown("## INPUT", elem_id="input_header")
             with gr.Group():
                 canvas = gr.ImageMask(
-                    value=blank_image,
                     height=640,
                     image_mode="RGBA",
                     sources=["upload", "clipboard"],
                     type="pil",
-                    label="Sketch",
+                    label="canvas",
                     show_label=False,
                     show_download_button=True,
                     interactive=True,
@@ -160,11 +145,11 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-Fill-dev Sk
                     scale=1,
                     format="png",
                     layers=False,
+                    brush=gr.Brush(default_size=30),
                 )
                 with gr.Row():
                     prompt = gr.Text(label="Prompt", placeholder="Enter your prompt", scale=6)
                     run_button = gr.Button("Run", scale=1, elem_id="run_button")
-            download_sketch = gr.DownloadButton("Download Sketch", scale=1, elem_id="download_sketch")
             with gr.Row():
                 style = gr.Dropdown(label="Style", choices=STYLE_NAMES, value=DEFAULT_STYLE_NAME, scale=1)
                 prompt_template = gr.Textbox(
@@ -176,8 +161,12 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-Fill-dev Sk
                 randomize_seed = gr.Button("Random Seed", scale=1, min_width=50, elem_id="random_seed")
             with gr.Accordion("Advanced options", open=False):
                 with gr.Group():
-                    num_inference_steps = gr.Slider(label="Inference Steps", minimum=10, maximum=50, step=1, value=DEFAULT_INFERENCE_STEP)
-                    guidance_scale = gr.Slider(label="Guidance Scale", minimum=1, maximum=50, step=1, value=DEFAULT_GUIDANCE)
+                    num_inference_steps = gr.Slider(
+                        label="Inference Steps", minimum=10, maximum=50, step=1, value=DEFAULT_INFERENCE_STEP
+                    )
+                    guidance_scale = gr.Slider(
+                        label="Guidance Scale", minimum=1, maximum=50, step=1, value=DEFAULT_GUIDANCE
+                    )
 
         with gr.Column(elem_id="column_output"):
             gr.Markdown("## OUTPUT", elem_id="output_header")
@@ -195,16 +184,16 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-Fill-dev Sk
                 )
                 latency_result = gr.Text(label="Inference Latency", show_label=True)
 
-            download_result = gr.DownloadButton("Download Result", elem_id="download_result")
             gr.Markdown("### Instructions")
-            gr.Markdown("**1**. Enter a text prompt (e.g. a cat)")
-            gr.Markdown("**2**. Start sketching")
+            gr.Markdown("**1**. Enter a text prompt (e.g., a cat)")
+            gr.Markdown("**2**. Upload the image and draw the inpainting mask")
             gr.Markdown("**3**. Change the image style using a style template")
-            gr.Markdown("**4**. Adjust the effect of sketch guidance using the slider (typically between 0.2 and 0.4)")
+            gr.Markdown("**4**. Adjust guidance scale using the slider")
             gr.Markdown("**5**. Try different seeds to generate different results")
 
-    run_inputs = [canvas, prompt, prompt_template, num_inference_steps, guidance_scale, seed]
+    run_inputs = [canvas, prompt, style, prompt_template, num_inference_steps, guidance_scale, seed]
     run_outputs = [result, latency_result]
+    gr.Examples(examples=EXAMPLES, inputs=run_inputs, outputs=run_outputs, fn=run)
 
     randomize_seed.click(
         lambda: random.randint(0, MAX_SEED),
@@ -220,19 +209,11 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-Fill-dev Sk
         outputs=[prompt_template],
         api_name=False,
         queue=False,
-    ).then(fn=run, inputs=run_inputs, outputs=run_outputs, api_name=False)
-    gr.on(
-        triggers=[prompt.submit, run_button.click, canvas.change],
-        fn=run,
-        inputs=run_inputs,
-        outputs=run_outputs,
-        api_name=False,
     )
+    gr.on(triggers=[prompt.submit, run_button.click], fn=run, inputs=run_inputs, outputs=run_outputs, api_name=False)
 
-    download_sketch.click(fn=save_image, inputs=canvas, outputs=download_sketch)
-    download_result.click(fn=save_image, inputs=result, outputs=download_result)
     gr.Markdown("MIT Accessibility: https://accessibility.mit.edu/", elem_id="accessibility")
 
 
 if __name__ == "__main__":
-    demo.queue().launch(debug=True, share=True)
+    demo.queue().launch(debug=True, share=True, root_path=args.gradio_root_path)

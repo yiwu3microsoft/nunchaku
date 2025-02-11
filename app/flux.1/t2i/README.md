@@ -2,6 +2,12 @@
 
 ## Text-to-Image Gradio Demo
 
+![demo](./assets/demo.jpg)
+
+This interactive Gradio application can generate an image based on your provided text prompt. The base model can be either [FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell) or [FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev).
+
+To launch the application, simply run:
+
 ```shell
 python run_gradio.py
 ```

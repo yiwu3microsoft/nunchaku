@@ -8,7 +8,7 @@ from huggingface_hub import hf_hub_download, utils
 from packaging.version import Version
 from torch import nn
 
-from .utils import NunchakuModelLoaderMixin
+from .utils import NunchakuModelLoaderMixin, pad_tensor
 from .._C import QuantizedFluxModel, utils as cutils
 
 SVD_RANK = 32
@@ -51,6 +51,10 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         rotary_emb_txt = image_rotary_emb[:, :txt_tokens, ...]  # .to(self.dtype)
         rotary_emb_img = image_rotary_emb[:, txt_tokens:, ...]  # .to(self.dtype)
         rotary_emb_single = image_rotary_emb  # .to(self.dtype)
+
+        rotary_emb_txt = pad_tensor(rotary_emb_txt, 256, 1)
+        rotary_emb_img = pad_tensor(rotary_emb_img, 256, 1)
+        rotary_emb_single = pad_tensor(rotary_emb_single, 256, 1)
 
         hidden_states = self.m.forward(
             hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_txt, rotary_emb_single
