@@ -48,8 +48,8 @@ EXAMPLES = {
         [
             "https://huggingface.co/mit-han-lab/svdq-int4-flux.1-canny-dev/resolve/main/logo_example.png",
             "A logo of 'MIT HAN Lab'.",
-            DEFAULT_STYLE_NAME,
-            STYLES[DEFAULT_STYLE_NAME],
+            "Fantasy art",
+            STYLES["Fantasy art"],
             30,
             10,
             2,
