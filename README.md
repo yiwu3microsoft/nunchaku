@@ -105,7 +105,7 @@ Please refer to [comfyui/README.md](comfyui/README.md) for the usage in [ComfyUI
   * Depth/Canny-to-Image ([FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/)): see [`app/flux.1/depth_canny`](app/flux.1/depth_canny).
   * Inpainting ([FLUX.1-Fill-dev](https://huggingface.co/black-forest-labs/FLUX.1-Depth-dev)): see [`app/flux.1/fill`](app/flux.1/fill).
 * SANA:
-  * Text-to-image: see [`app/sana.1/t2i`](app/sana.1/t2i).
+  * Text-to-image: see [`app/sana/t2i`](app/sana/t2i).
 
 ## Benchmark
 
