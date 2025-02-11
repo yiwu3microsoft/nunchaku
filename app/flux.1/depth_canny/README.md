@@ -13,7 +13,7 @@ First you need to install some dependencies:
 
 ```shell
 pip install git+https://github.com/asomoza/image_gen_aux.git
-pip install controlnet_aux
+pip install controlnet_aux mediapipe
 ```
 
 Then run:
