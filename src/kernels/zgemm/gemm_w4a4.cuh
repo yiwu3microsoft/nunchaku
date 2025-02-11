@@ -1209,7 +1209,7 @@ public:
             const bool is_q = bn < binfo.numBlocksN / 3;
             const bool is_k = !is_q && bn < binfo.numBlocksN / 3 * 2;
 
-            assert(args.actualM == M);
+            assert(!args.pool_out || args.actualM == M);
             assert(args.actualN == N);
 
             if (is_q || is_k) {
