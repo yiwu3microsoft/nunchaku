@@ -361,7 +361,7 @@ class DepthPreprocesser:
     @classmethod
     def INPUT_TYPES(s):
         model_paths = ["LiheYoung/depth-anything-large-hf"]
-        prefix = "models/style_models"
+        prefix = "models/checkpoints"
         local_folders = os.listdir(prefix)
         local_folders = sorted(
             [
@@ -388,7 +388,7 @@ class DepthPreprocesser:
     TITLE = "Flux.1 Depth Preprocessor"
 
     def depth_preprocess(self, image, model_path):
-        prefix = "models/style_models"
+        prefix = "models/checkpoints"
         if os.path.exists(os.path.join(prefix, model_path)):
             model_path = os.path.join(prefix, model_path)
         processor = DepthPreprocessor.from_pretrained(model_path)
@@ -402,5 +402,5 @@ NODE_CLASS_MAPPINGS = {
     "SVDQuantFluxDiTLoader": SVDQuantFluxDiTLoader,
     "SVDQuantTextEncoderLoader": SVDQuantTextEncoderLoader,
     "SVDQuantLoRALoader": SVDQuantLoraLoader,
-    "DepthPreprocesser": DepthPreprocesser,
+    "DepthPreprocesser": DepthPreprocesser
 }
