@@ -5,11 +5,15 @@
 
 1. Install `nunchaku` following [README.md](https://github.com/mit-han-lab/nunchaku?tab=readme-ov-file#installation). 
 2. Set up the dependencies for [ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) with the following commands:
-
 ```shell
 git clone https://github.com/comfyanonymous/ComfyUI.git
 cd ComfyUI
 pip install -r requirements.txt
+```
+3. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager) with the following commands then restart ComfyUI:
+```shell
+cd ComfyUI/custom_nodes
+git clone https://github.com/ltdrdata/ComfyUI-Manager comfyui-manager
 ```
 
 ## Usage
@@ -34,6 +38,7 @@ pip install -r requirements.txt
     cd custom_nodes
     ln -s ../../nunchaku/comfyui svdquant
     ```
+  * Install missing nodes (e.g., comfyui-inpainteasy) following [this tutorial](https://github.com/ltdrdata/ComfyUI-Manager?tab=readme-ov-file#support-of-missing-nodes-installation).
 
 
 2. **Download Required Models**: Follow [this tutorial](https://comfyanonymous.github.io/ComfyUI_examples/flux/) and download the required models into the appropriate directories using the commands below:
@@ -50,13 +55,13 @@ pip install -r requirements.txt
    python main.py
    ```
 
-4. **Select the SVDQuant Workflow**: Choose one of the SVDQuant workflows (`flux.1-dev-svdquant.json` or `flux.1-schnell-svdquant.json`) to get started.
+4. **Select the SVDQuant Workflow**: Choose one of the SVDQuant workflows (`flux.1-dev-svdquant.json`, `flux.1-schnell-svdquant.json`, `flux.1-depth-svdquant.json`, `flux.1-canny-svdquant.json` or `flux.1-fill-svdquant.json`) to get started. For the flux.1 fill workflow, you can use the built-in MaskEditor tool to add mask on top of an image.
 
 ## SVDQuant Nodes
 
 * **SVDQuant Flux DiT Loader**: A node for loading the FLUX diffusion model. 
 
-  * `model_path`: Specifies the model location. If set to `mit-han-lab/svdq-int4-flux.1-schnell` or `mit-han-lab/svdq-int4-flux.1-dev`, the model will be automatically downloaded from our Hugging Face repository. Alternatively, you can manually download the model directory by running the following command:
+  * `model_path`: Specifies the model location. If set to `mit-han-lab/svdq-int4-flux.1-schnell`, `mit-han-lab/svdq-int4-flux.1-dev`, `mit-han-lab/svdq-int4-flux.1-canny-dev`, `mit-han-lab/svdq-int4-flux.1-fill-dev` or `mit-han-lab/svdq-int4-flux.1-depth-dev`, the model will be automatically downloaded from our Hugging Face repository. Alternatively, you can manually download the model directory by running the following command example:
 
     ```shell
     huggingface-cli download mit-han-lab/svdq-int4-flux.1-dev --local-dir models/diffusion_models/svdq-int4-flux.1-dev
