@@ -4,6 +4,7 @@ import torch
 from diffusers import __version__
 from huggingface_hub import constants, hf_hub_download
 from safetensors.torch import load_file
+from typing import Optional, Any
 
 
 class NunchakuModelLoaderMixin:
@@ -64,3 +65,20 @@ class NunchakuModelLoaderMixin:
         transformer.load_state_dict(state_dict, strict=False)
 
         return transformer, transformer_block_path
+
+def ceil_div(x: int, y: int) -> int:
+    return (x + y - 1) // y
+
+def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: Any = 0) -> torch.Tensor:
+    if multiples <= 1:
+        return tensor
+    if tensor is None:
+        return None
+    shape = list(tensor.shape)
+    if shape[dim] % multiples == 0:
+        return tensor
+    shape[dim] = ceil_div(shape[dim], multiples) * multiples
+    result = torch.empty(shape, dtype=tensor.dtype, device=tensor.device)
+    result.fill_(fill)
+    result[[slice(0, extent) for extent in tensor.shape]] = tensor
+    return result

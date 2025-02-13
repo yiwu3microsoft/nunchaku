@@ -2,6 +2,10 @@
 
 ## Text-to-Image Gradio Demo
 
+![demo](./assets/demo.jpg)
+
+This interactive Gradio application can generate an image based on your provided text prompt. The base model is [SANA-1.6B](https://huggingface.co/Efficient-Large-Model/Sana_1600M_1024px_BF16_diffusers).
+
 ```shell
 python run_gradio.py
 ```

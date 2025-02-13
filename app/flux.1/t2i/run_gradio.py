@@ -35,6 +35,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("--use-qencoder", action="store_true", help="Whether to use 4-bit text encoder")
     parser.add_argument("--no-safety-checker", action="store_true", help="Disable safety checker")
     parser.add_argument("--count-use", action="store_true", help="Whether to count the number of uses")
+    parser.add_argument("--gradio-root-path", type=str, default="")
     return parser.parse_args()
 
 
@@ -282,4 +283,4 @@ with gr.Blocks(
 
 
 if __name__ == "__main__":
-    demo.queue(max_size=20).launch(server_name="0.0.0.0", debug=True, share=True)
+    demo.queue(max_size=20).launch(server_name="0.0.0.0", debug=True, share=True, root_path=args.gradio_root_path)

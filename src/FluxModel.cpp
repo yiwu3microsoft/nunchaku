@@ -128,7 +128,7 @@ Tensor Attention::forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio) {
     assert(qkv.shape[2] == num_heads * dim_head * 3);
 
     constexpr int POOL_SIZE = 128;
-    const int pool_tokens = num_tokens / POOL_SIZE;
+    const int pool_tokens = ceilDiv(num_tokens, POOL_SIZE);
 
     Tensor blockmask;
 

@@ -8,4 +8,4 @@ pipeline = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
 image = pipeline("A cat holding a sign that says hello world", num_inference_steps=50, guidance_scale=3.5).images[0]
-image.save("flux.1-dev.png")
+image.save("flux.1-dev-int4.png")

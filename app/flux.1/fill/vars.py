@@ -10,9 +10,24 @@ STYLES = {
     "Neonpunk": "neonpunk style {prompt}. cyberpunk, vaporwave, neon, vibes, vibrant, stunningly beautiful, crisp, detailed, sleek, ultramodern, magenta highlights, dark purple shadows, high contrast, cinematic, ultra detailed, intricate, professional",
     "Manga": "manga style {prompt}. vibrant, high-energy, detailed, iconic, Japanese comic style",
 }
-DEFAULT_STYLE_NAME = "3D Model"
+DEFAULT_STYLE_NAME = "None"
 STYLE_NAMES = list(STYLES.keys())
 
 MAX_SEED = 1000000000
 DEFAULT_GUIDANCE = 30
 DEFAULT_INFERENCE_STEP = 50
+
+HEIGHT = 1024
+WIDTH = 1024
+
+EXAMPLES = [
+    [
+        "https://huggingface.co/mit-han-lab/svdq-int4-flux.1-fill-dev/resolve/main/example.png",
+        "A wooden basket of a cat.",
+        DEFAULT_STYLE_NAME,
+        STYLES[DEFAULT_STYLE_NAME],
+        DEFAULT_GUIDANCE,
+        DEFAULT_INFERENCE_STEP,
+        1,
+    ]
+]
