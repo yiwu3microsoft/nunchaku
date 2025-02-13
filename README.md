@@ -43,7 +43,7 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 *  Ensure your CUDA version is **≥ 12.2 on Linux** and **≥ 12.6 on Windows**.
 
-*  For Windows user, please refer to [this issue](https://github.com/mit-han-lab/nunchaku/issues/6) for the instruction. Please upgrade your MSVC compiler to the latest version.
+*  For Windows users, please refer to [this issue](https://github.com/mit-han-lab/nunchaku/issues/6) for the instruction. Please upgrade your MSVC compiler to the latest version.
 
 *  We currently support only NVIDIA GPUs with architectures sm_86 (Ampere: RTX 3090, A6000), sm_89 (Ada: RTX 4090), and sm_80 (A100). See [this issue](https://github.com/mit-han-lab/nunchaku/issues/1) for more details.
 
