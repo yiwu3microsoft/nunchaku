@@ -349,6 +349,29 @@ __device__ inline __nv_bfloat162 cuda_cast<__nv_bfloat162, half2>(half2 val)
 
 #endif // ENABLE BF16
 
+template <typename f16_t>
+__device__ __forceinline__
+    packed_as<f16_t, 2>::type
+    f162f162(f16_t x);
+
+template <>
+__device__ __forceinline__
+    packed_as<half, 2>::type
+    f162f162<half>(half x)
+{
+  return __half2half2(x);
+}
+
+#ifdef ENABLE_BF16
+template <>
+__device__ __forceinline__
+    packed_as<__nv_bfloat16, 2>::type
+    f162f162<__nv_bfloat16>(__nv_bfloat16 x)
+{
+  return __bfloat162bfloat162(x);
+}
+# endif
+
 template <typename To, typename Ti>
 __device__ inline To cuda_sum(Ti val)
 {

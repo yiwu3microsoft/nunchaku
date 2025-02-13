@@ -2,9 +2,14 @@
 #include <cuda_bf16.h>
 #include "semaphore.h"
 #include "gemm_cuda.h"
-#include "../dequantize.cuh"
-#include "../../utils.cuh"
-#include <torch/extension.h>
+//#include "../../../nunchaku/csrc/quantization/dequantize.cuh"
+#include "dequantize.cuh"
+#include <stdio.h>
+#include "../dispatch_utils.h"
+//#include "../../../nunchaku/csrc/utils.cuh"
+#include "../utils.cuh"
+
+
 #include <cuda_pipeline_primitives.h>
 
 #define kInterleave 4
@@ -25,8 +30,8 @@
 #endif
 
 #define KERNEL_LAUNCH_CODE                                                                                                                               \
-  int num_mn_tiles = (num_in_feats + CTA_M - 1) / CTA_M * (num_out_channels + CTA_N - 1) / CTA_N;                                                        \
-  torch::Tensor _semaphores = torch::empty({num_mn_tiles}, options_int);                                                                                 \
+  int num_mn_tiles = (num_in_feats + CTA_M - 1) / CTA_M * (num_out_channels + CTA_N - 1) / CTA_N;                                                        \   
+  Tensor _semaphores = Tensor::empty({num_mn_tiles}, Tensor::INT32, _in_feats.device());                                                                              \
   auto semaphores = reinterpret_cast<int *>(_semaphores.data_ptr<int>());                                                                                \
   constexpr int NUM_WARPS = (CTA_M / WARP_M) * (CTA_N / WARP_N) * (CTA_K / WARP_K);                                                                      \
   constexpr int SCALES_SMEM_SIZE = (G >= CTA_K) ? (CTA_N / (G / CTA_K) * STAGES * 2) : (CTA_N * (CTA_K / G) * STAGES * 2);                               \
@@ -301,7 +306,7 @@ __device__ __inline__ void share_to_reg_one_stage_B(f16_t *src, f16_t *src_scale
     f162_t zero2 = f162f162(zero);
     f162_t loaded[4];
 
-    dequantize_s4_to_f16x2(*reinterpret_cast<f162_t *>(dst + (k_0_1 % 2) * 4 + (k_0_1 / 2 * 2) + shared_iter * 8), reinterpret_cast<uint4 *>(loaded));
+    dequantize_s4_to_fp16x2(*reinterpret_cast<f162_t *>(dst + (k_0_1 % 2) * 4 + (k_0_1 / 2 * 2) + shared_iter * 8), reinterpret_cast<uint4 *>(loaded));
 #pragma unroll
     for (int i = 0; i < 4; i++)
     {
@@ -758,7 +763,7 @@ __device__ __inline__ void share_to_reg_one_stage_B_T2(f16_t *src, f16_t *src_sc
     f162_t scale2 = f162f162(scale);
     f162_t zero2 = f162f162(zero);
     f162_t loaded[4];
-    dequantize_s4_to_f16x2(*reinterpret_cast<f162_t *>(dst + (k_0_1 % 2) * 4 + (k_0_1 / 2 * 2) + shared_iter * 8), reinterpret_cast<uint4 *>(loaded));
+    dequantize_s4_to_fp16x2(*reinterpret_cast<f162_t *>(dst + (k_0_1 % 2) * 4 + (k_0_1 / 2 * 2) + shared_iter * 8), reinterpret_cast<uint4 *>(loaded));
 #pragma unroll
     for (int i = 0; i < 4; i++)
     {
@@ -949,25 +954,25 @@ __global__ void gemm_w4a16_T2(f16_t *__restrict__ A, f16_t *__restrict__ B, f16_
   }
 }
 
-torch::Tensor awq_gemm_forward_cuda(
-    torch::Tensor _in_feats,
-    torch::Tensor _kernel,
-    torch::Tensor _scales,
-    torch::Tensor _zeros)
+Tensor awq_gemm_forward_cuda(
+    Tensor _in_feats,
+    Tensor _kernel,
+    Tensor _scales,
+    Tensor _zeros)
 {
-  std::vector<int64_t> output_shape = _in_feats.sizes().vec();
+  auto output_shape = _in_feats.shape.dataExtent;
   output_shape.back() = _kernel.size(0) * kInterleave;
   int num_in_feats = _in_feats.numel() / _in_feats.size(-1);
   int num_in_channels = _in_feats.size(-1);
-  auto options =
-      torch::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
-  auto options_int =
-      torch::TensorOptions().dtype(torch::kInt32).device(_in_feats.device());
-  at::Tensor _out_feats = torch::empty(output_shape, options);
+  auto options = 
+      Tensor::TensorOptions().dtype(_in_feats.dtype()).device(_in_feats.device());
+  auto options_int = 
+      Tensor::TensorOptions().dtype(Tensor::INT32).device(_in_feats.device());
+  Tensor _out_feats = Tensor::allocate(output_shape, _in_feats.dtype(), _in_feats.device());
   int num_out_feats = _out_feats.numel() / _out_feats.size(-1);
   int num_out_channels = _out_feats.size(-1);
 
-  if (_in_feats.scalar_type() == at::ScalarType::Half)
+  if (_in_feats.scalar_type() == Tensor::FP16)
   {
     using f16_t = half;
 
@@ -1057,7 +1062,7 @@ torch::Tensor awq_gemm_forward_cuda(
           in_feats, kernel, scales, zeros, out_feats, num_in_feats, num_out_channels, num_in_channels);
     }
   }
-  else if (_in_feats.scalar_type() == at::ScalarType::BFloat16)
+  else if (_in_feats.scalar_type() == Tensor::BF16)
   {
     using f16_t = __nv_bfloat16;
 
@@ -1149,7 +1154,7 @@ torch::Tensor awq_gemm_forward_cuda(
   }
   else
   {
-    AT_ERROR("Unsupported input type");
+    throw std::runtime_error("Unsupported input type");
   }
 
   return _out_feats;
