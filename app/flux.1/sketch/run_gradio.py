@@ -1,5 +1,4 @@
 # Changed from https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py
-import logging
 import os
 import random
 import tempfile
@@ -29,7 +28,7 @@ if args.precision == "bf16":
     pipeline = pipeline.to("cuda")
     pipeline.precision = "bf16"
     pipeline.load_control_module(
-        "mit-han-lab/svdquant-models", "flux.1-pix2pix-turbo-sketch2image.safetensors", alpha=DEFAULT_SKETCH_GUIDANCE
+        "mit-han-lab/svdq-flux.1-schnell-pix2pix-turbo", "sketch.safetensors", alpha=DEFAULT_SKETCH_GUIDANCE
     )
 else:
     assert args.precision == "int4"
@@ -48,9 +47,9 @@ else:
     pipeline = pipeline.to("cuda")
     pipeline.precision = "int4"
     pipeline.load_control_module(
-        "mit-han-lab/svdquant-models",
-        "flux.1-pix2pix-turbo-sketch2image.safetensors",
-        svdq_lora_path="mit-han-lab/svdquant-models/svdq-flux.1-pix2pix-turbo-sketch2image.safetensors",
+        "mit-han-lab/svdq-flux.1-schnell-pix2pix-turbo",
+        "sketch.safetensors",
+        svdq_lora_path="mit-han-lab/svdq-flux.1-schnell-pix2pix-turbo/svdq-int4-sketch.safetensors",
         alpha=DEFAULT_SKETCH_GUIDANCE,
     )
 safety_checker = SafetyChecker("cuda", disabled=args.no_safety_checker)
@@ -223,13 +222,7 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Sketch-to-Image De
         queue=False,
     ).then(run, inputs=run_inputs, outputs=run_outputs, api_name=False)
 
-    style.change(
-        lambda x: STYLES[x],
-        inputs=[style],
-        outputs=[prompt_template],
-        api_name=False,
-        queue=False,
-    )
+    style.change(lambda x: STYLES[x], inputs=[style], outputs=[prompt_template], api_name=False, queue=False)
     gr.on(
         triggers=[prompt.submit, run_button.click, canvas.change],
         fn=run,

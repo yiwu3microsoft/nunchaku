@@ -4,6 +4,7 @@ Nunchaku is an inference engine designed for 4-bit diffusion models, as demonstr
 
 ### [Paper](http://arxiv.org/abs/2411.05007) | [Project](https://hanlab.mit.edu/projects/svdquant) | [Blog](https://hanlab.mit.edu/blog/svdquant) | [Demo](https://svdquant.mit.edu)
 
+- **[2025-02-14]** 🔥 [LoRA conversion script](nunchaku/convert_lora.py) is now available!
 - **[2025-02-11]** 🎉 **[SVDQuant](http://arxiv.org/abs/2411.05007) has been selected as a ICLR 2025 Spotlight! FLUX.1-tools Gradio demos are now available!** Check [here](#gradio-demos) for the usage details! Our new [depth-to-image demo](https://svdquant.mit.edu/flux1-depth-dev/) is also online—try it out!
 - **[2025-02-04]** **🚀 4-bit [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) is here!** Enjoy a **2-3× speedup** over the original models. Check out the [examples](./examples) for usage. **ComfyUI integration is coming soon!**
 - **[2025-01-23]** 🚀 **4-bit [SANA](https://nvlabs.github.io/Sana/) support is here!** Experience a 2-3× speedup compared to the 16-bit model. Check out the [usage example](./examples/sana_1600m_pag.py) and the [deployment guide](app/sana/t2i) for more details. Explore our live demo at [svdquant.mit.edu](https://svdquant.mit.edu)!
@@ -116,7 +117,7 @@ Please refer to [app/flux/t2i/README.md](app/flux/t2i/README.md) for instruction
 
 - [ ] Easy installation
 - [x] Comfy UI node
-- [ ] Customized LoRA conversion instructions
+- [x] Customized LoRA conversion instructions
 - [ ] Customized model quantization instructions
 - [x] FLUX.1 tools support
 - [ ] Modularization

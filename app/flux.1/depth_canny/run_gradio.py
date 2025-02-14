@@ -137,8 +137,8 @@ with gr.Blocks(css_paths="assets/style.css", title=f"SVDQuant Flux.1-{model_name
     def get_header_str():
 
         if args.count_use:
-            if os.path.exists("use_count.txt"):
-                with open("use_count.txt", "r") as f:
+            if os.path.exists(f"{args.model}-use_count.txt"):
+                with open(f"{args.model}-use_count.txt", "r") as f:
                     count = int(f.read())
             else:
                 count = 0

@@ -276,8 +276,6 @@ with gr.Blocks(
             outputs=[prompt_template],
             api_name=False,
             queue=False,
-        ).then(
-            fn=generate_func, inputs=input_args, outputs=[*image_results, *latency_results], api_name=False, queue=False
         )
     gr.Markdown("MIT Accessibility: https://accessibility.mit.edu/", elem_id="accessibility")
 

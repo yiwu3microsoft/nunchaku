@@ -139,10 +139,8 @@ class FluxPix2pixTurboPipeline(FluxPipeline):
             erosion_kernel = torch.ones(1, 1, kernel_size, kernel_size, dtype=self.dtype, device=device)
             self.erosion_kernel = erosion_kernel
 
-        torchvision.utils.save_image(image_t[0], "before.png")
         image_t = nn.functional.conv2d(image_t[:, :1], erosion_kernel, padding=kernel_size // 2) > kernel_size**2 - 0.1
         image_t = torch.concat([image_t, image_t, image_t], dim=1).to(self.dtype)
-        torchvision.utils.save_image(image_t[0], "after.png")
 
         image_t = (image_t - 0.5) * 2
 
