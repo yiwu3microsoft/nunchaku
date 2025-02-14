@@ -4,13 +4,17 @@
 ## Installation
 
 1. Install `nunchaku` following [README.md](https://github.com/mit-han-lab/nunchaku?tab=readme-ov-file#installation). 
-2. Set up the dependencies for [ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) with the following commands:
+2. Install dependencies needed to run custom ComfyUI nodes:
+  ```shell
+  pip install git+https://github.com/asomoza/image_gen_aux.git
+  ```
+3. Set up the dependencies for [ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) with the following commands:
 ```shell
 git clone https://github.com/comfyanonymous/ComfyUI.git
 cd ComfyUI
 pip install -r requirements.txt
 ```
-3. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager) with the following commands then restart ComfyUI:
+4. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager) with the following commands then restart ComfyUI:
 ```shell
 cd ComfyUI/custom_nodes
 git clone https://github.com/ltdrdata/ComfyUI-Manager comfyui-manager
