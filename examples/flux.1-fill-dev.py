@@ -12,7 +12,7 @@ pipe = FluxFillPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-Fill-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
 image = pipe(
-    prompt="A wooden basket of several individual cartons of blueberries.",
+    prompt="A wooden basket of a cat.",
     image=image,
     mask_image=mask,
     height=1024,

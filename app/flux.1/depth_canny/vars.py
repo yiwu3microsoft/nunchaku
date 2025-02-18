@@ -65,7 +65,7 @@ EXAMPLES = {
         ],
         [
             "https://huggingface.co/mit-han-lab/svdq-int4-flux.1-fill-dev/resolve/main/example.png",
-            "A wooden basked of several individual cartons of strawberries.",
+            "A wooden basket of several individual cartons of strawberries.",
             DEFAULT_STYLE_NAME,
             STYLES[DEFAULT_STYLE_NAME],
             30,
