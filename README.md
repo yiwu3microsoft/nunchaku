@@ -189,7 +189,7 @@ Please refer to [app/flux/t2i/README.md](app/flux/t2i/README.md) for instruction
 
 ## Roadmap
 
-- [x] Easy installation
+- [ ] Easy installation
 - [x] Comfy UI node
 - [x] Customized LoRA conversion instructions
 - [x] Customized model quantization instructions
