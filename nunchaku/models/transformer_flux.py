@@ -4,12 +4,13 @@ import diffusers
 import torch
 from diffusers import FluxTransformer2DModel
 from diffusers.configuration_utils import register_to_config
-from huggingface_hub import hf_hub_download, utils
+from huggingface_hub import utils
 from packaging.version import Version
 from torch import nn
 
 from .utils import NunchakuModelLoaderMixin, pad_tensor
 from .._C import QuantizedFluxModel, utils as cutils
+from ..utils import fetch_or_download
 
 SVD_RANK = 32
 
@@ -158,10 +159,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         return transformer
 
     def update_lora_params(self, path: str):
-        if not os.path.exists(path):
-            hf_repo_id = os.path.dirname(path)
-            filename = os.path.basename(path)
-            path = hf_hub_download(repo_id=hf_repo_id, filename=filename)
+        path = fetch_or_download(path)
         block = self.transformer_blocks[0]
         assert isinstance(block, NunchakuFluxTransformerBlocks)
         block.m.load(path, True)
