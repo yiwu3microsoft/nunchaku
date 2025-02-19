@@ -54,7 +54,7 @@ if __name__ == "__main__":
     lora_format = args.lora_format
 
     if lora_format == "diffusers":
-        extra_lora_dict = load_state_dict_in_safetensors(args.lora_path, filter_prefix="transformer.")
+        extra_lora_dict = load_state_dict_in_safetensors(args.lora_path)
     else:
         if lora_format == "comfyui":
             extra_lora_dict = comfyui2diffusers(args.lora_path)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             extra_lora_dict = xlab2diffusers(args.lora_path)
         else:
             raise NotImplementedError(f"LoRA format {lora_format} is not supported.")
-        extra_lora_dict = filter_state_dict(extra_lora_dict, filter_prefix="transformer.")
+        extra_lora_dict = filter_state_dict(extra_lora_dict)
 
     converted = convert_to_nunchaku_flux_lowrank_dict(
         base_model=orig_state_dict,

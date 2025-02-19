@@ -55,7 +55,7 @@ def load_state_dict_in_safetensors(
     return state_dict
 
 
-def filter_state_dict(state_dict: dict[str, torch.Tensor], filter_prefix: str) -> dict[str, torch.Tensor]:
+def filter_state_dict(state_dict: dict[str, torch.Tensor], filter_prefix: str = "") -> dict[str, torch.Tensor]:
     """Filter state dict.
 
     Args:
