@@ -108,13 +108,12 @@ class EmbedND(nn.Module):
         return emb.unsqueeze(1)
 
 
-def load_quantized_module(path: str, device: str | torch.device = "cuda") -> QuantizedFluxModel:
+def load_quantized_module(path: str, device: str | torch.device = "cuda", use_fp4: bool = False) -> QuantizedFluxModel:
     device = torch.device(device)
     assert device.type == "cuda"
-
     m = QuantizedFluxModel()
     cutils.disable_memory_auto_release()
-    m.init(True, 0 if device.index is None else device.index)
+    m.init(use_fp4, True, 0 if device.index is None else device.index)
     m.load(path)
     return m
 
@@ -153,8 +152,10 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
     @utils.validate_hf_hub_args
     def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
         device = kwargs.get("device", "cuda")
+        precision = kwargs.get("precision", "int4")
+        assert precision in ["int4", "fp4"]
         transformer, transformer_block_path = cls._build_model(pretrained_model_name_or_path, **kwargs)
-        m = load_quantized_module(transformer_block_path, device=device)
+        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4")
         transformer.inject_quantized_module(m, device)
         return transformer
 
