@@ -848,7 +848,19 @@ public:
     using typename Base::EpilogueDefault;   \
     using typename Base::EpilogueNop;   \
     template<bool USE_BIAS, bool USE_SCALE> \
-    using EpilogueBias = typename Base::EpilogueBias<USE_BIAS, USE_SCALE>;
+    using EpilogueBias = typename Base::EpilogueBias<USE_BIAS, USE_SCALE>; \
+    using Base::mma_f16xf16_f32; \
+    using Base::packed_fp32_to_fp16; \
+    using Base::packed_fp16_to_fp32; \
+    using Base::load_act;   \
+    using Base::load_wgt;   \
+    using Base::load_ascale; \
+    using Base::load_wscale; \
+    using Base::broadcast_wscale; \
+    using Base::broadcast_ascale; \
+    using Base::apply_scales; \
+    using Base::pack_ascales; \
+    using Base::pack_wscales;
 
 
 template<typename kernel, typename ...T>
