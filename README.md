@@ -42,20 +42,6 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 ## Installation
 
-### Wheels (linux only)
-
-Please make sure you are using Python 3.11.
-
-```shell
-pip install nunchaku
-```
-
-**The above wheel work for PyTorch>=2.6.** For PyTorch 2.4 and 2.5, please install the corresponding wheel in our release. For example:
-
-```shell
-pip install 
-```
-
 ### Build from Source
 
 **Note**:
