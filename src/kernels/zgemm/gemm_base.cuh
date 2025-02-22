@@ -860,7 +860,8 @@ public:
     using Base::broadcast_ascale; \
     using Base::apply_scales; \
     using Base::pack_ascales; \
-    using Base::pack_wscales;
+    using Base::pack_wscales; \
+    using Base::apply_act;
 
 
 template<typename kernel, typename ...T>
