@@ -1,4 +1,5 @@
 # convert the comfyui lora to diffusers format
+import argparse
 import os
 
 import torch
@@ -8,7 +9,7 @@ from ...utils import load_state_dict_in_safetensors
 
 
 def comfyui2diffusers(
-    input_lora: str | dict[str, torch.Tensor], output_path: str | None = None
+    input_lora: str | dict[str, torch.Tensor], output_path: str | None = None, min_rank: int | None = None
 ) -> dict[str, torch.Tensor]:
     if isinstance(input_lora, str):
         tensors = load_state_dict_in_safetensors(input_lora, device="cpu")
@@ -16,9 +17,10 @@ def comfyui2diffusers(
         tensors = input_lora
 
     new_tensors = {}
-
+    max_alpha = 0
     for k, v in tensors.items():
         if "alpha" in k:
+            max_alpha = max(max_alpha, v.max().item())
             continue
         new_k = k.replace("lora_down", "lora_A").replace("lora_up", "lora_B")
         if "lora_unet_double_blocks_" in k:
@@ -72,8 +74,36 @@ def comfyui2diffusers(
                 new_k = new_k.replace("_modulation_lin", ".norm.linear")
                 new_tensors[new_k] = v
 
+    if min_rank is not None:
+        for k in new_tensors.keys():
+            v = new_tensors[k]
+            if "lora_A" in k:
+                rank = v.shape[0]
+                if rank < min_rank:
+                    new_v = torch.zeros(min_rank, v.shape[1], dtype=v.dtype, device=v.device)
+                    new_v[:rank] = v
+                    new_tensors[k] = new_v
+            else:
+                assert "lora_B" in k
+                rank = v.shape[1]
+                if rank < min_rank:
+                    new_v = torch.zeros(v.shape[0], min_rank, dtype=v.dtype, device=v.device)
+                    new_v[:, :rank] = v
+                    new_tensors[k] = new_v
+
     if output_path is not None:
         output_dir = os.path.dirname(os.path.abspath(output_path))
         os.makedirs(output_dir, exist_ok=True)
         save_file(new_tensors, output_path)
     return new_tensors
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input-path", type=str, required=True, help="path to the comfyui lora safetensor file")
+    parser.add_argument(
+        "-o", "--output-path", type=str, required=True, help="path to the output diffusers safetensor file"
+    )
+    parser.add_argument("--min-rank", type=int, default=None, help="minimum rank for the LoRA weights")
+    args = parser.parse_args()
+    comfyui2diffusers(args.input_path, args.output_path, min_rank=args.min_rank)

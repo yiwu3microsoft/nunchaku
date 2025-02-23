@@ -37,8 +37,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.output_root:
-        # output to the parent directory of the quantized model safetensor file
-        args.output_root = os.path.dirname(args.quant_path)
+        # output to the parent directory of the lora safetensor file
+        args.output_root = os.path.dirname(args.lora_path)
     if args.lora_name is None:
         base_name = os.path.basename(args.lora_path)
         lora_name = base_name.rsplit(".", 1)[0]
