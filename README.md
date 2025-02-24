@@ -4,6 +4,7 @@ Nunchaku is an inference engine designed for 4-bit diffusion models, as demonstr
 
 ### [Paper](http://arxiv.org/abs/2411.05007) | [Project](https://hanlab.mit.edu/projects/svdquant) | [Blog](https://hanlab.mit.edu/blog/svdquant) | [Demo](https://svdquant.mit.edu)
 
+- **[2025-02-20]** 🚀 We release the [pre-built wheels](https://huggingface.co/mit-han-lab/nunchaku) to simplify installation! Check [here](#Installation) for the guidance!
 - **[2025-02-20]** 🚀 **Support NVFP4 precision on NVIDIA RTX 5090!** NVFP4 delivers superior image quality compared to INT4, offering **~3× speedup** on the RTX 5090 over BF16. Learn more in our [blog](https://hanlab.mit.edu/blog/svdquant-nvfp4), checkout  [`examples`](./examples) for usage and try [our demo](https://svdquant.mit.edu/flux1-schnell/) online!
 - **[2025-02-18]** 🔥 [**Customized LoRA conversion**](#Customized-LoRA) and [**model quantization**](#Customized-Model-Quantization) instructions are now available! **[ComfyUI](./comfyui)** workflows now support **customized LoRA**, along with **FLUX.1-Tools**!
 - **[2025-02-14]** 🔥 **[LoRA conversion script](nunchaku/convert_lora.py)** is now available! [ComfyUI FLUX.1-tools workflows](./comfyui) is released!
@@ -42,6 +43,22 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 ## Installation
 
+### Wheels (Linux only for now)
+
+Before installation, ensure you have PyTorch 2.6 installed (support for PyTorch 2.5 wheels will be added later):
+
+```shell
+pip install torch==2.6 torchvision==0.21 torchaudio==2.6
+```
+
+Once PyTorch is installed, you can directly install `nunchaku` from our [Hugging Face repository](https://huggingface.co/mit-han-lab/nunchaku/tree/main). Be sure to select the appropriate wheel for your Python version. For example, for Python 3.11:
+
+```shell
+pip install https://huggingface.co/mit-han-lab/nunchaku/blob/main/nunchaku-0.1.2-cp311-cp311-linux_x86_64.whl
+```
+
+**Note**: NVFP4 wheels are not currently available because PyTorch has not officially supported CUDA 11.8. To use NVFP4, you will need **Blackwell GPUs (e.g., 50-series GPUs)** and must **build from source**.
+
 ### Build from Source
 
 **Note**:
@@ -54,29 +71,37 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 
 1. Install dependencies:
-	```shell
-	conda create -n nunchaku python=3.11
-	conda activate nunchaku
-	pip install torch torchvision torchaudio
-	pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
-	pip install peft opencv-python gradio spaces GPUtil  # For gradio demos
-	```
-	
+  ```shell
+  conda create -n nunchaku python=3.11
+  conda activate nunchaku
+  pip install torch torchvision torchaudio
+  pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
+  pip install peft opencv-python gradio spaces GPUtil  # For gradio demos
+  ```
+
+  To enable NVFP4 on Blackwell GPUs (e.g., 50-series GPUs), please install nightly PyTorch with CUDA 12.8. The installation command can be:
+
+  ```shell
+  pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
+  ```
+
 2. Install `nunchaku` package:
     Make sure you have `gcc/g++>=11`. If you don't, you can install it via Conda:
-  
-	```shell
-	conda install -c conda-forge gxx=11 gcc=11
-	```
-	
-	Then build the package from source:
-	```shell
-	git clone https://github.com/mit-han-lab/nunchaku.git
-	cd nunchaku
-	git submodule init
-	git submodule update
-	pip install -e . --no-build-isolation
-	```
+
+    ```shell
+    conda install -c conda-forge gxx=11 gcc=11
+    ```
+
+    Then build the package from source:
+    ```shell
+    git clone https://github.com/mit-han-lab/nunchaku.git
+    cd nunchaku
+    git submodule init
+    git submodule update
+    pip install -e . --no-build-isolation
+    ```
+
+**[Optional]** You can verify your installation by running: `python -m nunchaku.test`. This command will download and run our 4-bit FLUX.1-schnell model.
 
 ## Usage Example
 
