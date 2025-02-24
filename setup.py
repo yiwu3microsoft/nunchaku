@@ -111,9 +111,11 @@ if __name__ == "__main__":
         "--threads=3",
         "--expt-relaxed-constexpr",
         "--expt-extended-lambda",
-        "--generate-line-info",
         "--ptxas-options=--allow-expensive-optimizations=true",
     ]
+
+    if os.getenv("NUNCHAKU_BUILD_WHEELS", "0") == "0":
+        NVCC_FLAGS.append("--generate-line-info")
 
     sm_targets = get_sm_targets()
     print(f"Detected SM targets: {sm_targets}", file=sys.stderr)
