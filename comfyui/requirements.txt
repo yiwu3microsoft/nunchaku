@@ -4,4 +4,3 @@ accelerate
 sentencepiece
 protobuf
 huggingface_hub
-git+https://github.com/asomoza/image_gen_aux.git

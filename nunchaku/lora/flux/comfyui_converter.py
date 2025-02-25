@@ -17,10 +17,9 @@ def comfyui2diffusers(
         tensors = input_lora
 
     new_tensors = {}
-    max_alpha = 0
+    max_rank = 0
     for k, v in tensors.items():
         if "alpha" in k:
-            max_alpha = max(max_alpha, v.max().item())
             continue
         new_k = k.replace("lora_down", "lora_A").replace("lora_up", "lora_B")
         if "lora_unet_double_blocks_" in k:
@@ -31,7 +30,10 @@ def comfyui2diffusers(
                         # Copy the tensor
                         new_k = new_k.replace("_img_attn_qkv", f".attn.to_{p}")
                         new_k = new_k.replace("_txt_attn_qkv", f".attn.add_{p}_proj")
-                        new_tensors[new_k] = v.clone()
+                        rank = v.shape[0]
+                        alpha = tensors[k.replace("lora_down.weight", "alpha")]
+                        new_tensors[new_k] = v.clone() * alpha / rank
+                        max_rank = max(max_rank, rank)
                     else:
                         assert "lora_B" in new_k
                         assert v.shape[0] % 3 == 0
@@ -60,7 +62,10 @@ def comfyui2diffusers(
                             new_k1 = new_k.replace("_linear1", ".proj_mlp")
                         else:
                             new_k1 = new_k.replace("_linear1", f".attn.to_{p}")
-                        new_tensors[new_k1] = v.clone()
+                        rank = v.shape[0]
+                        alpha = tensors[k.replace("lora_down.weight", "alpha")]
+                        new_tensors[new_k1] = v.clone() * alpha / rank
+                        max_rank = max(max_rank, rank)
                     else:
                         if p == "i":
                             new_k1 = new_k.replace("_linear1", ".proj_mlp")
@@ -72,6 +77,11 @@ def comfyui2diffusers(
             else:
                 new_k = new_k.replace("_linear2", ".proj_out")
                 new_k = new_k.replace("_modulation_lin", ".norm.linear")
+                if "lora_down" in k:
+                    rank = v.shape[0]
+                    alpha = tensors[k.replace("lora_down.weight", "alpha")]
+                    v = v * alpha / rank
+                    max_rank = max(max_rank, rank)
                 new_tensors[new_k] = v
 
     if min_rank is not None:

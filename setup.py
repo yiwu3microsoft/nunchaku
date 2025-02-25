@@ -62,6 +62,10 @@ if __name__ == "__main__":
     fp = open("nunchaku/__version__.py", "r").read()
     version = eval(fp.strip().split()[-1])
 
+    torch_version = torch.__version__.split("+")[0]
+    torch_major_minor_version = ".".join(torch_version.split(".")[:2])
+    version = version + "+torch" + torch_major_minor_version
+
     ROOT_DIR = os.path.dirname(__file__)
 
     INCLUDE_DIRS = [

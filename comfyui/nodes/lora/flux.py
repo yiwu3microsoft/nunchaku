@@ -6,6 +6,7 @@ from safetensors.torch import save_file
 
 from nunchaku.lora.flux.comfyui_converter import comfyui2diffusers
 from nunchaku.lora.flux.diffusers_converter import convert_to_nunchaku_flux_lowrank_dict
+from nunchaku.lora.flux.utils import detect_format
 from nunchaku.lora.flux.xlab_converter import xlab2diffusers
 
 
@@ -43,7 +44,10 @@ class SVDQuantFluxLoraLoader:
             "required": {
                 "model": ("MODEL", {"tooltip": "The diffusion model the LoRA will be applied to."}),
                 "lora_name": (lora_name_list, {"tooltip": "The name of the LoRA."}),
-                "lora_format": (["comfyui", "diffusers", "svdquant", "xlab"], {"tooltip": "The format of the LoRA."}),
+                "lora_format": (
+                    ["auto", "comfyui", "diffusers", "svdquant", "xlab"],
+                    {"tooltip": "The format of the LoRA."},
+                ),
                 "base_model_name": (
                     base_model_paths,
                     {
@@ -89,6 +93,8 @@ class SVDQuantFluxLoraLoader:
                     lora_path = folder_paths.get_full_path_or_raise("loras", lora_name)
                 except FileNotFoundError:
                     lora_path = lora_name
+                if lora_format == "auto":
+                    lora_format = detect_format(lora_path)
                 if lora_format != "svdquant":
                     if lora_format == "comfyui":
                         input_lora = comfyui2diffusers(lora_path)

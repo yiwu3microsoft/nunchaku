@@ -45,16 +45,16 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 ### Wheels (Linux only for now)
 
-Before installation, ensure you have PyTorch 2.6 installed (support for PyTorch 2.5 wheels will be added later):
+Before installation, ensure you have [PyTorch>=2.5](https://pytorch.org/) installed. For example, you can use the following command to install PyTorch 2.6:
 
 ```shell
 pip install torch==2.6 torchvision==0.21 torchaudio==2.6
 ```
 
-Once PyTorch is installed, you can directly install `nunchaku` from our [Hugging Face repository](https://huggingface.co/mit-han-lab/nunchaku/tree/main). Be sure to select the appropriate wheel for your Python version. For example, for Python 3.11:
+Once PyTorch is installed, you can directly install `nunchaku` from our [Hugging Face repository](https://huggingface.co/mit-han-lab/nunchaku/tree/main). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
 
 ```shell
-pip install https://huggingface.co/mit-han-lab/nunchaku/blob/main/nunchaku-0.1.2-cp311-cp311-linux_x86_64.whl
+pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.1.3+torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
 **Note**: NVFP4 wheels are not currently available because PyTorch has not officially supported CUDA 11.8. To use NVFP4, you will need **Blackwell GPUs (e.g., 50-series GPUs)** and must **build from source**.
@@ -133,7 +133,6 @@ Specifically, `nunchaku` shares the same APIs as [diffusers](https://github.com/
 python -m nunchaku.lora.flux.convert \
   --quant-path mit-han-lab/svdq-int4-flux.1-dev/transformer_blocks.safetensors \
   --lora-path aleksa-codes/flux-ghibsky-illustration/lora.safetensors \
-  --lora-format diffusers \
   --output-root ./nunchaku_loras \
   --lora-name svdq-int4-flux.1-dev-ghibsky
 ```
@@ -145,6 +144,7 @@ Argument Details:
 - `--lora-path`: The path to your LoRA safetensors, which can also be a local or remote Hugging Face model.
 
 - `--lora-format`: Specifies the LoRA format. Supported formats include:
+  - `auto`: The default option. Automatically detects the appropriate LoRA format.
   - `diffusers` (e.g., [aleksa-codes/flux-ghibsky-illustration](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration))
   - `comfyui` (e.g., [Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch](https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch))
   - `xlab` (e.g., [XLabs-AI/flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora))
