@@ -23,6 +23,5 @@ image = pipe(
     guidance_scale=5.0,
     pag_scale=2.0,
     num_inference_steps=20,
-    generator=torch.Generator().manual_seed(42),
 ).images[0]
 image.save("sana_1600m_pag.png")

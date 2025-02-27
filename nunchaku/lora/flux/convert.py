@@ -6,6 +6,7 @@ from safetensors.torch import save_file
 
 from .comfyui_converter import comfyui2diffusers
 from .diffusers_converter import convert_to_nunchaku_flux_lowrank_dict
+from .utils import detect_format
 from .xlab_converter import xlab2diffusers
 from ...utils import filter_state_dict, load_state_dict_in_safetensors
 
@@ -21,8 +22,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lora-format",
         type=str,
-        default="diffusers",
-        choices=["comfyui", "diffusers", "xlab"],
+        default="auto",
+        choices=["auto", "comfyui", "diffusers", "xlab"],
         help="format of the LoRA weights",
     )
     parser.add_argument("--output-root", type=str, default="", help="root to the output safetensor file")
@@ -37,8 +38,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.output_root:
-        # output to the parent directory of the quantized model safetensor file
-        args.output_root = os.path.dirname(args.quant_path)
+        # output to the parent directory of the lora safetensor file
+        args.output_root = os.path.dirname(args.lora_path)
     if args.lora_name is None:
         base_name = os.path.basename(args.lora_path)
         lora_name = base_name.rsplit(".", 1)[0]
@@ -52,6 +53,13 @@ if __name__ == "__main__":
     assert args.lora_path.endswith(".safetensors"), "LoRA weights must be a safetensor file"
     orig_state_dict = load_state_dict_in_safetensors(args.quant_path)
     lora_format = args.lora_format
+
+    if lora_format == "auto":
+        lora_format = detect_format(args.lora_path)
+        print(f"Detected LoRA format: {lora_format}")
+        if lora_format == "svdquant":
+            print("Already in SVDQuant format, no conversion needed.")
+            exit(0)
 
     if lora_format == "diffusers":
         extra_lora_dict = load_state_dict_in_safetensors(args.lora_path)

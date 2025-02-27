@@ -1,6 +1,5 @@
 # convert the diffusers lora to nunchaku format
 """Convert LoRA weights to Nunchaku format."""
-
 import typing as tp
 
 import torch
@@ -215,8 +214,8 @@ def convert_to_nunchaku_transformer_block_lowrank_dict(  # noqa: C901
                 update_state_dict(
                     converted,
                     {
-                        "lora_down": lora[0],
-                        "lora_up": reorder_adanorm_lora_up(lora[1], splits=3),
+                        "lora_down": pad(lora[0], divisor=16, dim=0),
+                        "lora_up": pad(reorder_adanorm_lora_up(lora[1], splits=3), divisor=16, dim=1),
                     },
                     prefix=converted_local_name,
                 )
@@ -224,8 +223,8 @@ def convert_to_nunchaku_transformer_block_lowrank_dict(  # noqa: C901
                 update_state_dict(
                     converted,
                     {
-                        "lora_down": lora[0],
-                        "lora_up": reorder_adanorm_lora_up(lora[1], splits=6),
+                        "lora_down": pad(lora[0], divisor=16, dim=0),
+                        "lora_up": pad(reorder_adanorm_lora_up(lora[1], splits=6), divisor=16, dim=1),
                     },
                     prefix=converted_local_name,
                 )
@@ -262,6 +261,22 @@ def convert_to_nunchaku_flux_single_transformer_block_lowrank_dict(
         extra_lora_dict[f"{candidate_block_name}.proj_out.linears.1.lora_B.weight"] = lora_up.clone()
         extra_lora_dict.pop(f"{candidate_block_name}.proj_out.lora_A.weight")
         extra_lora_dict.pop(f"{candidate_block_name}.proj_out.lora_B.weight")
+
+        for component in ["lora_A", "lora_B"]:
+            fc1_k = f"{candidate_block_name}.proj_mlp.{component}.weight"
+            fc2_k = f"{candidate_block_name}.proj_out.linears.1.{component}.weight"
+            fc1_v = extra_lora_dict[fc1_k]
+            fc2_v = extra_lora_dict[fc2_k]
+            dim = 0 if "lora_A" in fc1_k else 1
+
+            fc1_rank = fc1_v.shape[dim]
+            fc2_rank = fc2_v.shape[dim]
+            if fc1_rank != fc2_rank:
+                rank = max(fc1_rank, fc2_rank)
+                if fc1_rank < rank:
+                    extra_lora_dict[fc1_k] = pad(fc1_v, divisor=rank, dim=dim)
+                if fc2_rank < rank:
+                    extra_lora_dict[fc2_k] = pad(fc2_v, divisor=rank, dim=dim)
 
     return convert_to_nunchaku_transformer_block_lowrank_dict(
         orig_state_dict=orig_state_dict,
@@ -347,6 +362,28 @@ def convert_to_nunchaku_flux_lowrank_dict(
     else:
         extra_lora_dict = filter_state_dict(lora, filter_prefix="transformer.")
 
+    for k in extra_lora_dict.keys():
+        fc1_k = k
+        if "ff.net.0.proj" in k:
+            fc2_k = k.replace("ff.net.0.proj", "ff.net.2")
+        elif "ff_context.net.0.proj" in k:
+            fc2_k = k.replace("ff_context.net.0.proj", "ff_context.net.2")
+        else:
+            continue
+        assert fc2_k in extra_lora_dict
+        fc1_v = extra_lora_dict[fc1_k]
+        fc2_v = extra_lora_dict[fc2_k]
+        dim = 0 if "lora_A" in fc1_k else 1
+
+        fc1_rank = fc1_v.shape[dim]
+        fc2_rank = fc2_v.shape[dim]
+        if fc1_rank != fc2_rank:
+            rank = max(fc1_rank, fc2_rank)
+            if fc1_rank < rank:
+                extra_lora_dict[fc1_k] = pad(fc1_v, divisor=rank, dim=dim)
+            if fc2_rank < rank:
+                extra_lora_dict[fc2_k] = pad(fc2_v, divisor=rank, dim=dim)
+
     block_names: set[str] = set()
     for param_name in orig_state_dict.keys():
         if param_name.startswith(("transformer_blocks.", "single_transformer_blocks.")):
@@ -370,4 +407,5 @@ def convert_to_nunchaku_flux_lowrank_dict(
             ),
             prefix=block_name,
         )
+
     return converted

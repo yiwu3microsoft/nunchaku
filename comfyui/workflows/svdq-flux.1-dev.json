@@ -534,7 +534,7 @@
       },
       "widgets_values": [
         "aleksa-codes/flux-ghibsky-illustration/lora.safetensors",
-        "diffusers",
+        "auto",
         "mit-han-lab/svdq-int4-flux.1-dev",
         1
       ]

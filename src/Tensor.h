@@ -218,7 +218,8 @@ public:
     enum ScalarType {
         INVALID_SCALAR_TYPE,
         INT8, INT16, INT32, INT64,
-        FP16, FP32, BF16
+        FP16, FP32, BF16,
+        FP8_E4M3, FP8_E5M2,
     };
 
     struct TensorOptions {
@@ -546,6 +547,8 @@ inline const std::map<Tensor::ScalarType, size_t> Tensor::scalarSize = {
     {FP16, 2},
     {FP32, 4},
     {BF16, 2},
+    {FP8_E4M3, 1},
+    {FP8_E5M2, 1},
 };
 
 struct TensorsProvider {

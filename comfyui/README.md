@@ -3,7 +3,11 @@
 ![comfyui](../assets/comfyui.jpg)
 ## Installation
 
-Please first install `nunchaku` following the instructions in [README.md](https://github.com/mit-han-lab/nunchaku?tab=readme-ov-file#installation).
+Please first install `nunchaku` following the instructions in [README.md](https://github.com/mit-han-lab/nunchaku?tab=readme-ov-file#installation). Then just install `image_gen_aux` with 
+
+```shell
+pip install git+https://github.com/asomoza/image_gen_aux.git
+```
 
 ### ComfyUI-CLI
 
@@ -102,11 +106,11 @@ comfy node registry-install svdquant
 
   * Place your LoRA checkpoints in the `models/loras` directory. These will appear as selectable options under `lora_name`. Meanwhile, the [example Ghibsky LoRA](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration) is included and will automatically download from our Hugging Face repository when used.
   * `lora_format` specifies the LoRA format. Supported formats include:
-
-    - `diffusers` (e.g., [aleksa-codes/flux-ghibsky-illustration](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration))
-    - `comfyui` (e.g., [Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch](https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch))
-    - `xlab` (e.g., [XLabs-AI/flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora))
-    - `svdquant` (e.g., [mit-han-lab/svdquant-lora-collection](https://huggingface.co/mit-han-lab/svdquant-lora-collection)).
+* `auto`: Automatically detects the appropriate LoRA format.
+    * `diffusers` (e.g., [aleksa-codes/flux-ghibsky-illustration](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration))
+    * `comfyui` (e.g., [Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch](https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch))
+    * `xlab` (e.g., [XLabs-AI/flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora))
+    * `svdquant` (e.g., [mit-han-lab/svdquant-lora-collection](https://huggingface.co/mit-han-lab/svdquant-lora-collection)).
 
   * `base_model_name` specifies the path to the quantized base model. If `lora_format` is already set to `svdquant`, this option has no use. You can set it to the same value as `model_path` in the above **SVDQuant Flux DiT Loader**.
   * **Note**: Currently, **only one LoRA** can be loaded at a time.
