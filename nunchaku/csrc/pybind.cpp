@@ -11,9 +11,6 @@
 #include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("awq_gemm_forward_cuda", &awq_gemm_forward_cuda, "AWQ quantized GEMM kernel.");
-    m.def("gemv_awq", &gemv_awq, "AWQ quantized GEMV kernel.");
-
     py::class_<QuantizedFluxModel>(m, "QuantizedFluxModel")
         .def(py::init<>())
         .def("init", &QuantizedFluxModel::init,
@@ -76,7 +73,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ;
 
     m.def_submodule("ops")
-        .def("gemm_w4a4", nunchaku::ops::gemm_w4a4)
+        .def("gemm_cuda", nunchaku::ops::gemm_cuda)
         .def("gemv_awq", nunchaku::ops::gemv_awq)
     ;
 

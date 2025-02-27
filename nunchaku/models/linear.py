@@ -6,7 +6,7 @@ import warnings
 import torch
 import torch.nn as nn
 
-from nunchaku.csrc.load import _C
+from nunchaku._C.ops import gemm_cuda, gemv_awq
 from .tinychat_utils import ceil_num_groups, convert_to_tinychat_w4x16y16_linear_weight
 
 __all__ = ["W4Linear"]
@@ -78,7 +78,7 @@ class W4Linear(nn.Module):
     @torch.no_grad()
     def forward(self, x):
         if x.numel() / x.shape[-1] < 8:
-            out = _C.awq_gemv_forward_cuda(
+            out = gemv_awq(
                 x,
                 self.qweight,
                 self.scales,
@@ -89,7 +89,7 @@ class W4Linear(nn.Module):
                 self.group_size,
             )
         else:
-            out = _C.awq_gemm_forward_cuda(x, self.qweight, self.scales, self.scaled_zeros)
+            out = gemm_cuda(x, self.qweight, self.scales, self.scaled_zeros)
         out = out + self.bias if self.bias is not None else out
         return out
 

@@ -28,6 +28,8 @@ Tensor from_torch(at::Tensor input) {
         { at::ScalarType::Float, Tensor::FP32 },
         { at::ScalarType::Half, Tensor::FP16 },
         { at::ScalarType::BFloat16, Tensor::BF16 },
+
+        { at::ScalarType::Short,    Tensor::INT16 },
     };
 
     result.scalarType = mapType.at(input.scalar_type());
@@ -53,6 +55,8 @@ at::Tensor to_torch(Tensor input) {
         { Tensor::FP32, at::ScalarType::Float  },
         { Tensor::FP16, at::ScalarType::Half  },
         { Tensor::BF16, at::ScalarType::BFloat16  },
+
+        { Tensor::INT16,  at::ScalarType::Short   },
     };
 
     c10::TensorOptions opts(mapType.at(input.scalar_type()));
