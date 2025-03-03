@@ -188,7 +188,7 @@ image = pipeline(
 image.save("flux.1-dev-ghibsky.png")
 ```
 
-**For ComfyUI users, we have implemented a node to convert the LoRA weights on the fly. All you need to do is specify the correct LoRA format. Please refer to Please refer to [comfyui/README.md](comfyui/README.md) for more details.**
+**For ComfyUI users, we have implemented a node to convert the LoRA weights on the fly. All you need to do is specify the correct LoRA format. Please refer to [comfyui/README.md](comfyui/README.md) for more details.**
 
 ## ComfyUI
 
