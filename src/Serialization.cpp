@@ -106,7 +106,9 @@ SafeTensors::SafeTensors(const std::string &filename) {
 }
 
 SafeTensors::~SafeTensors() {
+#ifndef _WIN32  
     checkCUDA(cudaHostUnregister(const_cast<char *>(this->mapped->data())));
+#endif
 }
 
 void SafeTensors::parseHeader() {
