@@ -9,7 +9,7 @@ import torch
 from diffusers import FluxPipeline, FluxPriorReduxPipeline
 from PIL import Image
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku.models.transformers.transformer_flux import NunchakuFluxTransformer2dModel
 from utils import get_args
 from vars import DEFAULT_GUIDANCE, DEFAULT_INFERENCE_STEP, EXAMPLES, MAX_SEED
 

@@ -10,7 +10,7 @@ from diffusers import FluxTransformer2DModel
 from einops import rearrange, repeat
 from torch import nn
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 
 class ComfyUIFluxForwardWrapper(nn.Module):
@@ -67,31 +67,53 @@ class ComfyUIFluxForwardWrapper(nn.Module):
 class SVDQuantFluxDiTLoader:
     @classmethod
     def INPUT_TYPES(s):
-        # folder_paths.get_filename_list("loras"),
         model_paths = [
             "mit-han-lab/svdq-int4-flux.1-schnell",
             "mit-han-lab/svdq-int4-flux.1-dev",
+            "mit-han-lab/svdq-fp4-flux.1-schnell",
+            "mit-han-lab/svdq-fp4-flux.1-dev",
             "mit-han-lab/svdq-int4-flux.1-canny-dev",
             "mit-han-lab/svdq-int4-flux.1-depth-dev",
             "mit-han-lab/svdq-int4-flux.1-fill-dev",
         ]
-        prefix = os.path.join(folder_paths.models_dir, "diffusion_models")
-        local_folders = os.listdir(prefix)
-        local_folders = sorted(
-            [
-                folder
-                for folder in local_folders
-                if not folder.startswith(".") and os.path.isdir(os.path.join(prefix, folder))
-            ]
-        )
+        prefixes = folder_paths.folder_names_and_paths["diffusion_models"][0]
+        local_folders = set()
+        for prefix in prefixes:
+            if os.path.exists(prefix) and os.path.isdir(prefix):
+                local_folders_ = os.listdir(prefix)
+                local_folders_ = [
+                    folder
+                    for folder in local_folders_
+                    if not folder.startswith(".") and os.path.isdir(os.path.join(prefix, folder))
+                ]
+                local_folders.update(local_folders_)
+        local_folders = sorted(list(local_folders))
         model_paths = local_folders + model_paths
         ngpus = len(GPUtil.getGPUs())
         return {
             "required": {
-                "model_path": (model_paths,),
+                "model_path": (
+                    model_paths,
+                    {"tooltip": "The SVDQuant quantized FLUX.1 models. It can be a huggingface path or a local path."},
+                ),
+                "cpu_offload": (
+                    ["enable", "disable"],
+                    {
+                        "default": "disable",
+                        "tooltip": "Whether to enable CPU offload for the transformer model. This may slow down the inference, but may reduce the GPU memory usage.",
+                    },
+                ),
                 "device_id": (
                     "INT",
-                    {"default": 0, "min": 0, "max": ngpus, "step": 1, "display": "number", "lazy": True},
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": ngpus,
+                        "step": 1,
+                        "display": "number",
+                        "lazy": True,
+                        "tooltip": "The GPU device ID to use for the model.",
+                    },
                 ),
             }
         }
@@ -101,14 +123,15 @@ class SVDQuantFluxDiTLoader:
     CATEGORY = "SVDQuant"
     TITLE = "SVDQuant Flux DiT Loader"
 
-    def load_model(self, model_path: str, device_id: int, **kwargs) -> tuple[FluxTransformer2DModel]:
+    def load_model(self, model_path: str, cpu_offload: str, device_id: int, **kwargs) -> tuple[FluxTransformer2DModel]:
         device = f"cuda:{device_id}"
-        prefix = os.path.join(folder_paths.models_dir, "diffusion_models")
-        if os.path.exists(os.path.join(prefix, model_path)):
-            model_path = os.path.join(prefix, model_path)
-        else:
-            model_path = model_path
-        transformer = NunchakuFluxTransformer2dModel.from_pretrained(model_path).to(device)
+        prefixes = folder_paths.folder_names_and_paths["diffusion_models"][0]
+        for prefix in prefixes:
+            if os.path.exists(os.path.join(prefix, model_path)):
+                model_path = os.path.join(prefix, model_path)
+                break
+        transformer = NunchakuFluxTransformer2dModel.from_pretrained(model_path, offload=cpu_offload == "enable")
+        transformer = transformer.to(device)
         dit_config = {
             "image_model": "flux",
             "patch_size": 2,

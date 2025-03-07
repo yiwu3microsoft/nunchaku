@@ -5,11 +5,11 @@ import torch
 from huggingface_hub import hf_hub_download
 
 
-def fetch_or_download(path: str) -> str:
+def fetch_or_download(path: str, repo_type: str = "model") -> str:
     if not os.path.exists(path):
         hf_repo_id = os.path.dirname(path)
         filename = os.path.basename(path)
-        path = hf_hub_download(repo_id=hf_repo_id, filename=filename)
+        path = hf_hub_download(repo_id=hf_repo_id, filename=filename, repo_type=repo_type)
     return path
 
 

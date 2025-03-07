@@ -3,7 +3,7 @@ from diffusers import FluxControlPipeline
 from diffusers.utils import load_image
 from image_gen_aux import DepthPreprocessor
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-depth-dev")
 

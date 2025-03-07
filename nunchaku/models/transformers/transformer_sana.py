@@ -9,7 +9,7 @@ from huggingface_hub import utils
 from torch import nn
 
 from .utils import NunchakuModelLoaderMixin
-from .._C import QuantizedSanaModel, utils as cutils
+from ..._C import QuantizedSanaModel, utils as cutils
 
 SVD_RANK = 32
 

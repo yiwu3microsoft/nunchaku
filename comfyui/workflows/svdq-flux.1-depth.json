@@ -21,20 +21,22 @@
       "inputs": [
         {
           "name": "clip",
+          "localized_name": "clip",
+          "label": "clip",
           "type": "CLIP",
-          "link": 63,
-          "label": "clip"
+          "link": 63
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
             68
           ],
-          "slot_index": 0,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "title": "CLIP Text Encode (Negative Prompt)",
@@ -56,7 +58,7 @@
       ],
       "size": [
         315,
-        106
+        122
       ],
       "flags": {},
       "order": 0,
@@ -65,12 +67,13 @@
       "outputs": [
         {
           "name": "CLIP",
+          "localized_name": "CLIP",
+          "label": "CLIP",
           "type": "CLIP",
           "links": [
             62,
             63
-          ],
-          "label": "CLIP"
+          ]
         }
       ],
       "properties": {
@@ -100,21 +103,23 @@
       "inputs": [
         {
           "name": "conditioning",
+          "localized_name": "conditioning",
+          "label": "conditioning",
           "type": "CONDITIONING",
-          "link": 41,
-          "label": "conditioning"
+          "link": 41
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
+          "shape": 3,
           "links": [
             67
           ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -141,84 +146,56 @@
       "inputs": [
         {
           "name": "model",
+          "localized_name": "model",
+          "label": "model",
           "type": "MODEL",
-          "link": 78,
-          "label": "model"
+          "link": 78
         },
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
-          "link": 64,
-          "label": "positive"
+          "link": 64
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
-          "link": 65,
-          "label": "negative"
+          "link": 65
         },
         {
           "name": "latent_image",
+          "localized_name": "latent_image",
+          "label": "latent_image",
           "type": "LATENT",
-          "link": 73,
-          "label": "latent_image"
+          "link": 73
         }
       ],
       "outputs": [
         {
           "name": "LATENT",
+          "localized_name": "LATENT",
+          "label": "LATENT",
           "type": "LATENT",
           "links": [
             7
           ],
-          "slot_index": 0,
-          "label": "LATENT"
+          "slot_index": 0
         }
       ],
       "properties": {
         "Node name for S&R": "KSampler"
       },
       "widgets_values": [
-        704308966490490,
+        69796511068157,
         "randomize",
         20,
         1,
         "euler",
         "normal",
         1
-      ]
-    },
-    {
-      "id": 39,
-      "type": "SVDQuantFluxDiTLoader",
-      "pos": [
-        707.80908203125,
-        -172.0343017578125
-      ],
-      "size": [
-        315,
-        82
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            78
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "SVDQuantFluxDiTLoader"
-      },
-      "widgets_values": [
-        "mit-han-lab/svdq-int4-flux.1-depth-dev",
-        0
       ]
     },
     {
@@ -238,9 +215,10 @@
       "inputs": [
         {
           "name": "images",
+          "localized_name": "images",
+          "label": "images",
           "type": "IMAGE",
-          "link": 87,
-          "label": "images"
+          "link": 87
         }
       ],
       "outputs": [],
@@ -266,26 +244,29 @@
       "inputs": [
         {
           "name": "samples",
+          "localized_name": "samples",
+          "label": "samples",
           "type": "LATENT",
-          "link": 7,
-          "label": "samples"
+          "link": 7
         },
         {
           "name": "vae",
+          "localized_name": "vae",
+          "label": "vae",
           "type": "VAE",
-          "link": 60,
-          "label": "vae"
+          "link": 60
         }
       ],
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
+          "label": "IMAGE",
           "type": "IMAGE",
           "links": [
             85
           ],
-          "slot_index": 0,
-          "label": "IMAGE"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -310,9 +291,10 @@
       "inputs": [
         {
           "name": "images",
+          "localized_name": "images",
+          "label": "images",
           "type": "IMAGE",
-          "link": 85,
-          "label": "images"
+          "link": 85
         }
       ],
       "outputs": [],
@@ -338,6 +320,7 @@
       "inputs": [
         {
           "name": "image",
+          "localized_name": "image",
           "type": "IMAGE",
           "link": 82
         }
@@ -345,6 +328,7 @@
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
           "type": "IMAGE",
           "links": [
             86
@@ -379,20 +363,22 @@
       "inputs": [
         {
           "name": "clip",
+          "localized_name": "clip",
+          "label": "clip",
           "type": "CLIP",
-          "link": 62,
-          "label": "clip"
+          "link": 62
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
             41
           ],
-          "slot_index": 0,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "title": "CLIP Text Encode (Positive Prompt)",
@@ -417,19 +403,20 @@
         58
       ],
       "flags": {},
-      "order": 2,
+      "order": 1,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "VAE",
+          "localized_name": "VAE",
+          "label": "VAE",
           "type": "VAE",
           "links": [
             60,
             69
           ],
-          "slot_index": 0,
-          "label": "VAE"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -456,56 +443,63 @@
       "inputs": [
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
-          "link": 67,
-          "label": "positive"
+          "link": 67
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
-          "link": 68,
-          "label": "negative"
+          "link": 68
         },
         {
           "name": "vae",
+          "localized_name": "vae",
+          "label": "vae",
           "type": "VAE",
-          "link": 69,
-          "label": "vae"
+          "link": 69
         },
         {
           "name": "pixels",
+          "localized_name": "pixels",
+          "label": "pixels",
           "type": "IMAGE",
-          "link": 88,
-          "label": "pixels"
+          "link": 88
         }
       ],
       "outputs": [
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
           "links": [
             64
           ],
-          "slot_index": 0,
-          "label": "positive"
+          "slot_index": 0
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
           "links": [
             65
           ],
-          "slot_index": 1,
-          "label": "negative"
+          "slot_index": 1
         },
         {
           "name": "latent",
+          "localized_name": "latent",
+          "label": "latent",
           "type": "LATENT",
           "links": [
             73
           ],
-          "slot_index": 2,
-          "label": "latent"
+          "slot_index": 2
         }
       ],
       "properties": {
@@ -530,6 +524,7 @@
       "inputs": [
         {
           "name": "image",
+          "localized_name": "image",
           "type": "IMAGE",
           "link": 86
         }
@@ -537,6 +532,7 @@
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
           "type": "IMAGE",
           "links": [
             87,
@@ -564,26 +560,28 @@
         314.0000305175781
       ],
       "flags": {},
-      "order": 3,
+      "order": 2,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
+          "label": "IMAGE",
           "type": "IMAGE",
+          "shape": 3,
           "links": [
             82
           ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "IMAGE"
+          "slot_index": 0
         },
         {
           "name": "MASK",
+          "localized_name": "MASK",
+          "label": "MASK",
           "type": "MASK",
-          "links": null,
           "shape": 3,
-          "label": "MASK"
+          "links": null
         }
       ],
       "properties": {
@@ -592,6 +590,41 @@
       "widgets_values": [
         "logo_example.png",
         "image"
+      ]
+    },
+    {
+      "id": 39,
+      "type": "SVDQuantFluxDiTLoader",
+      "pos": [
+        707.80908203125,
+        -172.0343017578125
+      ],
+      "size": [
+        315,
+        106
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "localized_name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            78
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SVDQuantFluxDiTLoader"
+      },
+      "widgets_values": [
+        "mit-han-lab/svdq-int4-flux.1-depth-dev",
+        "disable",
+        0
       ]
     }
   ],
@@ -739,12 +772,12 @@
     "ds": {
       "scale": 0.8140274938684042,
       "offset": [
-        1060.3416359459316,
-        529.8567933439979
+        1795.999020278545,
+        750.1636967541119
       ]
     },
     "node_versions": {
-      "comfy-core": "0.3.14"
+      "comfy-core": "0.3.24"
     }
   },
   "version": 0.4

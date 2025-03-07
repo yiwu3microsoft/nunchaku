@@ -70,8 +70,6 @@ comfy node registry-install svdquant
 
      * Install missing nodes (e.g., comfyui-inpainteasy) following [this tutorial](https://github.com/ltdrdata/ComfyUI-Manager?tab=readme-ov-file#support-of-missing-nodes-installation).
 
-
-
 2. **Download Required Models**: Follow [this tutorial](https://comfyanonymous.github.io/ComfyUI_examples/flux/) and download the required models into the appropriate directories using the commands below:
 
    ```shell
@@ -92,13 +90,15 @@ comfy node registry-install svdquant
 
 * **SVDQuant Flux DiT Loader**: A node for loading the FLUX diffusion model. 
 
-  * `model_path`: Specifies the model location. If set to `mit-han-lab/svdq-int4-flux.1-schnell`, `mit-han-lab/svdq-int4-flux.1-dev`, `mit-han-lab/svdq-int4-flux.1-canny-dev`, `mit-han-lab/svdq-int4-flux.1-fill-dev` or `mit-han-lab/svdq-int4-flux.1-depth-dev`, the model will be automatically downloaded from our Hugging Face repository. Alternatively, you can manually download the model directory by running the following command example:
+  * `model_path`: Specifies the model location. If set to the folder starting with `mit-han-lab`, the model will be automatically downloaded from our Hugging Face repository. Alternatively, you can manually download the model directory by running the following command example:
 
     ```shell
     huggingface-cli download mit-han-lab/svdq-int4-flux.1-dev --local-dir models/diffusion_models/svdq-int4-flux.1-dev
     ```
 
      After downloading, specify the corresponding folder name as the `model_path`.
+
+  * `cpu_offload`: Enables CPU offloading for the transformer model. While this may reduce GPU memory usage, it can slow down inference. Memory usage will be further optimized in node v0.1.6.
 
   * `device_id`: Indicates the GPU ID for running the model.
 

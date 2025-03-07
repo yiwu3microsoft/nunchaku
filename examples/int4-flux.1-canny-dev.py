@@ -3,7 +3,7 @@ from controlnet_aux import CannyDetector
 from diffusers import FluxControlPipeline
 from diffusers.utils import load_image
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-canny-dev")
 pipe = FluxControlPipeline.from_pretrained(

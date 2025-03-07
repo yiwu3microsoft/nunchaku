@@ -9,9 +9,12 @@
 
 class QuantizedFluxModel : public ModuleWrapper<FluxModel> { // : public torch::CustomClassHolder {
 public:
-    void init(bool use_fp4, bool bf16, int8_t deviceId) {
+    void init(bool use_fp4, bool offload, bool bf16, int8_t deviceId) {
         spdlog::info("Initializing QuantizedFluxModel");
-        net = std::make_unique<FluxModel>(use_fp4, bf16 ? Tensor::BF16 : Tensor::FP16, Device::cuda((int)deviceId));
+        if (offload) {
+            spdlog::info("Layer offloading enabled");
+        }
+        net = std::make_unique<FluxModel>(use_fp4, offload, bf16 ? Tensor::BF16 : Tensor::FP16, Device::cuda((int)deviceId));
     }
 
     torch::Tensor forward(

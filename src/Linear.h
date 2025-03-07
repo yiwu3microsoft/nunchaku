@@ -36,6 +36,7 @@ public:
     int lora_rank;
     float lora_scale;
 
+    const Device device;
 public:
     Tensor qweight;
     Tensor wscales;
@@ -86,6 +87,7 @@ public:
     std::vector<float> lora_scales; // every 16 ranks share a scale
 
     const Tensor::ScalarType dtype;
+    const Device device;
 
 protected:
     virtual void loadParam(std::string key, Tensor &dst, Tensor src) override;

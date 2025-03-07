@@ -16,7 +16,7 @@ GEMM_F16::GEMM_F16(int in_features, int out_features, bool use_bias, Tensor::Sca
     this->bias = use_bias ? Tensor::allocate({out_features}, dtype, device) : Tensor{};
 
     registerParams
-        (weight, "weight")
+        (weight, "weight", ParamFlags::LazyLoad)
         (bias, "bias")
     ;
 }
@@ -27,7 +27,7 @@ Tensor GEMM_F16::forward(Tensor x) {
 }
 
 GEMV_AWQ::GEMV_AWQ(int in_features, int out_features, bool use_bias, Tensor::ScalarType dtype, Device device) : 
-    in_features(in_features), out_features(out_features), group_size(64), lora_rank(0), lora_scale(1.0f)
+    in_features(in_features), out_features(out_features), group_size(64), lora_rank(0), lora_scale(1.0f), device(device)
 {
     this->qweight = Tensor::allocate({out_features / 4, ceilDiv(in_features, 8) * 4}, Tensor::INT32, device);
     this->wscales = Tensor::allocate({ceilDiv(in_features, group_size), out_features}, dtype, device);
@@ -39,7 +39,7 @@ GEMV_AWQ::GEMV_AWQ(int in_features, int out_features, bool use_bias, Tensor::Sca
     this->lora_up = Tensor::allocate({out_features, lora_rank}, dtype, device, true);
 
     registerParams
-        (qweight, "qweight")
+        (qweight, "qweight", ParamFlags::LazyLoad)
         (wscales, "wscales")
         (wzeros, "wzeros")
         (bias, "bias")
@@ -52,7 +52,7 @@ void GEMV_AWQ::loadParam(std::string key, Tensor &dst, Tensor src) {
     if (key == "lora_down" || key == "lora_up") {
         assert(src.ndims() == 2);
         if (dst.shape.dataExtent != src.shape.dataExtent) {
-            dst = src.copy(this->qweight.device());
+            dst = src.copy(this->device);
             if (key == "lora_down") {
                 const int new_rank = dst.shape[0];
                 this->lora_rank = new_rank;
@@ -100,7 +100,7 @@ GEMM_W4A4::GEMM_W4A4(int in_features, int out_features, bool bias, bool use_fp4,
     in_features(in_features), out_features(out_features), 
     in_features_pad(ceilDiv(in_features, 128) * 128), out_features_pad(ceilDiv(out_features, 128) * 128),
     use_fp4(use_fp4),
-    lora_rank(0), dtype(dtype)
+    lora_rank(0), dtype(dtype), device(device)
 {
     this->qweight = Tensor::allocate({out_features_pad, in_features_pad / 2}, Tensor::INT8, device, true);
     if (use_fp4) {
@@ -124,7 +124,7 @@ GEMM_W4A4::GEMM_W4A4(int in_features, int out_features, bool bias, bool use_fp4,
     this->wcscales = Tensor::allocate({0}, dtype, device, true);
 
     registerParams
-        (qweight, "qweight")
+        (qweight, "qweight", ParamFlags::LazyLoad)
         (wscales, "wscales")
         (this->bias, "bias")
         (lora_down, "lora_down", ParamFlags::Optional)
@@ -143,7 +143,7 @@ void GEMM_W4A4::loadParam(std::string key, Tensor &dst, Tensor src) {
     if (key == "lora_down" || key == "lora_up") {
         assert(src.ndims() == 2);
         if (dst.shape.dataExtent != src.shape.dataExtent) {
-            dst = src.copy(this->qweight.device());
+            dst = src.copy(this->device);
             this->lora_rank = dst.shape[1];
             this->lora_scales.resize(ceilDiv(this->lora_rank, 16), 1.0f);
         } else {
@@ -152,7 +152,7 @@ void GEMM_W4A4::loadParam(std::string key, Tensor &dst, Tensor src) {
     } else if (key == "wcscales") {
         assert(src.ndims() == 1);
         assert(src.shape[0] == out_features_pad);
-        dst = src.copy(this->qweight.device());
+        dst = src.copy(this->device);
     } else if (key == "wtscale") {
         assert(src.numel() == 1);
         if (src.dtype() == Tensor::BF16) {
@@ -242,15 +242,15 @@ std::variant<Tensor, GEMM_W4A4::QuantizedActivation> GEMM_W4A4::forward_quant(Qu
         // shape[-1] = out_features;
         auto shape = TensorShape(qact.actShape.dataExtent);
         shape[-1] = out_features;
-        out = Tensor::allocate(shape, dtype, qweight.device());
+        out = Tensor::allocate(shape, dtype, device);
     } else {
-        qout.act = Tensor::allocate({M, out_features_pad / 2}, Tensor::INT8, qweight.device());
+        qout.act = Tensor::allocate({M, out_features_pad / 2}, Tensor::INT8, device);
         if (use_fp4) {
-            qout.ascales = Tensor::allocate({out_features_pad / 16, M}, Tensor::FP8_E4M3, qweight.device());
+            qout.ascales = Tensor::allocate({out_features_pad / 16, M}, Tensor::FP8_E4M3, device);
         } else {
-            qout.ascales = Tensor::allocate({out_features_pad / 64, M}, dtype, qweight.device());
+            qout.ascales = Tensor::allocate({out_features_pad / 64, M}, dtype, device);
         }
-        qout.lora_act = Tensor::allocate({M, lora_rank}, Tensor::FP32, qweight.device());
+        qout.lora_act = Tensor::allocate({M, lora_rank}, Tensor::FP32, device);
         qout.is_unsigned = !use_fp4;
         qout.actShape = qact.actShape;
 
@@ -363,13 +363,13 @@ GEMM_W4A4::QuantizedActivation GEMM_W4A4::quantize(Tensor x, bool fuse_glu) {
     // shape[-1] = in_features / 2;
 
     QuantizedActivation qact;
-    qact.act = Tensor::allocate({M, in_features_pad / 2}, Tensor::INT8, qweight.device());
+    qact.act = Tensor::allocate({M, in_features_pad / 2}, Tensor::INT8, device);
     if (use_fp4) {
-        qact.ascales = Tensor::allocate({in_features_pad / 16, M}, Tensor::FP8_E4M3, qweight.device());
+        qact.ascales = Tensor::allocate({in_features_pad / 16, M}, Tensor::FP8_E4M3, device);
     } else {
-        qact.ascales = Tensor::allocate({in_features_pad / 64, M}, dtype, qweight.device());
+        qact.ascales = Tensor::allocate({in_features_pad / 64, M}, dtype, device);
     }
-    qact.lora_act = Tensor::allocate({M, lora_rank}, Tensor::FP32, qweight.device());
+    qact.lora_act = Tensor::allocate({M, lora_rank}, Tensor::FP32, device);
     qact.is_unsigned = false;
     qact.actShape = x.shape.dataExtent;
 
@@ -420,7 +420,7 @@ GEMM_W8A8::GEMM_W8A8(int in_features, int out_features, bool bias, Tensor::Scala
     this->bias = bias ? Tensor::allocate({out_features}, dtype, device, true) : Tensor{};
 
     registerParams
-        (qweight, "qweight")
+        (qweight, "qweight", ParamFlags::LazyLoad)
         (wscales, "wscales")
         (this->bias, "bias")
     ;

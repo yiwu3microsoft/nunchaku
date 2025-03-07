@@ -8,6 +8,7 @@ import torch
 from packaging import version as packaging_version
 from torch.utils.cpp_extension import BuildExtension, CUDA_HOME, CUDAExtension
 
+
 class CustomBuildExtension(BuildExtension):
     def build_extensions(self):
         for ext in self.extensions:
@@ -74,8 +75,6 @@ if __name__ == "__main__":
         "third_party/mio/include",
         "third_party/spdlog/include",
         "third_party/Block-Sparse-Attention/csrc/block_sparse_attn",
-        "src/interop",
-        "src/kernels",
     ]
 
     INCLUDE_DIRS = [os.path.join(ROOT_DIR, dir) for dir in INCLUDE_DIRS]
@@ -94,8 +93,13 @@ if __name__ == "__main__":
         else:
             return []
 
+    sm_targets = get_sm_targets()
+    print(f"Detected SM targets: {sm_targets}", file=sys.stderr)
+
+    assert len(sm_targets) > 0, "No SM targets found"
+
     GCC_FLAGS = ["-DENABLE_BF16=1", "-DBUILD_NUNCHAKU=1", "-fvisibility=hidden", "-g", "-std=c++20", "-UNDEBUG", "-Og"]
-    MSVC_FLAGS = ["/DENABLE_BF16=1", "/DBUILD_NUNCHAKU=1", "/std:c++20", "/UNDEBUG", "/Zc:__cplusplus"]
+    MSVC_FLAGS = ["/DENABLE_BF16=1", "/DBUILD_NUNCHAKU=1", "/std:c++20", "/UNDEBUG", "/Zc:__cplusplus", "/FS"]
     NVCC_FLAGS = [
         "-DENABLE_BF16=1",
         "-DBUILD_NUNCHAKU=1",
@@ -113,7 +117,7 @@ if __name__ == "__main__":
         "-U__CUDA_NO_BFLOAT16_CONVERSIONS__",
         "-U__CUDA_NO_BFLOAT162_OPERATORS__",
         "-U__CUDA_NO_BFLOAT162_CONVERSIONS__",
-        "--threads=3",
+        f"--threads={len(sm_targets)}",
         "--expt-relaxed-constexpr",
         "--expt-extended-lambda",
         "--ptxas-options=--allow-expensive-optimizations=true",
@@ -122,15 +126,10 @@ if __name__ == "__main__":
     if os.getenv("NUNCHAKU_BUILD_WHEELS", "0") == "0":
         NVCC_FLAGS.append("--generate-line-info")
 
-    sm_targets = get_sm_targets()
-    print(f"Detected SM targets: {sm_targets}", file=sys.stderr)
-
-    assert len(sm_targets) > 0, "No SM targets found"
-
     for target in sm_targets:
         NVCC_FLAGS += ["-gencode", f"arch=compute_{target},code=sm_{target}"]
 
-    NVCC_MSVC_FLAGS = ["-Xcompiler", "/Zc:__cplusplus"]
+    NVCC_MSVC_FLAGS = ["-Xcompiler", "/Zc:__cplusplus", "-Xcompiler", "/FS"]
 
     nunchaku_extension = CUDAExtension(
         name="nunchaku._C",
@@ -165,16 +164,12 @@ if __name__ == "__main__":
             "src/kernels/dwconv.cu",
             "src/kernels/gemm_batched.cu",
             "src/kernels/gemm_f16.cu",
-            "src/kernels/awq/gemm_cuda.cu",
+            "src/kernels/awq/gemm_awq.cu",
             "src/kernels/awq/gemv_awq.cu",
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/flash_api.cpp"),
             *ncond("third_party/Block-Sparse-Attention/csrc/block_sparse_attn/flash_api_adapter.cpp"),
         ],
-        extra_compile_args={
-            "gcc": GCC_FLAGS,
-            "msvc": MSVC_FLAGS,
-            "nvcc": NVCC_FLAGS,
-        },
+        extra_compile_args={"gcc": GCC_FLAGS, "msvc": MSVC_FLAGS, "nvcc": NVCC_FLAGS, "nvcc_msvc": NVCC_MSVC_FLAGS},
         include_dirs=INCLUDE_DIRS,
     )
 

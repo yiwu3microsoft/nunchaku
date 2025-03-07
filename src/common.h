@@ -63,6 +63,49 @@ inline cudaStream_t getCurrentCUDAStream() {
     return stackCUDAStreams.top();
 }
 
+struct CUDAStreamContext {
+    cudaStream_t stream;
+
+    CUDAStreamContext(cudaStream_t stream) : stream(stream) {
+        stackCUDAStreams.push(stream);
+    }
+    CUDAStreamContext(const CUDAStreamContext &) = delete;
+    CUDAStreamContext(CUDAStreamContext &&) = delete;
+    
+    ~CUDAStreamContext() {
+        assert(stackCUDAStreams.top() == stream);
+        stackCUDAStreams.pop();
+    }
+};
+
+struct CUDAStreamWrapper {
+    cudaStream_t stream;
+
+    CUDAStreamWrapper() {
+        checkCUDA(cudaStreamCreate(&stream));
+    }
+    CUDAStreamWrapper(const CUDAStreamWrapper &) = delete;
+    CUDAStreamWrapper(CUDAStreamWrapper &&) = delete;
+
+    ~CUDAStreamWrapper() {
+        checkCUDA(cudaStreamDestroy(stream));
+    }
+};
+
+struct CUDAEventWrapper {
+    cudaEvent_t event;
+
+    CUDAEventWrapper(unsigned int flags = cudaEventDefault) {
+        checkCUDA(cudaEventCreateWithFlags(&event, flags));
+    }
+    CUDAEventWrapper(const CUDAEventWrapper &) = delete;
+    CUDAEventWrapper(CUDAEventWrapper &&) = delete;
+
+    ~CUDAEventWrapper() {
+        checkCUDA(cudaEventDestroy(event));
+    }
+};
+
 inline cudaDeviceProp *getCurrentDeviceProperties() {
     static thread_local cudaDeviceProp prop;
     static thread_local bool propAvailable = false;

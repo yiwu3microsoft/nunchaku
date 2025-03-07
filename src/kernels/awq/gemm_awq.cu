@@ -1,7 +1,7 @@
 #include <cuda_fp16.h>
 #include <cuda_bf16.h>
 #include "semaphore.h"
-#include "gemm_cuda.h"
+#include "gemm_awq.h"
 //#include "../../../nunchaku/csrc/quantization/dequantize.cuh"
 #include "dequantize.cuh"
 #include <stdio.h>
@@ -30,8 +30,8 @@
 #endif
 
 #define KERNEL_LAUNCH_CODE                                                                                                                               \
-  int num_mn_tiles = (num_in_feats + CTA_M - 1) / CTA_M * (num_out_channels + CTA_N - 1) / CTA_N;                                                        \   
-  Tensor _semaphores = Tensor::empty({num_mn_tiles}, Tensor::INT32, _in_feats.device());                                                                              \
+  int num_mn_tiles = (num_in_feats + CTA_M - 1) / CTA_M * (num_out_channels + CTA_N - 1) / CTA_N;                                                        \
+  Tensor _semaphores = Tensor::empty({num_mn_tiles}, Tensor::INT32, _in_feats.device());                                                                 \
   auto semaphores = reinterpret_cast<int *>(_semaphores.data_ptr<int>());                                                                                \
   constexpr int NUM_WARPS = (CTA_M / WARP_M) * (CTA_N / WARP_N) * (CTA_K / WARP_K);                                                                      \
   constexpr int SCALES_SMEM_SIZE = (G >= CTA_K) ? (CTA_N / (G / CTA_K) * STAGES * 2) : (CTA_N * (CTA_K / G) * STAGES * 2);                               \
@@ -99,7 +99,7 @@ __inline__ __device__ void ldmatrix_m8n8_x4_b16(f16_t *shared_warp, int ax0_0, u
 {
   static_assert(std::is_same<f16_t, half>::value || std::is_same<f16_t, __nv_bfloat16>::value,
                 "ldmatrix_m8n8_x4_b16 supports only half or __nv_bfloat16 types.");
-  __asm__ __volatile__(
+  asm volatile(
       "ldmatrix.sync.aligned.m8n8.x4.shared.b16"
       "{%0, %1, %2, %3}, [%4];"
       : "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[0]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[1]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[2]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[3])
@@ -111,7 +111,7 @@ __inline__ __device__ void ldmatrix_m8n8_x4_trans_b16(f16_t *shared_warp, int ax
 {
   static_assert(std::is_same<f16_t, half>::value || std::is_same<f16_t, __nv_bfloat16>::value,
                 "ldmatrix_m8n8_x4_trans_b16 supports only half or __nv_bfloat16 types.");
-  __asm__ __volatile__(
+  asm volatile(
       "ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16"
       "{%0, %1, %2, %3}, [%4];"
       : "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[0]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[1]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[2]), "=r"(((unsigned *)(shared_warp + (ax0_0 * 8)))[3])
@@ -137,7 +137,7 @@ __device__ __inline__ void mma_m16n8k16(float *C_warp, f16_t *A_shared_warp, f16
 template <>
 __device__ __inline__ void mma_m16n8k16<half>(float *C_warp, half *A_shared_warp, half *B_shared_warp)
 {
-  __asm__ __volatile__(
+  asm volatile(
       "mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32"
       "{%0, %1, %2, %3}, {%4, %5, %6, %7}, {%8, %9}, {%10, %11, %12, %13};"
       : "=f"(((float *)C_warp)[0]), "=f"(((float *)C_warp)[1]), "=f"(((float *)C_warp)[2]), "=f"(((float *)C_warp)[3])
@@ -147,7 +147,7 @@ __device__ __inline__ void mma_m16n8k16<half>(float *C_warp, half *A_shared_warp
 template <>
 __device__ __inline__ void mma_m16n8k16<__nv_bfloat16>(float *C_warp, __nv_bfloat16 *A_shared_warp, __nv_bfloat16 *B_shared_warp)
 {
-  __asm__ __volatile__(
+  asm volatile(
       "mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32"
       "{%0, %1, %2, %3}, {%4, %5, %6, %7}, {%8, %9}, {%10, %11, %12, %13};"
       : "=f"(((float *)C_warp)[0]), "=f"(((float *)C_warp)[1]), "=f"(((float *)C_warp)[2]), "=f"(((float *)C_warp)[3])

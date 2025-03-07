@@ -1,21 +1,13 @@
 # -*- coding: utf-8 -*-
 """TinyChat Quantized Linear Module"""
 
-import warnings
-
 import torch
 import torch.nn as nn
 
-from nunchaku._C.ops import gemm_cuda, gemv_awq
 from .tinychat_utils import ceil_num_groups, convert_to_tinychat_w4x16y16_linear_weight
+from ..._C.ops import gemm_awq, gemv_awq
 
 __all__ = ["W4Linear"]
-
-warnings.warn(
-    "Module `tinychat.linear` will be moved to `Nunchaku` and deprecated in the future release.",
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 
 class W4Linear(nn.Module):
@@ -89,7 +81,7 @@ class W4Linear(nn.Module):
                 self.group_size,
             )
         else:
-            out = gemm_cuda(x, self.qweight, self.scales, self.scaled_zeros)
+            out = gemm_awq(x, self.qweight, self.scales, self.scaled_zeros)
         out = out + self.bias if self.bias is not None else out
         return out
 

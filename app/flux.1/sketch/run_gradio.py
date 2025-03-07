@@ -12,7 +12,7 @@ from PIL import Image
 
 from flux_pix2pix_pipeline import FluxPix2pixTurboPipeline
 from nunchaku.models.safety_checker import SafetyChecker
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku.models.transformers.transformer_flux import NunchakuFluxTransformer2dModel
 from utils import get_args
 from vars import DEFAULT_SKETCH_GUIDANCE, DEFAULT_STYLE_NAME, MAX_SEED, STYLE_NAMES, STYLES
 
@@ -36,7 +36,7 @@ else:
     transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-schnell")
     pipeline_init_kwargs["transformer"] = transformer
     if args.use_qencoder:
-        from nunchaku.models.text_encoder import NunchakuT5EncoderModel
+        from nunchaku.models.text_encoders.t5_encoder import NunchakuT5EncoderModel
 
         text_encoder_2 = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
         pipeline_init_kwargs["text_encoder_2"] = text_encoder_2

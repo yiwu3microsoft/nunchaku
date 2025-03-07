@@ -3,7 +3,7 @@
 #include "interop/torch.h"
 #include "kernels/zgemm/zgemm.h"
 #include "kernels/awq/gemv_awq.h"
-#include "kernels/awq/gemm_cuda.h"
+#include "kernels/awq/gemm_awq.h"
 
 namespace nunchaku::ops {
 
@@ -72,7 +72,7 @@ namespace nunchaku::ops {
             alpha,
             getTensor(wcscales)
         );
-        Tensor::synchronizeDevice();
+        // Tensor::synchronizeDevice();
     }
 
     torch::Tensor gemv_awq(
@@ -97,12 +97,12 @@ namespace nunchaku::ops {
         );
 
         torch::Tensor output = to_torch(result);
-        Tensor::synchronizeDevice();
+        // Tensor::synchronizeDevice();
 
         return output;
     }
 
-    torch::Tensor gemm_cuda(
+    torch::Tensor gemm_awq(
         torch::Tensor _in_feats,
         torch::Tensor _kernel,
         torch::Tensor _scaling_factors,
@@ -115,8 +115,9 @@ namespace nunchaku::ops {
             from_torch(_zeros.contiguous())
         );
 
+        // TODO: allocate output in torch and use from_torch instead (to_torch needs an extra copy)
         torch::Tensor output = to_torch(result);
-        Tensor::synchronizeDevice();
+        // Tensor::synchronizeDevice();
 
         return output;
     }

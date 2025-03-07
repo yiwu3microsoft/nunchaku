@@ -1440,10 +1440,10 @@ public:
         static constexpr int ROTARY_EMB_NUM_ELEMENTS = 2;   // 1 for theta, 2 for {sin, cos} pair
 
         __device__ __forceinline__
-        static void apply(fpsum_warp fpsum, half_t *out, int M, int N, int K, half_t *pool_out, const float *rotary_emb, const half_t *rmsnorm_weight, float epsilon) {
+        static void apply(fpsum_warp fpsum, half_t *out, int M, int N, int K, half_t *pool_out, const float *rotary_emb, const half_t *rmsnorm_weight, float epsilon, int maxRows) {
             const int laneId = threadIdx.x % WARP_SIZE;
             const int warpId = threadIdx.x / WARP_SIZE;
-            
+
             __shared__ alignas(128) uint8_t shmem[NUM_WARPS][ceilDiv(unpack_fpsum::SHMEM_SIZE, 128) * 128];
 
             constexpr int PACK_SIZE = unpack_fpsum::PACK_SIZE;
@@ -1470,9 +1470,9 @@ public:
 
             CHECK_NAN(fpsum, "fpsum");
 
-            unpack_fpsum()(fpsum, out + warpId * WARP_M * N, N, INT_MAX, INT_MAX, shmem[warpId], [&](int rowId, pack_t &pack) ALWAYSINLINE {
+            unpack_fpsum()(fpsum, out + warpId * WARP_M * N, N, maxRows - warpId * WARP_M, INT_MAX, shmem[warpId], [&](int rowId, pack_t &pack) ALWAYSINLINE {
                 // load rope
-                pack_rope_t rope; 
+                pack_rope_t rope;
                 if (laneId < LANES_PER_HEAD) {
                     // freq = load(reinterpret_cast<pack_freq_t *>(&freqs_cis[(warpId * WARP_M + rowId) * HEAD_DIM * 2 + laneId * PACK_SIZE * 2]));
                     rope = load(reinterpret_cast<const pack_rope_t *>(&rotary_emb_base_addr[rowId * HEAD_DIM / 2 * ROTARY_EMB_NUM_ELEMENTS]));
@@ -1508,7 +1508,7 @@ public:
                 // rope
                 for (int i = 0; i < PACK_SIZE; i += 2) {
                     float2 pack2 = half22float2(half2_t(pack[i], pack[i+1]));
-                    
+
                     CHECK_NAN(freq[i].x, "rope.freq");
                     CHECK_NAN(freq[i].y, "rope.freq");
                     CHECK_NAN(freq[i+1].x, "rope.freq");
@@ -1519,7 +1519,7 @@ public:
                     // pack[i] = tmp.x;
                     // pack[i+1] = tmp.y;
 
-                    // printf("block.x=%d block.y=%d warpId=%d rowId=%d (%d) freqs = %f %f %f %f\n", 
+                    // printf("block.x=%d block.y=%d warpId=%d rowId=%d (%d) freqs = %f %f %f %f\n",
                     //     blockIdx.x, blockIdx.y, warpId, rowId,
                     //     blockIdx.x * BLOCK_M + warpId * WARP_M + rowId,
                     //     (float)freq[i].x, (float)freq[i].y, (float)freq[i+1].x, (float)freq[i+1].y
@@ -1579,7 +1579,7 @@ public:
                 for (int j = 0; j < PACK_SIZE; j++) {
                     reduce_tmp[j] /= PoolSize;
                 }
-                
+
                 store(reinterpret_cast<pack_t *>(pool_out + warpId * N), reduce_tmp);
             }
             __syncthreads();
@@ -1599,13 +1599,14 @@ public:
 
             if (is_q || is_k) {
                 apply(
-                    fpsum, 
+                    fpsum,
                     args.out + bm * BLOCK_M * args.actualN + bn * BLOCK_N,
-                    M, N, K, 
+                    M, N, K,
                     args.pool_out ? args.pool_out + bm * BLOCK_M / PoolSize * N : nullptr,
                     args.rotary_emb + bm * BLOCK_M * (HEAD_DIM / 2 * ROTARY_EMB_NUM_ELEMENTS),
                     is_q ? args.rmsnorm_weight_q : args.rmsnorm_weight_k,
-                    args.epsilon
+                    args.epsilon,
+                    args.actualM - bm * BLOCK_M
                 );
             } else {
                 EpilogueDefault()(binfo, fpsum, M, N, K, typename EpilogueDefault::Arguments{

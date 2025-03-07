@@ -19,45 +19,50 @@
       "inputs": [
         {
           "name": "model",
+          "localized_name": "model",
+          "label": "model",
           "type": "MODEL",
-          "link": 71,
-          "label": "model"
+          "link": 71
         },
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
-          "link": 64,
-          "label": "positive"
+          "link": 64
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
-          "link": 65,
-          "label": "negative"
+          "link": 65
         },
         {
           "name": "latent_image",
+          "localized_name": "latent_image",
+          "label": "latent_image",
           "type": "LATENT",
-          "link": 66,
-          "label": "latent_image"
+          "link": 66
         }
       ],
       "outputs": [
         {
           "name": "LATENT",
+          "localized_name": "LATENT",
+          "label": "LATENT",
           "type": "LATENT",
           "links": [
             7
           ],
-          "slot_index": 0,
-          "label": "LATENT"
+          "slot_index": 0
         }
       ],
       "properties": {
         "Node name for S&R": "KSampler"
       },
       "widgets_values": [
-        896617285614695,
+        875054580097021,
         "randomize",
         20,
         1,
@@ -83,56 +88,63 @@
       "inputs": [
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
-          "link": 67,
-          "label": "positive"
+          "link": 67
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
-          "link": 68,
-          "label": "negative"
+          "link": 68
         },
         {
           "name": "vae",
+          "localized_name": "vae",
+          "label": "vae",
           "type": "VAE",
-          "link": 69,
-          "label": "vae"
+          "link": 69
         },
         {
           "name": "pixels",
+          "localized_name": "pixels",
+          "label": "pixels",
           "type": "IMAGE",
-          "link": 70,
-          "label": "pixels"
+          "link": 70
         }
       ],
       "outputs": [
         {
           "name": "positive",
+          "localized_name": "positive",
+          "label": "positive",
           "type": "CONDITIONING",
           "links": [
             64
           ],
-          "slot_index": 0,
-          "label": "positive"
+          "slot_index": 0
         },
         {
           "name": "negative",
+          "localized_name": "negative",
+          "label": "negative",
           "type": "CONDITIONING",
           "links": [
             65
           ],
-          "slot_index": 1,
-          "label": "negative"
+          "slot_index": 1
         },
         {
           "name": "latent",
+          "localized_name": "latent",
+          "label": "latent",
           "type": "LATENT",
           "links": [
             66
           ],
-          "slot_index": 2,
-          "label": "latent"
+          "slot_index": 2
         }
       ],
       "properties": {
@@ -157,26 +169,29 @@
       "inputs": [
         {
           "name": "samples",
+          "localized_name": "samples",
+          "label": "samples",
           "type": "LATENT",
-          "link": 7,
-          "label": "samples"
+          "link": 7
         },
         {
           "name": "vae",
+          "localized_name": "vae",
+          "label": "vae",
           "type": "VAE",
-          "link": 60,
-          "label": "vae"
+          "link": 60
         }
       ],
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
+          "label": "IMAGE",
           "type": "IMAGE",
           "links": [
             9
           ],
-          "slot_index": 0,
-          "label": "IMAGE"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -201,9 +216,10 @@
       "inputs": [
         {
           "name": "images",
+          "localized_name": "images",
+          "label": "images",
           "type": "IMAGE",
-          "link": 9,
-          "label": "images"
+          "link": 9
         }
       ],
       "outputs": [],
@@ -230,13 +246,14 @@
       "outputs": [
         {
           "name": "VAE",
+          "localized_name": "VAE",
+          "label": "VAE",
           "type": "VAE",
           "links": [
             60,
             69
           ],
-          "slot_index": 0,
-          "label": "VAE"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -263,21 +280,23 @@
       "inputs": [
         {
           "name": "conditioning",
+          "localized_name": "conditioning",
+          "label": "conditioning",
           "type": "CONDITIONING",
-          "link": 41,
-          "label": "conditioning"
+          "link": 41
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
+          "shape": 3,
           "links": [
             67
           ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -296,7 +315,7 @@
       ],
       "size": [
         315,
-        106
+        122
       ],
       "flags": {},
       "order": 1,
@@ -305,12 +324,13 @@
       "outputs": [
         {
           "name": "CLIP",
+          "localized_name": "CLIP",
+          "label": "CLIP",
           "type": "CLIP",
           "links": [
             62,
             63
-          ],
-          "label": "CLIP"
+          ]
         }
       ],
       "properties": {
@@ -340,20 +360,22 @@
       "inputs": [
         {
           "name": "clip",
+          "localized_name": "clip",
+          "label": "clip",
           "type": "CLIP",
-          "link": 62,
-          "label": "clip"
+          "link": 62
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
             41
           ],
-          "slot_index": 0,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "title": "CLIP Text Encode (Positive Prompt)",
@@ -383,9 +405,10 @@
       "inputs": [
         {
           "name": "images",
+          "localized_name": "images",
+          "label": "images",
           "type": "IMAGE",
-          "link": 26,
-          "label": "images"
+          "link": 26
         }
       ],
       "outputs": [],
@@ -411,22 +434,24 @@
       "inputs": [
         {
           "name": "image",
+          "localized_name": "image",
+          "label": "image",
           "type": "IMAGE",
-          "link": 76,
-          "label": "image"
+          "link": 76
         }
       ],
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
+          "label": "IMAGE",
           "type": "IMAGE",
+          "shape": 3,
           "links": [
             26,
             70
           ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "IMAGE"
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -454,6 +479,7 @@
       "inputs": [
         {
           "name": "image",
+          "localized_name": "image",
           "type": "IMAGE",
           "link": 75
         }
@@ -461,6 +487,7 @@
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
           "type": "IMAGE",
           "links": [
             76
@@ -476,48 +503,6 @@
         1024,
         1024,
         "center"
-      ]
-    },
-    {
-      "id": 17,
-      "type": "LoadImage",
-      "pos": [
-        6.694743633270264,
-        562.3865966796875
-      ],
-      "size": [
-        315,
-        314.0000305175781
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            75
-          ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "IMAGE"
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null,
-          "shape": 3,
-          "label": "MASK"
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadImage"
-      },
-      "widgets_values": [
-        "robot.png",
-        "image"
       ]
     },
     {
@@ -539,20 +524,22 @@
       "inputs": [
         {
           "name": "clip",
+          "localized_name": "clip",
+          "label": "clip",
           "type": "CLIP",
-          "link": 63,
-          "label": "clip"
+          "link": 63
         }
       ],
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
+          "label": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
             68
           ],
-          "slot_index": 0,
-          "label": "CONDITIONING"
+          "slot_index": 0
         }
       ],
       "title": "CLIP Text Encode (Negative Prompt)",
@@ -566,6 +553,50 @@
       "bgcolor": "#533"
     },
     {
+      "id": 17,
+      "type": "LoadImage",
+      "pos": [
+        6.694743633270264,
+        562.3865966796875
+      ],
+      "size": [
+        315,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "localized_name": "IMAGE",
+          "label": "IMAGE",
+          "type": "IMAGE",
+          "shape": 3,
+          "links": [
+            75
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "localized_name": "MASK",
+          "label": "MASK",
+          "type": "MASK",
+          "shape": 3,
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "robot.png",
+        "image"
+      ]
+    },
+    {
       "id": 36,
       "type": "SVDQuantFluxDiTLoader",
       "pos": [
@@ -574,7 +605,7 @@
       ],
       "size": [
         395.6002197265625,
-        105.77959442138672
+        106
       ],
       "flags": {},
       "order": 3,
@@ -583,6 +614,7 @@
       "outputs": [
         {
           "name": "MODEL",
+          "localized_name": "MODEL",
           "type": "MODEL",
           "links": [
             71
@@ -595,6 +627,7 @@
       },
       "widgets_values": [
         "mit-han-lab/svdq-int4-flux.1-canny-dev",
+        "disable",
         0
       ]
     }
@@ -741,14 +774,14 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.895430243255241,
+      "scale": 1.5863092971714992,
       "offset": [
-        838.4305404853558,
-        332.05158795287764
+        170.04223120944968,
+        209.5374167314878
       ]
     },
     "node_versions": {
-      "comfy-core": "0.3.14"
+      "comfy-core": "0.3.24"
     }
   },
   "version": 0.4
