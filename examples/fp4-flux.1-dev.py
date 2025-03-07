@@ -1,7 +1,7 @@
 import torch
 from diffusers import FluxPipeline
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-fp4-flux.1-dev", precision="fp4")
 pipeline = FluxPipeline.from_pretrained(

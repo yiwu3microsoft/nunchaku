@@ -4,39 +4,60 @@ import types
 import comfy.sd
 import folder_paths
 import torch
+from torch import nn
 from transformers import T5EncoderModel
+
+from nunchaku import NunchakuT5EncoderModel
 
 
 def svdquant_t5_forward(
     self: T5EncoderModel,
     input_ids: torch.LongTensor,
     attention_mask,
+    embeds=None,
     intermediate_output=None,
     final_layer_norm_intermediate=True,
     dtype: str | torch.dtype = torch.bfloat16,
+    **kwargs,
 ):
     assert attention_mask is None
     assert intermediate_output is None
     assert final_layer_norm_intermediate
-    outputs = self.encoder(input_ids, attention_mask=attention_mask)
+    outputs = self.encoder(input_ids=input_ids, inputs_embeds=embeds, attention_mask=attention_mask)
     hidden_states = outputs["last_hidden_state"]
     hidden_states = hidden_states.to(dtype=dtype)
     return hidden_states, None
+
+
+class WrappedEmbedding(nn.Module):
+    def __init__(self, embedding: nn.Embedding):
+        super().__init__()
+        self.embedding = embedding
+
+    def forward(self, input: torch.Tensor, out_dtype: torch.dtype | None = None):
+        return self.embedding(input)
+
+    @property
+    def weight(self):
+        return self.embedding.weight
 
 
 class SVDQuantTextEncoderLoader:
     @classmethod
     def INPUT_TYPES(s):
         model_paths = ["mit-han-lab/svdq-flux.1-t5"]
-        prefix = os.path.join(folder_paths.models_dir, "text_encoders")
-        local_folders = os.listdir(prefix)
-        local_folders = sorted(
-            [
-                folder
-                for folder in local_folders
-                if not folder.startswith(".") and os.path.isdir(os.path.join(prefix, folder))
-            ]
-        )
+        prefixes = folder_paths.folder_names_and_paths["text_encoders"][0]
+        local_folders = set()
+        for prefix in prefixes:
+            if os.path.exists(prefix) and os.path.isdir(prefix):
+                local_folders_ = os.listdir(prefix)
+                local_folders_ = [
+                    folder
+                    for folder in local_folders_
+                    if not folder.startswith(".") and os.path.isdir(os.path.join(prefix, folder))
+                ]
+                local_folders.update(local_folders_)
+        local_folders = sorted(list(local_folders))
         model_paths.extend(local_folders)
         return {
             "required": {
@@ -45,14 +66,7 @@ class SVDQuantTextEncoderLoader:
                 "text_encoder2": (folder_paths.get_filename_list("text_encoders"),),
                 "t5_min_length": (
                     "INT",
-                    {
-                        "default": 512,
-                        "min": 256,
-                        "max": 1024,
-                        "step": 128,
-                        "display": "number",
-                        "lazy": True,
-                    },
+                    {"default": 512, "min": 256, "max": 1024, "step": 128, "display": "number", "lazy": True},
                 ),
                 "t5_precision": (["BF16", "INT4"],),
                 "int4_model": (model_paths, {"tooltip": "The name of the INT4 model."}),
@@ -92,20 +106,23 @@ class SVDQuantTextEncoderLoader:
             clip.tokenizer.t5xxl.min_length = t5_min_length
 
         if t5_precision == "INT4":
-            from nunchaku.models.text_encoder import NunchakuT5EncoderModel
-
             transformer = clip.cond_stage_model.t5xxl.transformer
             param = next(transformer.parameters())
             dtype = param.dtype
             device = param.device
 
-            prefix = "models/text_encoders"
-            if os.path.exists(os.path.join(prefix, int4_model)):
-                model_path = os.path.join(prefix, int4_model)
-            else:
+            prefixes = folder_paths.folder_names_and_paths["diffusion_models"][0]
+            model_path = None
+            for prefix in prefixes:
+                if os.path.exists(os.path.join(prefix, int4_model)):
+                    model_path = os.path.join(prefix, int4_model)
+                    break
+            if model_path is None:
                 model_path = int4_model
             transformer = NunchakuT5EncoderModel.from_pretrained(model_path)
             transformer.forward = types.MethodType(svdquant_t5_forward, transformer)
+            transformer.shared = WrappedEmbedding(transformer.shared)
+
             clip.cond_stage_model.t5xxl.transformer = (
                 transformer.to(device=device, dtype=dtype) if device.type == "cuda" else transformer
             )

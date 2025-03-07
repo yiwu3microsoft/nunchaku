@@ -2,7 +2,7 @@ import torch
 from diffusers import FluxPipeline
 from peft.tuners import lora
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 from vars import LORA_PATHS, SVDQ_LORA_PATHS
 
 
@@ -32,11 +32,11 @@ def get_pipeline(
             else:
                 assert precision == "fp4"
                 transformer = NunchakuFluxTransformer2dModel.from_pretrained(
-                    "/home/muyang/nunchaku_models/flux.1-schnell-nvfp4-svdq-gptq", precision="fp4"
+                    "mit-han-lab/svdq-fp4-flux.1-schnell", precision="fp4"
                 )
             pipeline_init_kwargs["transformer"] = transformer
             if use_qencoder:
-                from nunchaku.models.text_encoder import NunchakuT5EncoderModel
+                from nunchaku.models.text_encoders.t5_encoder import NunchakuT5EncoderModel
 
                 text_encoder_2 = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
                 pipeline_init_kwargs["text_encoder_2"] = text_encoder_2
@@ -53,7 +53,7 @@ def get_pipeline(
                 transformer.set_lora_strength(lora_weight)
             pipeline_init_kwargs["transformer"] = transformer
             if use_qencoder:
-                from nunchaku.models.text_encoder import NunchakuT5EncoderModel
+                from nunchaku.models.text_encoders.t5_encoder import NunchakuT5EncoderModel
 
                 text_encoder_2 = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
                 pipeline_init_kwargs["text_encoder_2"] = text_encoder_2

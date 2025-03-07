@@ -4,10 +4,7 @@ import tempfile
 import folder_paths
 from safetensors.torch import save_file
 
-from nunchaku.lora.flux.comfyui_converter import comfyui2diffusers
-from nunchaku.lora.flux.diffusers_converter import convert_to_nunchaku_flux_lowrank_dict
-from nunchaku.lora.flux.utils import detect_format
-from nunchaku.lora.flux.xlab_converter import xlab2diffusers
+from nunchaku.lora.flux import comfyui2diffusers, convert_to_nunchaku_flux_lowrank_dict, detect_format, xlab2diffusers
 
 
 class SVDQuantFluxLoraLoader:
@@ -25,6 +22,8 @@ class SVDQuantFluxLoraLoader:
         base_model_paths = [
             "mit-han-lab/svdq-int4-flux.1-dev",
             "mit-han-lab/svdq-int4-flux.1-schnell",
+            "mit-han-lab/svdq-fp4-flux.1-dev",
+            "mit-han-lab/svdq-fp4-flux.1-schnell",
             "mit-han-lab/svdq-int4-flux.1-canny-dev",
             "mit-han-lab/svdq-int4-flux.1-depth-dev",
             "mit-han-lab/svdq-int4-flux.1-fill-dev",

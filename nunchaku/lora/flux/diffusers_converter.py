@@ -362,6 +362,11 @@ def convert_to_nunchaku_flux_lowrank_dict(
     else:
         extra_lora_dict = filter_state_dict(lora, filter_prefix="transformer.")
 
+    unquantized_lora_dict = {}
+    for k in list(extra_lora_dict.keys()):
+        if "transformer_blocks" not in k:
+            unquantized_lora_dict[k] = extra_lora_dict.pop(k)
+
     for k in extra_lora_dict.keys():
         fc1_k = k
         if "ff.net.0.proj" in k:
@@ -408,4 +413,5 @@ def convert_to_nunchaku_flux_lowrank_dict(
             prefix=block_name,
         )
 
+    converted.update(unquantized_lora_dict)
     return converted

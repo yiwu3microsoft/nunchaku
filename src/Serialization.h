@@ -44,6 +44,7 @@ private:
     class MMapImpl;
     class MMapImplMio;
     class MMapImplPrivate;
+    class MMapImplRead;
 
     struct TensorInfo {
         TensorShape shape;
@@ -54,4 +55,6 @@ private:
     };
     std::map<std::string, TensorInfo> tensors;
     std::unique_ptr<MMapImpl> mapped;
+
+    bool hostRegistered, memoryPinned;
 };

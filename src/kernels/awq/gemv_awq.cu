@@ -307,7 +307,7 @@ Tensor gemv_awq(
             return;
         }
         if constexpr (M > 0) {
-            gemv_kernel<half_t, N_PER_BLOCK, M, BLOCK_SIZE, GROUP_SIZE><<<num_blocks, num_threads>>>(
+            gemv_kernel<half_t, N_PER_BLOCK, M, BLOCK_SIZE, GROUP_SIZE><<<num_blocks, num_threads, 0, getCurrentCUDAStream()>>>(
                 in_feats, kernel, scaling_factors, zeros, out_feats, k, n
             );
             checkCUDA(cudaGetLastError());

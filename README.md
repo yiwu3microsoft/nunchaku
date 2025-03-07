@@ -6,6 +6,7 @@ Chere [here](https://github.com/mit-han-lab/nunchaku/issues/149) to join our use
 
 ### [Paper](http://arxiv.org/abs/2411.05007) | [Project](https://hanlab.mit.edu/projects/svdquant) | [Blog](https://hanlab.mit.edu/blog/svdquant) | [Demo](https://svdquant.mit.edu)
 
+- **[2025-03-07]** 🚀 **Nunchaku v0.1.4 Released!** We've supported [4-bit text encoder and per-layer CPU offloading](#Low-Memory-Inference), reducing FLUX's minimum memory requirement to just **4 GiB** while maintaining a **2–3× speedup**. This update also fixes various issues related to resolution, LoRA, pin memory, and runtime stability. Check out the release notes for full details!
 - **[2025-02-20]** 🚀 We release the [pre-built wheels](https://huggingface.co/mit-han-lab/nunchaku) to simplify installation! Check [here](#Installation) for the guidance!
 - **[2025-02-20]** 🚀 **Support NVFP4 precision on NVIDIA RTX 5090!** NVFP4 delivers superior image quality compared to INT4, offering **~3× speedup** on the RTX 5090 over BF16. Learn more in our [blog](https://hanlab.mit.edu/blog/svdquant-nvfp4), checkout  [`examples`](./examples) for usage and try [our demo](https://svdquant.mit.edu/flux1-schnell/) online!
 - **[2025-02-18]** 🔥 [**Customized LoRA conversion**](#Customized-LoRA) and [**model quantization**](#Customized-Model-Quantization) instructions are now available! **[ComfyUI](./comfyui)** workflows now support **customized LoRA**, along with **FLUX.1-Tools**!
@@ -45,18 +46,27 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 ## Installation
 
-### Wheels (Linux only for now)
+### Wheels (for Linux and Windows WSL)
 
+#### For Windows Users
+To install and use WSL (Windows Subsystem for Linux), follow the instructions [here](https://learn.microsoft.com/en-us/windows/wsl/install). You can also install WSL directly by running the following commands in PowerShell:
+```shell
+wsl --install # install the latest WSL
+wsl # launch WSL
+```
+
+#### Prerequisites for all users
 Before installation, ensure you have [PyTorch>=2.5](https://pytorch.org/) installed. For example, you can use the following command to install PyTorch 2.6:
 
 ```shell
 pip install torch==2.6 torchvision==0.21 torchaudio==2.6
 ```
 
+#### Installing nunchaku
 Once PyTorch is installed, you can directly install `nunchaku` from our [Hugging Face repository](https://huggingface.co/mit-han-lab/nunchaku/tree/main). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
 
 ```shell
-pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.1.3+torch2.6-cp311-cp311-linux_x86_64.whl
+pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.1.4+torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
 **Note**: NVFP4 wheels are not currently available because PyTorch has not officially supported CUDA 11.8. To use NVFP4, you will need **Blackwell GPUs (e.g., 50-series GPUs)** and must **build from source**.
@@ -81,7 +91,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
   pip install peft opencv-python gradio spaces GPUtil  # For gradio demos
   ```
 
-  To enable NVFP4 on Blackwell GPUs (e.g., 50-series GPUs), please install nightly PyTorch with CUDA 12.8. The installation command can be:
+ To enable NVFP4 on Blackwell GPUs (e.g., 50-series GPUs), please install nightly PyTorch with CUDA 12.8. The installation command can be:
 
   ```shell
   pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
@@ -113,7 +123,7 @@ In [examples](examples), we provide minimal scripts for running INT4 [FLUX.1](ht
 import torch
 from diffusers import FluxPipeline
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
 pipeline = FluxPipeline.from_pretrained(
@@ -124,6 +134,28 @@ image.save("flux.1-dev.png")
 ```
 
 Specifically, `nunchaku` shares the same APIs as [diffusers](https://github.com/huggingface/diffusers) and can be used in a similar way.
+
+### Low Memory Inference
+
+To further reduce GPU memory usage, you can use our 4-bit T5 encoder along with CPU offloading, requiring a minimum of just 4GiB of memory. The usage is also simple in the diffusers' way. For example, the [script](examples/int4-flux.1-dev-qencoder.py) for FLUX.1-dev is as follows:
+
+```python
+import torch
+from diffusers import FluxPipeline
+
+from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
+
+transformer = NunchakuFluxTransformer2dModel.from_pretrained(
+    "mit-han-lab/svdq-int4-flux.1-dev", offload=True
+)  # set offload to False if you want to disable offloading
+text_encoder_2 = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
+pipeline = FluxPipeline.from_pretrained(
+    "black-forest-labs/FLUX.1-dev", text_encoder_2=text_encoder_2, transformer=transformer, torch_dtype=torch.bfloat16
+).to("cuda")
+pipeline.enable_sequential_cpu_offload()  # remove this line if you want to disable the CPU offloading
+image = pipeline("A cat holding a sign that says hello world", num_inference_steps=50, guidance_scale=3.5).images[0]
+image.save("flux.1-dev.png")
+```
 
 ## Customized LoRA
 
@@ -168,7 +200,7 @@ transformer.set_lora_strength(lora_strength)
 import torch
 from diffusers import FluxPipeline
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
 pipeline = FluxPipeline.from_pretrained(

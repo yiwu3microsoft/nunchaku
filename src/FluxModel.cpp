@@ -607,14 +607,22 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
     return { hidden_states, encoder_hidden_states };
 }
 
-FluxModel::FluxModel(bool use_fp4, Tensor::ScalarType dtype, Device device) {
+FluxModel::FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Device device) : offload(offload) {
     for (int i = 0; i < 19; i++) {
         transformer_blocks.push_back(std::make_unique<JointTransformerBlock>(3072, 24, 3072, false, use_fp4, dtype, device));
         registerChildren(*transformer_blocks.back(), format("transformer_blocks.{}", i));
+        if (offload && i > 0) { // don't offload first block
+            transformer_blocks.back()->setLazyLoad(true);
+            transformer_blocks.back()->releaseLazyParams();
+        }
     }
     for (int i = 0; i < 38; i++) {
         single_transformer_blocks.push_back(std::make_unique<FluxSingleTransformerBlock>(3072, 24, 3072, 4, use_fp4, dtype, Device::cuda()));
         registerChildren(*single_transformer_blocks.back(), format("single_transformer_blocks.{}", i));
+        if (offload) {
+            single_transformer_blocks.back()->setLazyLoad(true);
+            single_transformer_blocks.back()->releaseLazyParams();
+        }
     }
 }
 
@@ -626,22 +634,51 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
     const int txt_tokens = encoder_hidden_states.shape[1];
     const int img_tokens = hidden_states.shape[1];
 
-    for (auto &&block : transformer_blocks) {
-        std::tie(hidden_states, encoder_hidden_states) = block->forward(hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_context, 0.0f);
-    }
+    const int numLayers = transformer_blocks.size() + single_transformer_blocks.size();
 
-    // txt first, same as diffusers
-    Tensor concat = Tensor::allocate({batch_size, txt_tokens + img_tokens, 3072}, dtype, device);
-    for (int i = 0; i < batch_size; i++) {
-        concat.slice(0, i, i + 1).slice(1, 0, txt_tokens).copy_(encoder_hidden_states);
-        concat.slice(0, i, i + 1).slice(1, txt_tokens, txt_tokens + img_tokens).copy_(hidden_states);
-    }
-    hidden_states = concat;
-    encoder_hidden_states = {};
+    Tensor concat;
 
-    for (auto &&block : single_transformer_blocks) {
-        hidden_states = block->forward(hidden_states, temb, rotary_emb_single);
-    }
+    auto compute = [&](int layer) {
+        if (size_t(layer) < transformer_blocks.size()) {
+            auto &block = transformer_blocks.at(layer);
+            std::tie(hidden_states, encoder_hidden_states) = block->forward(hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_context, 0.0f);
+        } else {
+            if (size_t(layer) == transformer_blocks.size()) {
+                // txt first, same as diffusers
+                concat = Tensor::allocate({batch_size, txt_tokens + img_tokens, 3072}, dtype, device);
+                for (int i = 0; i < batch_size; i++) {
+                    concat.slice(0, i, i + 1).slice(1, 0, txt_tokens).copy_(encoder_hidden_states);
+                    concat.slice(0, i, i + 1).slice(1, txt_tokens, txt_tokens + img_tokens).copy_(hidden_states);
+                }
+                hidden_states = concat;
+                encoder_hidden_states = {};
+            }
+
+            auto &block = single_transformer_blocks.at(layer - transformer_blocks.size());
+            hidden_states = block->forward(hidden_states, temb, rotary_emb_single);
+        }
+    };
+    auto load = [&](int layer) {
+        if (size_t(layer) < transformer_blocks.size()) {
+            auto &block = transformer_blocks.at(layer);
+            block->loadLazyParams();
+        } else {
+            auto &block = single_transformer_blocks.at(layer - transformer_blocks.size());
+            block->loadLazyParams();
+        }
+    };
+    auto unload = [&](int layer) {
+        if (size_t(layer) < transformer_blocks.size()) {
+            auto &block = transformer_blocks.at(layer);
+            block->releaseLazyParams();
+        } else {
+            auto &block = single_transformer_blocks.at(layer - transformer_blocks.size());
+            block->releaseLazyParams();
+        }
+    };
+
+    LayerOffloadHelper helper(this->offload, numLayers, compute, load, unload);
+    helper.run();
 
     return hidden_states;
 }

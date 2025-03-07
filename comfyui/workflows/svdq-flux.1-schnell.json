@@ -14,16 +14,18 @@
         46
       ],
       "flags": {},
-      "order": 12,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
           "name": "samples",
+          "localized_name": "samples",
           "type": "LATENT",
           "link": 24
         },
         {
           "name": "vae",
+          "localized_name": "vae",
           "type": "VAE",
           "link": 12
         }
@@ -31,6 +33,7 @@
       "outputs": [
         {
           "name": "IMAGE",
+          "localized_name": "IMAGE",
           "type": "IMAGE",
           "links": [
             9
@@ -55,12 +58,13 @@
         106
       ],
       "flags": {},
-      "order": 2,
+      "order": 0,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "LATENT",
+          "localized_name": "LATENT",
           "type": "LATENT",
           "links": [
             23
@@ -91,17 +95,18 @@
         58
       ],
       "flags": {},
-      "order": 3,
+      "order": 1,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "SAMPLER",
+          "localized_name": "SAMPLER",
           "type": "SAMPLER",
+          "shape": 3,
           "links": [
             19
-          ],
-          "shape": 3
+          ]
         }
       ],
       "properties": {
@@ -123,11 +128,12 @@
         106
       ],
       "flags": {},
-      "order": 8,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
+          "localized_name": "model",
           "type": "MODEL",
           "link": 41,
           "slot_index": 0
@@ -136,11 +142,12 @@
       "outputs": [
         {
           "name": "SIGMAS",
+          "localized_name": "SIGMAS",
           "type": "SIGMAS",
+          "shape": 3,
           "links": [
             20
-          ],
-          "shape": 3
+          ]
         }
       ],
       "properties": {
@@ -151,31 +158,6 @@
         4,
         1
       ]
-    },
-    {
-      "id": 27,
-      "type": "Note",
-      "pos": [
-        480,
-        960
-      ],
-      "size": [
-        311.3529052734375,
-        131.16229248046875
-      ],
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {
-        "text": ""
-      },
-      "widgets_values": [
-        "The schnell model is a distilled model that can generate a good image with only 4 steps."
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
     },
     {
       "id": 22,
@@ -189,17 +171,19 @@
         46
       ],
       "flags": {},
-      "order": 10,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
+          "localized_name": "model",
           "type": "MODEL",
           "link": 42,
           "slot_index": 0
         },
         {
           "name": "conditioning",
+          "localized_name": "conditioning",
           "type": "CONDITIONING",
           "link": 40,
           "slot_index": 1
@@ -208,12 +192,13 @@
       "outputs": [
         {
           "name": "GUIDER",
+          "localized_name": "GUIDER",
           "type": "GUIDER",
+          "shape": 3,
           "links": [
             30
           ],
-          "slot_index": 0,
-          "shape": 3
+          "slot_index": 0
         }
       ],
       "properties": {
@@ -233,11 +218,12 @@
         164.31304931640625
       ],
       "flags": {},
-      "order": 9,
+      "order": 6,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
+          "localized_name": "clip",
           "type": "CLIP",
           "link": 43
         }
@@ -245,6 +231,7 @@
       "outputs": [
         {
           "name": "CONDITIONING",
+          "localized_name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
             40
@@ -273,35 +260,40 @@
         106
       ],
       "flags": {},
-      "order": 11,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
           "name": "noise",
+          "localized_name": "noise",
           "type": "NOISE",
           "link": 37,
           "slot_index": 0
         },
         {
           "name": "guider",
+          "localized_name": "guider",
           "type": "GUIDER",
           "link": 30,
           "slot_index": 1
         },
         {
           "name": "sampler",
+          "localized_name": "sampler",
           "type": "SAMPLER",
           "link": 19,
           "slot_index": 2
         },
         {
           "name": "sigmas",
+          "localized_name": "sigmas",
           "type": "SIGMAS",
           "link": 20,
           "slot_index": 3
         },
         {
           "name": "latent_image",
+          "localized_name": "latent_image",
           "type": "LATENT",
           "link": 23,
           "slot_index": 4
@@ -310,18 +302,20 @@
       "outputs": [
         {
           "name": "output",
+          "localized_name": "output",
           "type": "LATENT",
+          "shape": 3,
           "links": [
             24
           ],
-          "slot_index": 0,
-          "shape": 3
+          "slot_index": 0
         },
         {
           "name": "denoised_output",
+          "localized_name": "denoised_output",
           "type": "LATENT",
-          "links": null,
-          "shape": 3
+          "shape": 3,
+          "links": null
         }
       ],
       "properties": {
@@ -341,11 +335,12 @@
         1060.3828125
       ],
       "flags": {},
-      "order": 13,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
+          "localized_name": "images",
           "type": "IMAGE",
           "link": 9
         }
@@ -368,17 +363,18 @@
         82
       ],
       "flags": {},
-      "order": 6,
+      "order": 2,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "NOISE",
+          "localized_name": "NOISE",
           "type": "NOISE",
+          "shape": 3,
           "links": [
             37
-          ],
-          "shape": 3
+          ]
         }
       ],
       "properties": {
@@ -400,10 +396,10 @@
       ],
       "size": [
         352.79998779296875,
-        130
+        178
       ],
       "flags": {},
-      "order": 7,
+      "order": 3,
       "mode": 0,
       "inputs": [
         {
@@ -415,6 +411,7 @@
       "outputs": [
         {
           "name": "CLIP",
+          "localized_name": "CLIP",
           "type": "CLIP",
           "links": [
             43
@@ -429,66 +426,10 @@
         "flux",
         "t5xxl_fp16.safetensors",
         "clip_l.safetensors",
-        512
+        512,
+        "BF16",
+        "mit-han-lab/svdq-flux.1-t5"
       ]
-    },
-    {
-      "id": 10,
-      "type": "VAELoader",
-      "pos": [
-        -31.617252349853516,
-        377.54791259765625
-      ],
-      "size": [
-        315,
-        58
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "VAE",
-          "type": "VAE",
-          "links": [
-            12
-          ],
-          "slot_index": 0,
-          "shape": 3
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAELoader"
-      },
-      "widgets_values": [
-        "ae.safetensors"
-      ]
-    },
-    {
-      "id": 26,
-      "type": "Note",
-      "pos": [
-        -28.286691665649414,
-        511.4660339355469
-      ],
-      "size": [
-        336,
-        288
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {
-        "text": ""
-      },
-      "widgets_values": [
-        "If you get an error in any of the nodes above make sure the files are in the correct directories.\n\nSee the top of the examples page for the links : https://comfyanonymous.github.io/ComfyUI_examples/flux/\n\nflux1-schnell.safetensors goes in: ComfyUI/models/unet/\n\nt5xxl_fp16.safetensors and clip_l.safetensors go in: ComfyUI/models/clip/\n\nae.safetensors goes in: ComfyUI/models/vae/\n\n\nTip: You can set the weight_dtype above to one of the fp8 types if you have memory issues."
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
     },
     {
       "id": 28,
@@ -499,15 +440,16 @@
       ],
       "size": [
         315,
-        82
+        106
       ],
       "flags": {},
-      "order": 5,
+      "order": 4,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
           "name": "MODEL",
+          "localized_name": "MODEL",
           "type": "MODEL",
           "links": [
             41,
@@ -521,7 +463,42 @@
       },
       "widgets_values": [
         "mit-han-lab/svdq-int4-flux.1-schnell",
+        "disable",
         0
+      ]
+    },
+    {
+      "id": 10,
+      "type": "VAELoader",
+      "pos": [
+        874.65625,
+        480.88372802734375
+      ],
+      "size": [
+        315,
+        58
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "localized_name": "VAE",
+          "type": "VAE",
+          "shape": 3,
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "ae.safetensors"
       ]
     }
   ],
@@ -627,11 +604,14 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.6727499949325652,
+      "scale": 1.1167815779424761,
       "offset": [
-        405.6825017392191,
-        29.738440474209906
+        874.5548427683093,
+        429.12540214017235
       ]
+    },
+    "node_versions": {
+      "comfy-core": "0.3.24"
     }
   },
   "version": 0.4

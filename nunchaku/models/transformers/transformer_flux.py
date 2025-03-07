@@ -8,9 +8,10 @@ from huggingface_hub import utils
 from packaging.version import Version
 from torch import nn
 
+from nunchaku.utils import fetch_or_download
 from .utils import NunchakuModelLoaderMixin, pad_tensor
-from .._C import QuantizedFluxModel, utils as cutils
-from ..utils import fetch_or_download
+from ..._C import QuantizedFluxModel, utils as cutils
+from ...utils import load_state_dict_in_safetensors
 
 SVD_RANK = 32
 
@@ -88,8 +89,6 @@ def rope(pos: torch.Tensor, dim: int, theta: int) -> torch.Tensor:
     else:
         out = out.view(batch_size, -1, dim // 2, 1, 1)
 
-    # stacked_out = torch.stack([cos_out, -sin_out, sin_out, cos_out], dim=-1)
-    # out = stacked_out.view(batch_size, -1, dim // 2, 2, 2)
     return out.float()
 
 
@@ -108,12 +107,14 @@ class EmbedND(nn.Module):
         return emb.unsqueeze(1)
 
 
-def load_quantized_module(path: str, device: str | torch.device = "cuda", use_fp4: bool = False) -> QuantizedFluxModel:
+def load_quantized_module(
+    path: str, device: str | torch.device = "cuda", use_fp4: bool = False, offload: bool = False
+) -> QuantizedFluxModel:
     device = torch.device(device)
     assert device.type == "cuda"
     m = QuantizedFluxModel()
     cutils.disable_memory_auto_release()
-    m.init(use_fp4, True, 0 if device.index is None else device.index)
+    m.init(use_fp4, offload, True, 0 if device.index is None else device.index)
     m.load(path)
     return m
 
@@ -147,19 +148,49 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
             guidance_embeds=guidance_embeds,
             axes_dims_rope=axes_dims_rope,
         )
+        self.unquantized_loras = {}
+        self.unquantized_state_dict = None
 
     @classmethod
     @utils.validate_hf_hub_args
     def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
         device = kwargs.get("device", "cuda")
         precision = kwargs.get("precision", "int4")
+        offload = kwargs.get("offload", False)
         assert precision in ["int4", "fp4"]
         transformer, transformer_block_path = cls._build_model(pretrained_model_name_or_path, **kwargs)
-        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4")
+        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4", offload=offload)
         transformer.inject_quantized_module(m, device)
         return transformer
 
+    def update_unquantized_lora_params(self, strength: float = 1):
+        new_state_dict = {}
+        for k in self.unquantized_state_dict.keys():
+            v = self.unquantized_state_dict[k]
+            if k.replace(".weight", ".lora_B.weight") in self.unquantized_loras:
+                new_state_dict[k] = v + strength * (
+                    self.unquantized_loras[k.replace(".weight", ".lora_B.weight")]
+                    @ self.unquantized_loras[k.replace(".weight", ".lora_A.weight")]
+                )
+            else:
+                new_state_dict[k] = v
+        self.load_state_dict(new_state_dict, strict=True)
+
     def update_lora_params(self, path: str):
+        state_dict = load_state_dict_in_safetensors(path)
+
+        unquantized_loras = {}
+        for k in state_dict.keys():
+            if "transformer_blocks" not in k:
+                unquantized_loras[k] = state_dict[k]
+
+        self.unquantized_loras = unquantized_loras
+        if len(unquantized_loras) > 0:
+            if self.unquantized_state_dict is None:
+                unquantized_state_dict = self.state_dict()
+                self.unquantized_state_dict = {k: v.cpu() for k, v in unquantized_state_dict.items()}
+            self.update_unquantized_lora_params(1)
+
         path = fetch_or_download(path)
         block = self.transformer_blocks[0]
         assert isinstance(block, NunchakuFluxTransformerBlocks)
@@ -169,6 +200,8 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         block = self.transformer_blocks[0]
         assert isinstance(block, NunchakuFluxTransformerBlocks)
         block.m.setLoraScale(SVD_RANK, strength)
+        if len(self.unquantized_loras) > 0:
+            self.update_unquantized_lora_params(strength)
 
     def inject_quantized_module(self, m: QuantizedFluxModel, device: str | torch.device = "cuda"):
         self.pos_embed = EmbedND(dim=self.inner_dim, theta=10000, axes_dim=[16, 56, 56])

@@ -28,6 +28,33 @@ private:
     mio::mmap_source impl;
 };
 
+class SafeTensors::MMapImplRead : public SafeTensors::MMapImpl {
+public:
+    MMapImplRead(const std::string &filename, bool pin) {
+        std::ifstream fin(filename, std::ios::binary);
+        fin.seekg(0, std::ios::end);
+        size_t size = fin.tellg();
+        fin.seekg(0);
+
+        if (pin) {
+            buffer = std::make_unique<BufferHost>(size);
+        } else {
+            buffer = std::make_unique<BufferMalloc>(size);
+        }
+
+        fin.read((char *)buffer->getPtr(), size);
+    }
+    virtual size_t size() override {
+        return buffer->getSize();
+    }
+    virtual const char *data() override {
+        return (const char *)buffer->getPtr();
+    }
+
+private:
+    std::unique_ptr<Buffer> buffer;
+};
+
 #ifdef __linux__ 
 
 #include <unistd.h>
@@ -89,26 +116,78 @@ public:
 #endif
 
 SafeTensors::SafeTensors(const std::string &filename) {
-    this->mapped = std::make_unique<MMapImplMio>(filename);
+    this->hostRegistered = false;
+    this->memoryPinned = false;
 
-    if (cudaHostRegister(const_cast<char *>(this->mapped->data()), this->mapped->size(), cudaHostRegisterPortable | cudaHostRegisterReadOnly) != cudaSuccess) {
-        spdlog::warn("Unable to pin memory: {}", cudaGetErrorString(cudaGetLastError()));
-        // mlock(const_cast<char *>(this->mapped->data()), this->mapped->size());
-#ifdef __linux__
-        spdlog::info("Try MAP_PRIVATE");
-        this->mapped.reset();
+    auto methodPrivate = [&]() {
         this->mapped = std::make_unique<MMapImplPrivate>(filename);
         checkCUDA(cudaHostRegister(const_cast<char *>(this->mapped->data()), this->mapped->size(), cudaHostRegisterPortable));
+        this->hostRegistered = true;
+        this->memoryPinned = true;
+    };
+    auto methodMio = [&]() {
+        this->mapped = std::make_unique<MMapImplMio>(filename);
+        checkCUDA(cudaHostRegister(const_cast<char *>(this->mapped->data()), this->mapped->size(), cudaHostRegisterPortable | cudaHostRegisterReadOnly));
+        this->hostRegistered = true;
+        this->memoryPinned = true;
+    };
+    auto methodRead = [&]() {
+        this->mapped = std::make_unique<MMapImplRead>(filename, true);
+        this->memoryPinned = true;
+    };
+    auto methodReadNopin = [&]() {
+        this->mapped = std::make_unique<MMapImplRead>(filename, false);
+    };
+    
+    const std::map<std::string, std::function<void()>> methods = {
+        { "PRIVATE", methodPrivate },
+        { "MIO", methodMio },
+        { "READ", methodRead },
+        { "READNOPIN", methodReadNopin },
+    };
+
+    auto tryMethod = [&](std::string name) {
+        spdlog::debug("Trying to load safetensors using method {}", name);
+        this->mapped.reset();
+        try {
+            methods.at(name)();
+            return true;
+        } catch (std::exception &e) {
+            spdlog::warn("Failed to load safetensors using method {}: {}", name, e.what());
+        }
+        return false;
+    };
+
+    if (char *env = getenv("NUNCHAKU_LOAD_METHOD")) {
+        std::string method = std::string(env);
+        tryMethod(method);
+    } else {
+
+#ifdef __linux__
+        tryMethod("PRIVATE") || tryMethod("MIO") || tryMethod("READ") || tryMethod("READNOPIN");
+#else
+        tryMethod("MIO") || tryMethod("READ") || tryMethod("READNOPIN");
 #endif
+
+    }
+
+    if (!this->mapped) {
+        throw std::runtime_error("Failed to load safetensors");
+    }
+
+    if (!this->memoryPinned) {
+        spdlog::warn("Memory not pinned");
     }
 
     parseHeader();
 }
 
 SafeTensors::~SafeTensors() {
-#ifndef _WIN32  
-    checkCUDA(cudaHostUnregister(const_cast<char *>(this->mapped->data())));
-#endif
+    if (this->hostRegistered) {
+        if (cudaHostUnregister(const_cast<char *>(this->mapped->data())) != cudaSuccess) {
+            spdlog::warn("cudaHostUnregister failed: {}", cudaGetErrorString(cudaGetLastError()));
+        }
+    }
 }
 
 void SafeTensors::parseHeader() {

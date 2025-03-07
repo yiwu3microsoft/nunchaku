@@ -1,7 +1,7 @@
 import torch
 from diffusers import FluxPipeline
 
-from .models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku.models.transformers.transformer_flux import NunchakuFluxTransformer2dModel
 
 if __name__ == "__main__":
     capability = torch.cuda.get_device_capability(0)

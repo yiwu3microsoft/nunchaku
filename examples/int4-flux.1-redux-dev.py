@@ -2,7 +2,7 @@ import torch
 from diffusers import FluxPipeline, FluxPriorReduxPipeline
 from diffusers.utils import load_image
 
-from nunchaku.models.transformer_flux import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2dModel
 
 pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16

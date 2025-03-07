@@ -1,11 +1,12 @@
 import os
 
 import torch
-from deepcompressor.backend.tinychat.linear import W4Linear
 from huggingface_hub import constants, hf_hub_download
 from safetensors.torch import load_file
 from torch import nn
 from transformers import PretrainedConfig, T5EncoderModel
+
+from .linear import W4Linear
 
 
 def quantize_t5_encoder(

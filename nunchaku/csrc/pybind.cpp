@@ -4,6 +4,7 @@
 #include "sana.h"
 #include "ops.h"
 #include "utils.h"
+#include <torch/extension.h>
 
 #include <pybind11/pybind11.h>
 
@@ -12,6 +13,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def(py::init<>())
         .def("init", &QuantizedFluxModel::init,
             py::arg("use_fp4"),
+            py::arg("offload"),
             py::arg("bf16"),
             py::arg("deviceId")
         )
@@ -72,7 +74,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ;
 
     m.def_submodule("ops")
-        .def("gemm_w4a4", nunchaku::ops::gemm_w4a4)
+        .def("gemm_awq", nunchaku::ops::gemm_awq)
         .def("gemv_awq", nunchaku::ops::gemv_awq)
     ;
 

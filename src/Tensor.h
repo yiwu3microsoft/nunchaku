@@ -85,14 +85,15 @@ public:
         if (size == 0) {
             this->ptr = nullptr;
         }
-        checkCUDA(cudaMallocAsync(&this->ptr, size, 0));    // use default stream to sync with all other streams
+        // TODO: buffer used in multiple streams?
+        checkCUDA(cudaMallocAsync(&this->ptr, size, getCurrentCUDAStream()));
     }
     virtual ~BufferCUDA() {
         if (this->size == 0) {
             assert(!this->ptr);
             return;
         }
-        checkCUDA(cudaFreeAsync(this->ptr, 0));
+        checkCUDA(cudaFreeAsync(this->ptr, getCurrentCUDAStream()));
     }
     virtual bool isAsyncBuffer() override { 
         return true;
@@ -217,7 +218,7 @@ class Tensor {
 public:
     enum ScalarType {
         INVALID_SCALAR_TYPE,
-        INT8, INT32, INT64,
+        INT8, INT16, INT32, INT64,
         FP16, FP32, BF16,
         FP8_E4M3, FP8_E5M2,
     };
@@ -361,7 +362,7 @@ public:
 
     Tensor &zero_() {
         assert(this->is_contiguous());
-        checkCUDA(cudaMemset(data_ptr<char>() + shape.offset * scalar_size(), 0, shape.size() * scalar_size()));
+        checkCUDA(cudaMemsetAsync(data_ptr<char>() + shape.offset * scalar_size(), 0, shape.size() * scalar_size(), getCurrentCUDAStream()));
         return *this;
     }
     Tensor &copy_(Tensor other) {
@@ -541,6 +542,7 @@ public:
 
 inline const std::map<Tensor::ScalarType, size_t> Tensor::scalarSize = {
     {INT8, 1},
+    {INT16, 2},
     {INT32, 4},
     {INT64, 8},
     {FP16, 2},
