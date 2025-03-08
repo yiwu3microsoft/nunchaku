@@ -111,7 +111,7 @@ class SVDQuantTextEncoderLoader:
             dtype = param.dtype
             device = param.device
 
-            prefixes = folder_paths.folder_names_and_paths["diffusion_models"][0]
+            prefixes = folder_paths.folder_names_and_paths["text_encoders"][0]
             model_path = None
             for prefix in prefixes:
                 if os.path.exists(os.path.join(prefix, int4_model)):
