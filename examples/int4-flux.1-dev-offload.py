@@ -6,7 +6,6 @@ from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 transformer = NunchakuFluxTransformer2dModel.from_pretrained(
     "mit-han-lab/svdq-int4-flux.1-dev", offload=True
 )  # set offload to False if you want to disable offloading
-text_encoder_2 = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
 pipeline = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 )
