@@ -215,6 +215,11 @@ struct LayerOffloadHelper {
         if (offload) {
             streamCompute = std::make_unique<CUDAStreamWrapper>();
             streamLoad = std::make_unique<CUDAStreamWrapper>();
+
+            needWorkaround = checkWorkaround();
+            if (needWorkaround) {
+                spdlog::debug("Offloading helper: use WDDM workaround");
+            }
         }
     }
 
@@ -240,6 +245,7 @@ private:
                 funcCompute(layer);
                 nextComputeDone = std::make_unique<CUDAEventWrapper>();
                 checkCUDA(cudaEventRecord(nextComputeDone->event, getCurrentCUDAStream()));
+                workaroundFlush();
             }
 
             {
@@ -253,10 +259,13 @@ private:
                 }
                 nextLoadDone = std::make_unique<CUDAEventWrapper>();
                 checkCUDA(cudaEventRecord(nextLoadDone->event, getCurrentCUDAStream()));
+                workaroundFlush();
             }
 
             eventComputeDone = std::move(nextComputeDone);
             eventLoadDone = std::move(nextLoadDone);
+
+            workaroundSynchronize();
         }
     }
 
@@ -265,5 +274,36 @@ private:
             return;
         }
         checkCUDA(cudaStreamWaitEvent(getCurrentCUDAStream(), event->event));
+    }
+
+    // WDDM prevents multiple streams run concurrently
+    // use flush and synchronize to work around
+    bool needWorkaround;
+    static bool checkWorkaround() {
+        if (char *env = getenv("NUNCHAKU_OFFLOAD_WDDM_WORKAROUND")) {
+            if (std::string(env) == "1") {
+                return true;
+            } else if (std::string(env) == "0") {
+                return false;
+            }
+        }
+        
+    #ifdef _WIN32
+        return true;
+    #else
+        return false;
+    #endif
+    }
+    void workaroundFlush() {
+        if (!needWorkaround) {
+            return;
+        }
+        cudaStreamQuery(getCurrentCUDAStream());
+    }
+    void workaroundSynchronize() {
+        if (!needWorkaround) {
+            return;
+        }
+        checkCUDA(cudaEventSynchronize(eventComputeDone->event));
     }
 };

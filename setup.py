@@ -129,7 +129,7 @@ if __name__ == "__main__":
     for target in sm_targets:
         NVCC_FLAGS += ["-gencode", f"arch=compute_{target},code=sm_{target}"]
 
-    NVCC_MSVC_FLAGS = ["-Xcompiler", "/Zc:__cplusplus", "-Xcompiler", "/FS"]
+    NVCC_MSVC_FLAGS = ["-Xcompiler", "/Zc:__cplusplus", "-Xcompiler", "/FS", "-Xcompiler", "/bigobj"]
 
     nunchaku_extension = CUDAExtension(
         name="nunchaku._C",
