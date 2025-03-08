@@ -41,6 +41,7 @@ private:
 
 inline cudaError_t checkCUDA(cudaError_t retValue, const std::source_location location = std::source_location::current()) {
     if (retValue != cudaSuccess) {
+        (void)cudaGetLastError();
         throw CUDAError(retValue, location);
     }
     return retValue;
