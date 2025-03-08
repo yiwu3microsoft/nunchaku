@@ -12,6 +12,7 @@ pip install git+https://github.com/asomoza/image_gen_aux.git
 ### ComfyUI-CLI
 
 ```shell
+pip install comfy-cli  # install the comfyui-cli
 comfy node registry-install svdquant
 ```
 
