@@ -46,9 +46,12 @@ SVDQuant is a post-training quantization technique for 4-bit weights and activat
 
 ## Installation
 
-### Wheels (for Linux and Windows WSL)
+### Wheels
 
-#### For Windows Users
+**Note:** For native Windows users, we have released a preliminary wheel to ease the installation. See [here](https://github.com/mit-han-lab/nunchaku/issues/169) for more details!
+
+#### For Windows WSL Users
+
 To install and use WSL (Windows Subsystem for Linux), follow the instructions [here](https://learn.microsoft.com/en-us/windows/wsl/install). You can also install WSL directly by running the following commands in PowerShell:
 ```shell
 wsl --install # install the latest WSL
