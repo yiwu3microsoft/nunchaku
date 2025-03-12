@@ -253,15 +253,7 @@ Please refer to [app/flux/t2i/README.md](app/flux/t2i/README.md) for instruction
 
 ## Roadmap
 
-- [x] Easy installation
-- [x] Comfy UI node
-- [x] Customized LoRA conversion instructions
-- [x] Customized model quantization instructions
-- [x] FLUX.1 tools support
-- [ ] Modularization
-- [ ] IP-Adapter integration
-- [ ] Video Model support
-- [ ] Metal backend
+Please check [here](https://github.com/mit-han-lab/nunchaku/issues/201) for the roadmap for March.
 
 ## Citation
 
