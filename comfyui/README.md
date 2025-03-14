@@ -1,6 +1,8 @@
 # SVDQuant ComfyUI Node
 
+**Note**: This node is **deprecated**! Please check **[ComfyUI-nunchaku/](https://github.com/mit-han-lab/ComfyUI-nunchaku/)** for the latest version.
 ![comfyui](../assets/comfyui.jpg)
+
 ## Installation
 
 Please first install `nunchaku` following the instructions in [README.md](https://github.com/mit-han-lab/nunchaku?tab=readme-ov-file#installation). Then just install `image_gen_aux` with 
