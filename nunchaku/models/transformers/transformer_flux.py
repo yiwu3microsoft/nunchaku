@@ -22,6 +22,28 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         self.dtype = torch.bfloat16
         self.device = device
 
+    @staticmethod
+    def pack_rotemb(rotemb: torch.Tensor) -> torch.Tensor:
+        assert rotemb.dtype == torch.float32
+        B = rotemb.shape[0]
+        M = rotemb.shape[1]
+        D = rotemb.shape[2] * 2
+        assert rotemb.shape == (B, M, D // 2, 1, 2)
+        assert M % 16 == 0
+        assert D % 8 == 0
+        rotemb = rotemb.reshape(B, M // 16, 16, D // 8, 8)
+        rotemb = rotemb.permute(0, 1, 3, 2, 4)
+        # 16*8 pack, FP32 accumulator (C) format
+        # https://docs.nvidia.com/cuda/parallel-thread-execution/#mma-16816-c
+        ##########################################|--M--|--D--| 
+        ##########################################|-3--4--5--6|
+        ##########################################  :  :  :  : 
+        rotemb = rotemb.reshape(*rotemb.shape[0:3], 2, 8, 4, 2)
+        rotemb = rotemb.permute(0, 1, 2, 4, 5, 3, 6)
+        rotemb = rotemb.contiguous()
+        rotemb = rotemb.view(B, M, D)
+        return rotemb
+
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -53,9 +75,9 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         rotary_emb_img = image_rotary_emb[:, txt_tokens:, ...]  # .to(self.dtype)
         rotary_emb_single = image_rotary_emb  # .to(self.dtype)
 
-        rotary_emb_txt = pad_tensor(rotary_emb_txt, 256, 1)
-        rotary_emb_img = pad_tensor(rotary_emb_img, 256, 1)
-        rotary_emb_single = pad_tensor(rotary_emb_single, 256, 1)
+        rotary_emb_txt = self.pack_rotemb(pad_tensor(rotary_emb_txt, 256, 1))
+        rotary_emb_img = self.pack_rotemb(pad_tensor(rotary_emb_img, 256, 1))
+        rotary_emb_single = self.pack_rotemb(pad_tensor(rotary_emb_single, 256, 1))
 
         hidden_states = self.m.forward(
             hidden_states,
@@ -104,8 +126,8 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         rotary_emb_txt = image_rotary_emb[:, :txt_tokens, ...]  # .to(self.dtype)
         rotary_emb_img = image_rotary_emb[:, txt_tokens:, ...]  # .to(self.dtype)
 
-        rotary_emb_txt = pad_tensor(rotary_emb_txt, 256, 1)
-        rotary_emb_img = pad_tensor(rotary_emb_img, 256, 1)
+        rotary_emb_txt = self.pack_rotemb(pad_tensor(rotary_emb_txt, 256, 1))
+        rotary_emb_img = self.pack_rotemb(pad_tensor(rotary_emb_img, 256, 1))
 
         hidden_states, encoder_hidden_states = self.m.forward_layer(
             idx, hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_txt
@@ -253,6 +275,11 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         block.m.setLoraScale(SVD_RANK, strength)
         if len(self.unquantized_loras) > 0:
             self.update_unquantized_lora_params(strength)
+
+    def set_attention_impl(self, impl: str):
+        block = self.transformer_blocks[0]
+        assert isinstance(block, NunchakuFluxTransformerBlocks)
+        block.m.setAttentionImpl(impl)
 
     def inject_quantized_module(self, m: QuantizedFluxModel, device: str | torch.device = "cuda"):
         print("Injecting quantized module")

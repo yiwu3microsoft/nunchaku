@@ -174,7 +174,7 @@ protected:
     }
 
     void debug(std::string name, Tensor tensor) {
-        if (DebugContext::ctxs.empty()) {
+        if (DebugContext::ctxs.empty() || !tensor.valid()) {
             return;
         }
         std::string prefix = getFullName();

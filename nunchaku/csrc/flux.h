@@ -143,8 +143,20 @@ public:
         });
     }
 
-    void forceFP16Attention(bool enable) {
-        Attention::setForceFP16(net.get(), enable);
+    void setAttentionImpl(std::string name) {
+        if (name.empty() || name == "default") {
+            name = "flashattn2";
+        }
+
+        spdlog::info("Set attention implementation to {}", name);
+
+        if (name == "flashattn2") {
+            net->setAttentionImpl(AttentionImpl::FlashAttention2);
+        } else if (name == "nunchaku-fp16") {
+            net->setAttentionImpl(AttentionImpl::NunchakuFP16);
+        } else {
+            throw std::invalid_argument(spdlog::fmt_lib::format("Invalid attention implementation {}", name));
+        }
     }
 
 };

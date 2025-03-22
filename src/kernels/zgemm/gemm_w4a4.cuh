@@ -1618,13 +1618,300 @@ public:
         }
     };
 
-    struct EpilogueLiteLA {
+    struct EpilogueRMSNormRope {
+        static constexpr int HEAD_DIM = 128;
+        static constexpr int NUM_HEADS_PER_WARP = WARP_N / HEAD_DIM;
+        static constexpr int WARP_N_TILES_PER_HEAD = WARP_N_TILES / NUM_HEADS_PER_WARP;
+
+        static constexpr int ROTARY_EMB_NUM_ELEMENTS = 2;
+
+        using packed_rotemb_t = float4;
+        static constexpr int WARP_N_ROTEMB_TILES = WARP_N_TILES / NUM_HEADS_PER_WARP * 2;
+        using rotemb_warp = std::array<packed_rotemb_t, WARP_M_TILES * WARP_N_ROTEMB_TILES>; // 128 regs
+
+        struct Arguments {
+            // **packed** [M, HEAD_DIM] float => [M // 16, HEAD_DIM // 8, WARP_SIZE] of packed_rotemb_t
+            // aka [M // BLOCK_M, NUM_WARPS, WARP_M_TILES, WARP_N_TILES // NUM_HEADS_PER_WARP * 2, WARP_SIZE]
+            const packed_rotemb_t *rotary_emb;
+            const half_t *rmsnorm_weight_q; // [HEAD_DIM]
+            const half_t *rmsnorm_weight_k; // [HEAD_DIM]
+            float epsilon;
+        };
+
         __device__ __forceinline__
-        static half2_t movmatrix(half2_t x) {
-            asm volatile ("movmatrix.sync.aligned.m8n8.trans.b16 %0, %1;" : "=r"(*reinterpret_cast<uint32_t *>(&x)) : "r"(*reinterpret_cast<uint32_t *>(&x)));
-            return x;
+        static rotemb_warp load_rotemb(const packed_rotemb_t *ptr_rotemb) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+            const int warpId = threadIdx.x / WARP_SIZE;
+
+            rotemb_warp rotemb;
+            const packed_rotemb_t *ptrlane = &ptr_rotemb[warpId * WARP_M_TILES * WARP_N_ROTEMB_TILES * WARP_SIZE + laneId];
+
+            unrolled_loop<WARP_M_TILES>([&]<int i>() {
+                unrolled_loop<WARP_N_ROTEMB_TILES>([&]<int j>() {
+                    constexpr int offset = (i * WARP_N_ROTEMB_TILES + j) * WARP_SIZE;
+                    rotemb[i * WARP_N_ROTEMB_TILES + j] = load(&ptrlane[offset]);
+                });
+            });
+
+            return rotemb;
         }
+
+        __device__ __forceinline__
+        static void load_rmsnorm(const half_t *ptr_rmsnorm_weight, half_t *shmem) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+
+            static constexpr int PACK_SIZE = HEAD_DIM / WARP_SIZE;
+            using packed_t = std::array<half_t, PACK_SIZE>;
+
+            packed_t pack = load(reinterpret_cast<const packed_t *>(ptr_rmsnorm_weight + laneId * PACK_SIZE));
+            store<true>(reinterpret_cast<packed_t *>(shmem + laneId * PACK_SIZE), pack);
+        }
+
+        __device__ __forceinline__
+        static packed_fpsum_t load_rmsnorm_from_shmem(half_t *shmem, int n) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+            const int col = n * INSN_N + laneId / 16 * 8;   // lane 0-15: n*16+0, lane 16-31: n*16+8
+            uint4 tmp;
+            ldmatrix(shmem + col, tmp);
+            return bit_cast<packed_fpsum_t>(tmp);
+        }
+
+        __device__ __forceinline__
+        static void apply(fpsum_warp &fpsum, const packed_rotemb_t *ptr_rotemb, const half_t *ptr_rmsnorm_weight, float epsilon) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+            const int warpId = threadIdx.x / WARP_SIZE;
+
+            __shared__ half_t shmem_rmsnorm[NUM_WARPS][HEAD_DIM];
+            load_rmsnorm(ptr_rmsnorm_weight, &shmem_rmsnorm[warpId][0]);
+            __syncwarp();
+
+            rotemb_warp rotemb = load_rotemb(ptr_rotemb);
+
+            float rmsnorm_coef[NUM_HEADS_PER_WARP][WARP_M_TILES][2];
+
+            auto sqr = [](half2_t val) ALWAYSINLINE {
+                float2 fval = half22float2(val);
+                return fval.x * fval.x + fval.y * fval.y;
+            };
+
+        #pragma unroll
+            for (int head = 0; head < NUM_HEADS_PER_WARP; head++) {
+                const int n_offset = head * WARP_N_TILES_PER_HEAD;
+
+            #pragma unroll
+                for (int m = 0; m < WARP_M_TILES; m++) {
+                    float sqrsum[2] = {0.0f, 0.0f};
+                #pragma unroll
+                    for (int n = 0; n < WARP_N_TILES_PER_HEAD; n++) {
+                        sqrsum[0] += sqr(fpsum[m * WARP_N_TILES + n + n_offset].data[0]);
+                        sqrsum[1] += sqr(fpsum[m * WARP_N_TILES + n + n_offset].data[1]);
+                        sqrsum[0] += sqr(fpsum[m * WARP_N_TILES + n + n_offset].data[2]);
+                        sqrsum[1] += sqr(fpsum[m * WARP_N_TILES + n + n_offset].data[3]);
+                    }
+                #pragma unroll
+                    for (int mask = 1; mask <= 2; mask *= 2) {
+                        sqrsum[0] += __shfl_xor_sync(~0, sqrsum[0], mask);
+                        sqrsum[1] += __shfl_xor_sync(~0, sqrsum[1], mask);
+                    }
+                    rmsnorm_coef[head][m][0] = cuda_frsqrt(sqrsum[0] / HEAD_DIM + epsilon);
+                    rmsnorm_coef[head][m][1] = cuda_frsqrt(sqrsum[1] / HEAD_DIM + epsilon);
+                }
+            }
+
+        #pragma unroll
+            for (int head = 0; head < NUM_HEADS_PER_WARP; head++) {
+                const int n_offset = head * WARP_N_TILES_PER_HEAD;
+
+            #pragma unroll
+                for (int n = 0; n < WARP_N_TILES_PER_HEAD; n++) {
+                    packed_f32psum_t rms = packed_fp16_to_fp32(load_rmsnorm_from_shmem(&shmem_rmsnorm[warpId][0], n));
+            #pragma unroll
+                    for (int m = 0; m < WARP_M_TILES; m++) {
+                        packed_f32psum_t pack = packed_fp16_to_fp32(fpsum[m * WARP_N_TILES + n + n_offset]);
+                        pack.data[0] *= rmsnorm_coef[head][m][0] * rms.data[0];
+                        pack.data[1] *= rmsnorm_coef[head][m][0] * rms.data[1];
+                        pack.data[2] *= rmsnorm_coef[head][m][1] * rms.data[2];
+                        pack.data[3] *= rmsnorm_coef[head][m][1] * rms.data[3];
+                        pack.data[4] *= rmsnorm_coef[head][m][0] * rms.data[4];
+                        pack.data[5] *= rmsnorm_coef[head][m][0] * rms.data[5];
+                        pack.data[6] *= rmsnorm_coef[head][m][1] * rms.data[6];
+                        pack.data[7] *= rmsnorm_coef[head][m][1] * rms.data[7];
+
+                        auto rope = [](float &x, float &y, float sin, float cos) ALWAYSINLINE {
+                            float ix = x, iy = y;
+                            x = ix * cos - iy * sin;
+                            y = ix * sin + iy * cos;
+                        };
+
+                        {
+                            packed_rotemb_t sincos = rotemb[m * WARP_N_ROTEMB_TILES + n * 2];
+                            rope(pack.data[0], pack.data[1], sincos.x, sincos.y);
+                            rope(pack.data[2], pack.data[3], sincos.z, sincos.w);
+                        }
+                        {
+                            packed_rotemb_t sincos = rotemb[m * WARP_N_ROTEMB_TILES + n * 2 + 1];
+                            rope(pack.data[4], pack.data[5], sincos.x, sincos.y);
+                            rope(pack.data[6], pack.data[7], sincos.z, sincos.w);
+                        }
+
+                        fpsum[m * WARP_N_TILES + n + n_offset] = packed_fp32_to_fp16(pack);
+                    }
+                }
+            }
+        }
+
+        __device__ __forceinline__
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+            const int bm = binfo.bm;
+            const int bn = binfo.bn;
+
+            assert(binfo.numBlocksN % 3 == 0);
+            const bool is_q = bn < binfo.numBlocksN / 3;
+            const bool is_k = !is_q && bn < binfo.numBlocksN / 3 * 2;
+
+            if (is_q || is_k) {
+                apply(
+                    fpsum,
+                    args.rotary_emb + bm * NUM_WARPS * WARP_M_TILES * WARP_N_ROTEMB_TILES * WARP_SIZE,
+                    is_q ? args.rmsnorm_weight_q : args.rmsnorm_weight_k,
+                    args.epsilon
+                );
+            }
+        }
+    };
+
+    struct EpiloguePackQKV {
+        using attn_half_t = half;
+        using attn_half2_t = half2;
+        using packed_qkv_t = uint4;
+
+        static constexpr int HEAD_DIM = 128;
+        static constexpr int INSN_K_QK = 16;
+        static constexpr int INSN_K_PV = 16;
+
+        struct Arguments {
+            packed_qkv_t *out_q, *out_k, *out_v;
+            int actualM;
+
+            // !!! stride in number of packed_qkv_t !!!
+            int strideHead_q;
+            int strideHead_k;
+            int strideHead_v;
+        };
+
+        __device__ __forceinline__ 
+        static attn_half2_t convert_half2(half2_t input) {
+            if constexpr (std::is_same_v<half2_t, attn_half2_t>) {
+                return input;
+            } else {
+                float2 fval = half22float2(input);
+                return float22half2<attn_half2_t>(fval);
+            }
+        }
+
+        __device__ __forceinline__
+        static packed_qkv_t pack_q(packed_fpsum_t input) {
+            packed_qkv_t output;
+            output.x = bit_cast<int>(convert_half2(input.data[0]));
+            output.y = bit_cast<int>(convert_half2(input.data[1]));
+            output.z = bit_cast<int>(convert_half2(input.data[2]));
+            output.w = bit_cast<int>(convert_half2(input.data[3]));
+            return output;
+        }
+
+        __device__ __forceinline__
+        static packed_qkv_t pack_k(packed_fpsum_t input) {
+            packed_qkv_t output;
+            output.x = bit_cast<int>(convert_half2(input.data[0]));
+            output.y = bit_cast<int>(convert_half2(input.data[2]));
+            output.z = bit_cast<int>(convert_half2(input.data[1]));
+            output.w = bit_cast<int>(convert_half2(input.data[3]));
+            return output;
+        }
+
+        __device__ __forceinline__
+        static packed_qkv_t pack_v(packed_fpsum_t input) {
+            packed_qkv_t output;
+            output.x = bit_cast<int>(convert_half2(movmatrix(input.data[0])));
+            output.y = bit_cast<int>(convert_half2(movmatrix(input.data[1])));
+            output.z = bit_cast<int>(convert_half2(movmatrix(input.data[2])));
+            output.w = bit_cast<int>(convert_half2(movmatrix(input.data[3])));
+            return output;
+        }
+
+        __device__ __forceinline__
+        static void mask(packed_qkv_t &pack, uint32_t maskVal, int m, int maxRows) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+            if (m * INSN_M + laneId / 4 >= maxRows) {
+                pack.x = maskVal;
+                pack.z = maskVal;
+            }
+            if (m * INSN_M + laneId / 4 + 8 >= maxRows) {
+                pack.y = maskVal;
+                pack.w = maskVal;
+            }
+        }
+
+        // qkv: [batch, head, bm, NUM_WARPS, WARP_M_TILES, WARP_N_TILES, WARP_SIZE] of packed_qkv_t
+        template<typename F>
+        __device__ __forceinline__
+        static void apply(fpsum_warp &fpsum, packed_qkv_t *ptr_output, int maxRows, F &&funcPack, attn_half2_t maskVal) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+            const int warpId = threadIdx.x / WARP_SIZE;
+
+            static_assert(HEAD_DIM == WARP_N);
+
+            packed_qkv_t *ptrlane = &ptr_output[((warpId * WARP_M_TILES + 0) * WARP_N_TILES + 0) * WARP_SIZE + laneId];
         
+            unrolled_loop<WARP_M_TILES>([&]<int m>() ALWAYSINLINE {
+                unrolled_loop<WARP_N_TILES>([&]<int n>() ALWAYSINLINE {
+                    packed_qkv_t pack = funcPack(fpsum[m * WARP_N_TILES + n]);
+                    mask(pack, bit_cast<uint32_t>(maskVal), m, maxRows - warpId * WARP_M);
+                    store(&ptrlane[(m * WARP_N_TILES + n) * WARP_SIZE], pack);
+                });
+            });
+        }
+
+        __device__ __forceinline__
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+            const int bm = binfo.bm;
+            const int bn = binfo.bn;
+
+            assert(binfo.numBlocksN % 3 == 0);
+            const int numBlocksQ = binfo.numBlocksN / 3;
+            const bool is_q = bn < numBlocksQ;
+            const bool is_k = !is_q && bn < numBlocksQ * 2;
+
+            // bn is head_id (assume HEAD_DIM == WARP_N)
+            int head_id, strideHead;
+            if (is_q) {
+                head_id = bn;
+                strideHead = args.strideHead_q;
+            } else if (is_k) {
+                head_id = bn - numBlocksQ;
+                strideHead = args.strideHead_k;
+            } else {
+                head_id = bn - numBlocksQ * 2;
+                strideHead = args.strideHead_v;
+            }
+
+            int block_offset = head_id * strideHead + bm * NUM_WARPS * WARP_M_TILES * WARP_N_TILES * WARP_SIZE;
+            int maxRows = args.actualM - bm * BLOCK_M;
+
+            // static constexpr float neginf = -std::numeric_limits<float>::infinity();
+
+            
+            if (is_q) {
+                apply(fpsum, args.out_q + block_offset, maxRows, pack_q, attn_half2_t(0.0f, 0.0f));
+            } else if (is_k) {
+                apply(fpsum, args.out_k + block_offset, maxRows, pack_k, attn_half2_t(NAN, NAN));
+            } else {
+                apply(fpsum, args.out_v + block_offset, maxRows, pack_v, attn_half2_t(0.0f, 0.0f));
+            }
+        }
+    };
+
+    struct EpilogueLiteLA {
         
         __device__ __forceinline__
         static packed_f32psum_t mma_litela(packed_fpsum_t k, packed_fpsum_t v, packed_f32psum_t psum) {
@@ -1872,6 +2159,62 @@ public:
                 epilogueArgs,
                 alwaysfalse
             );
+        }
+    };
+
+    template<typename Epilogue>
+    struct test_epilogue_kernel {
+        static constexpr size_t SHMEM_PER_WARP = ceilDiv<size_t>(load_act_to_fpsum<false>::SHMEM_SIZE, 128) * 128;
+        static constexpr size_t SHMEM_SIZE = SHMEM_PER_WARP * NUM_WARPS;
+
+        struct Arguments {
+            const half_t *input;
+            half_t *output;
+
+            // aligned to BLOCK_M and BLOCK_N
+            int M, N;
+            int actualM, actualN;
+
+            typename Epilogue::Arguments argsEpilogue;
+        };
+
+        __device__ __forceinline__
+        void operator()(Arguments args) 
+        {
+            const BlockInfo binfo = {
+                .bm = (int)blockIdx.x,
+                .bn = (int)blockIdx.y,
+                .numBlocksM = (int)gridDim.x,
+                .numBlocksN = (int)gridDim.y,
+            };
+
+            const int bm = binfo.bm;
+            const int bn = binfo.bn;
+            const int warpId = threadIdx.x / WARP_SIZE;
+
+            const int m_offset = bm * BLOCK_M + warpId * WARP_M;
+            const int n_offset = bn * BLOCK_N;
+
+            extern __shared__ uint8_t shmem[];
+
+            fpsum_warp fpsum;
+
+            load_act_to_fpsum<false>()(
+                args.input + m_offset * args.actualN + n_offset,
+                args.actualN,
+                args.actualM - m_offset,
+                args.actualN - n_offset,
+                fpsum,
+                shmem + warpId * SHMEM_PER_WARP
+            );
+
+            Epilogue()(binfo, fpsum, args.M, args.N, 0, args.argsEpilogue);
+
+            EpilogueDefault()(binfo, fpsum, args.M, args.N, 0, typename EpilogueDefault::Arguments{
+                .out = args.output,
+                .actualM = args.actualM,
+                .actualN = args.actualN,
+            });
         }
     };
 };

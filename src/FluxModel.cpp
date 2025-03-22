@@ -1,6 +1,7 @@
 #include "FluxModel.h"
 #include "kernels/misc_kernels.h"
 #include "kernels/gemm_batched.h"
+#include "kernels/zgemm/zgemm.h"
 #include "flash_api.h"
 #include "activation.h"
 
@@ -235,7 +236,7 @@ Tensor Attention::forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio) {
     Tensor raw_attn_output = mha_varlen_fwd(
         q, k, v,
         cu_seqlens, cu_seqlens,
-        num_tokens_img + num_tokens_context, num_tokens_img + num_tokens_context,
+        num_tokens_img + num_tokens_txt, num_tokens_img + num_tokens_txt,
         0.0f,
         pow(q.shape[-1], (-0.5)),
         false, false, -1, -1, false
@@ -298,18 +299,48 @@ Tensor FluxSingleTransformerBlock::forward(Tensor hidden_states, Tensor temb, Te
 
     Tensor residual = hidden_states;
 
-    Tensor qkv = Tensor::allocate({batch_size, num_tokens, dim * 3}, norm_hidden_states.scalar_type(), norm_hidden_states.device());
-    // qkv_proj.forward(norm_hidden_states, qkv, {});
-    // debug("qkv_raw", qkv);
+    Tensor attn_output;
 
     debug("rotary_emb", rotary_emb);
-    qkv_proj.forward(norm_hidden_states, qkv, {}, norm_q.weight, norm_k.weight, rotary_emb);
-    debug("qkv", qkv);
-    // Tensor qkv = forward_fc(qkv_proj, norm_hidden_states);
-    
-    Tensor attn_output = attn.forward(qkv, {}, 0);
-    attn_output = attn_output.reshape({batch_size, num_tokens, num_heads * dim_head});
+
+    if (attnImpl == AttentionImpl::FlashAttention2) {
+        Tensor qkv = Tensor::allocate({batch_size, num_tokens, dim * 3}, norm_hidden_states.scalar_type(), norm_hidden_states.device());
+        // qkv_proj.forward(norm_hidden_states, qkv, {});
+        // debug("qkv_raw", qkv);
+
+        qkv_proj.forward(norm_hidden_states, qkv, {}, norm_q.weight, norm_k.weight, rotary_emb);
+        debug("qkv", qkv);
+        // Tensor qkv = forward_fc(qkv_proj, norm_hidden_states);
+        
+        attn_output = attn.forward(qkv, {}, 0);
+        attn_output = attn_output.reshape({batch_size, num_tokens, num_heads * dim_head});
+    } else if (attnImpl == AttentionImpl::NunchakuFP16) {
+        assert(batch_size == 1);
+
+        const int num_tokens_pad = ceilDiv(num_tokens, 256) * 256;
+
+        Tensor q = Tensor::allocate({batch_size, num_heads, num_tokens_pad, dim_head}, Tensor::FP16, norm_hidden_states.device());
+        Tensor k = Tensor::allocate({batch_size, num_heads, num_tokens_pad, dim_head}, Tensor::FP16, norm_hidden_states.device());
+        Tensor v = Tensor::allocate({batch_size, num_heads, num_tokens_pad, dim_head}, Tensor::FP16, norm_hidden_states.device());
+
+        qkv_proj.forward(norm_hidden_states, {}, {}, norm_q.weight, norm_k.weight, rotary_emb, q, k, v, num_tokens);
+
+        debug("packed_q", q);
+        debug("packed_k", k);
+        debug("packed_v", v);
+
+        Tensor o = Tensor::allocate({batch_size, num_tokens_pad, num_heads * dim_head}, norm_hidden_states.scalar_type(), norm_hidden_states.device());
+
+        kernels::attention_fp16(q, k, v, o, pow(dim_head, (-0.5)));
+
+        attn_output = o.slice(1, 0, num_tokens);
+    } else {
+        assert(false);
+    }
+
     debug("raw_attn_output", attn_output);
+
+    
 
     attn_output = forward_fc(out_proj, attn_output);
     debug("attn_output", attn_output);
@@ -384,13 +415,13 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
 
 
     int num_tokens_img = hidden_states.shape[1];
-    int num_tokens_context = encoder_hidden_states.shape[1];
+    int num_tokens_txt = encoder_hidden_states.shape[1];
     
     assert(hidden_states.shape[2] == dim);
     assert(encoder_hidden_states.shape[2] == dim);
 
     spdlog::debug("hidden_states={} encoder_hidden_states={} temb={}", hidden_states.shape.str(), encoder_hidden_states.shape.str(), temb.shape.str());
-    spdlog::debug("batch_size={} num_tokens_img={} num_tokens_context={}", batch_size, num_tokens_img, num_tokens_context);
+    spdlog::debug("batch_size={} num_tokens_img={} num_tokens_txt={}", batch_size, num_tokens_img, num_tokens_txt);
 
     auto norm1_output = norm1.forward(hidden_states, temb);
     auto norm1_context_output = norm1_context.forward(encoder_hidden_states, temb);
@@ -408,76 +439,137 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
     nvtxRangePop();
 
     auto stream = getCurrentCUDAStream();
-    Tensor concat;
-    Tensor pool;
+    
+    int num_tokens_img_pad = 0, num_tokens_txt_pad = 0;
+    Tensor raw_attn_output;
 
-    {
-        nvtxRangePushA("qkv_proj");
+    if (attnImpl == AttentionImpl::FlashAttention2) {
+        num_tokens_img_pad = num_tokens_img;
+        num_tokens_txt_pad = num_tokens_txt;
 
-        const bool blockSparse = sparsityRatio > 0;
-
-        const int poolTokens = num_tokens_img / POOL_SIZE + num_tokens_context / POOL_SIZE;
-        concat = Tensor::allocate({batch_size, num_tokens_img + num_tokens_context, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device());
-
-        pool = blockSparse
-            ? Tensor::allocate({batch_size, poolTokens, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device())
-            : Tensor{};
-
-        for (int i = 0; i < batch_size; i++) {
-            // img first
-            Tensor qkv = concat.slice(0, i, i + 1).slice(1, 0, num_tokens_img);
-            Tensor qkv_context = concat.slice(0, i, i + 1).slice(1, num_tokens_img, num_tokens_img + num_tokens_context);
-
-            Tensor pool_qkv = pool.valid()
-                ? pool.slice(0, i, i + 1).slice(1, 0, num_tokens_img / POOL_SIZE)
+        Tensor concat;
+        Tensor pool;
+        
+        {
+            nvtxRangePushA("qkv_proj");
+    
+            const bool blockSparse = sparsityRatio > 0;
+    
+            const int poolTokens = num_tokens_img / POOL_SIZE + num_tokens_txt / POOL_SIZE;
+            concat = Tensor::allocate({batch_size, num_tokens_img + num_tokens_txt, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device());
+    
+            pool = blockSparse
+                ? Tensor::allocate({batch_size, poolTokens, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device())
                 : Tensor{};
-            Tensor pool_qkv_context = pool.valid()
-                ? concat.slice(0, i, i + 1).slice(1, num_tokens_img / POOL_SIZE, num_tokens_img / POOL_SIZE + num_tokens_context / POOL_SIZE)
-                : Tensor{};
+    
+            for (int i = 0; i < batch_size; i++) {
+                // img first
+                Tensor qkv = concat.slice(0, i, i + 1).slice(1, 0, num_tokens_img);
+                Tensor qkv_context = concat.slice(0, i, i + 1).slice(1, num_tokens_img, num_tokens_img + num_tokens_txt);
+    
+                Tensor pool_qkv = pool.valid()
+                    ? pool.slice(0, i, i + 1).slice(1, 0, num_tokens_img / POOL_SIZE)
+                    : Tensor{};
+                Tensor pool_qkv_context = pool.valid()
+                    ? concat.slice(0, i, i + 1).slice(1, num_tokens_img / POOL_SIZE, num_tokens_img / POOL_SIZE + num_tokens_txt / POOL_SIZE)
+                    : Tensor{};
+    
+                // qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv);
+                // debug("qkv_raw", qkv);
+    
+                debug("rotary_emb", rotary_emb);
+    
+                qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv, pool_qkv, norm_q.weight, norm_k.weight, rotary_emb);
+                debug("qkv", qkv);
+    
+                // qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context);
+                // debug("qkv_context_raw", qkv_context);
+    
+                debug("rotary_emb_context", rotary_emb_context);
+    
+                qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context, pool_qkv_context, norm_added_q.weight, norm_added_k.weight, rotary_emb_context);
+                debug("qkv_context", qkv_context);
+            }
+    
+            nvtxRangePop();
+        }
+    
+        spdlog::debug("concat={}", concat.shape.str());
+        debug("concat", concat);
+    
+        assert(concat.shape[2] == num_heads * dim_head * 3);
+    
+        nvtxRangePushA("Attention");
+    
+        raw_attn_output = attn.forward(concat, pool, sparsityRatio);
+    
+        nvtxRangePop();
+    
+        spdlog::debug("raw_attn_output={}", raw_attn_output.shape.str());
+    
+        raw_attn_output = raw_attn_output.view({batch_size, num_tokens_img + num_tokens_txt, num_heads, dim_head});
+    
+    } else if (attnImpl == AttentionImpl::NunchakuFP16) {
+        num_tokens_img_pad = ceilDiv(num_tokens_img, 256) * 256;
+        num_tokens_txt_pad = ceilDiv(num_tokens_txt, 256) * 256;
 
-            // qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv);
-            // debug("qkv_raw", qkv);
+        Tensor concat_q, concat_k, concat_v;
 
-            debug("rotary_emb", rotary_emb);
+        {
+            nvtxRangePushA("qkv_proj");
+    
+            concat_q = Tensor::allocate({batch_size, num_heads, num_tokens_img_pad + num_tokens_txt_pad, dim_head}, Tensor::FP16, norm1_output.x.device());
+            concat_k = Tensor::empty_like(concat_q);
+            concat_v = Tensor::empty_like(concat_q);
+    
+            for (int i = 0; i < batch_size; i++) {
+                // img first
+                auto sliceImg = [&](Tensor x) {
+                    return x.slice(0, i, i+1).slice(2, 0, num_tokens_img_pad);
+                };
+                auto sliceTxt = [&](Tensor x) {
+                    return x.slice(0, i, i+1).slice(2, num_tokens_img_pad, num_tokens_img_pad + num_tokens_txt_pad);
+                };
+    
+                qkv_proj.forward(
+                    norm1_output.x.slice(0, i, i + 1), {}, {}, norm_q.weight, norm_k.weight, rotary_emb,
+                    sliceImg(concat_q), sliceImg(concat_k), sliceImg(concat_v), num_tokens_img
+                );
+    
+                qkv_proj_context.forward(
+                    norm1_context_output.x.slice(0, i, i + 1), {}, {}, norm_added_q.weight, norm_added_k.weight, rotary_emb_context,
+                    sliceTxt(concat_q), sliceTxt(concat_k), sliceTxt(concat_v), num_tokens_txt
+                );
+            }
 
-            qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv, pool_qkv, norm_q.weight, norm_k.weight, rotary_emb);
-            debug("qkv", qkv);
-
-            // qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context);
-            // debug("qkv_context_raw", qkv_context);
-
-            debug("rotary_emb_context", rotary_emb_context);
-
-            qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context, pool_qkv_context, norm_added_q.weight, norm_added_k.weight, rotary_emb_context);
-            debug("qkv_context", qkv_context);
+            debug("concat_q", concat_q);
+            debug("concat_k", concat_k);
+            debug("concat_v", concat_v);
+    
+            nvtxRangePop();
         }
 
+        raw_attn_output = Tensor::allocate({batch_size, num_tokens_img_pad + num_tokens_txt_pad, num_heads * dim_head}, norm1_output.x.scalar_type(), norm1_output.x.device());
+
+        nvtxRangePushA("Attention");
+
+        kernels::attention_fp16(concat_q, concat_k, concat_v, raw_attn_output, pow(dim_head, (-0.5)));
+
         nvtxRangePop();
+
+        raw_attn_output = raw_attn_output.view({batch_size, num_tokens_img_pad + num_tokens_txt_pad, num_heads, dim_head});
+    } else {
+        assert(false);
     }
 
-    spdlog::debug("concat={}", concat.shape.str());
-    debug("concat", concat);
-
-    assert(concat.shape[2] == num_heads * dim_head * 3);
-
-    nvtxRangePushA("Attention");
-
-    Tensor raw_attn_output = attn.forward(concat, pool, sparsityRatio);
-
-    nvtxRangePop();
-
-    spdlog::debug("raw_attn_output={}", raw_attn_output.shape.str());
-
-    raw_attn_output = raw_attn_output.view({batch_size, num_tokens_img + num_tokens_context, num_heads, dim_head});
     debug("raw_attn_output", raw_attn_output);
-
 
     {
         nvtxRangePushA("o_proj");
 
         auto &&[_, gate_msa, shift_mlp, scale_mlp, gate_mlp] = norm1_output;
 
-        // raw_attn_output: [batch_size, num_tokens_img + num_tokens_context, num_heads * dim_head]
+        // raw_attn_output: [batch_size, num_tokens_img + num_tokens_txt, num_heads * dim_head]
 
         Tensor raw_attn_output_split;
         if (batch_size == 1) {
@@ -488,7 +580,7 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
                 raw_attn_output_split.data_ptr(),
                 num_tokens_img * num_heads * dim_head * raw_attn_output_split.scalar_size(),
                 raw_attn_output.data_ptr(),
-                (num_tokens_img + num_tokens_context) * num_heads * dim_head * raw_attn_output.scalar_size(),
+                (num_tokens_img_pad + num_tokens_txt_pad) * num_heads * dim_head * raw_attn_output.scalar_size(),
                 num_tokens_img * num_heads * dim_head * raw_attn_output_split.scalar_size(),
                 batch_size,
                 cudaMemcpyDeviceToDevice,
@@ -546,15 +638,15 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
 
         Tensor raw_attn_output_split;
         if (batch_size == 1) {
-            raw_attn_output_split = raw_attn_output.slice(1, num_tokens_img, num_tokens_img + num_tokens_context).reshape({batch_size, num_tokens_context, num_heads * dim_head});
+            raw_attn_output_split = raw_attn_output.slice(1, num_tokens_img_pad, num_tokens_img_pad + num_tokens_txt).reshape({batch_size, num_tokens_txt, num_heads * dim_head});
         } else {
-            raw_attn_output_split = Tensor::allocate({batch_size, num_tokens_context, num_heads * dim_head}, raw_attn_output.scalar_type(), raw_attn_output.device());
+            raw_attn_output_split = Tensor::allocate({batch_size, num_tokens_txt, num_heads * dim_head}, raw_attn_output.scalar_type(), raw_attn_output.device());
             checkCUDA(cudaMemcpy2DAsync(
                 raw_attn_output_split.data_ptr(),
-                num_tokens_context * num_heads * dim_head * raw_attn_output_split.scalar_size(),
-                raw_attn_output.data_ptr<char>() + num_tokens_img * num_heads * dim_head * raw_attn_output_split.scalar_size(),
-                (num_tokens_img + num_tokens_context) * num_heads * dim_head * raw_attn_output.scalar_size(),
-                num_tokens_context * num_heads * dim_head * raw_attn_output_split.scalar_size(),
+                num_tokens_txt * num_heads * dim_head * raw_attn_output_split.scalar_size(),
+                raw_attn_output.data_ptr<char>() + num_tokens_img_pad * num_heads * dim_head * raw_attn_output_split.scalar_size(),
+                (num_tokens_img_pad + num_tokens_txt_pad) * num_heads * dim_head * raw_attn_output.scalar_size(),
+                num_tokens_txt * num_heads * dim_head * raw_attn_output_split.scalar_size(),
                 batch_size,
                 cudaMemcpyDeviceToDevice,
                 stream));
@@ -682,4 +774,13 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
     helper.run();
 
     return hidden_states;
+}
+
+void FluxModel::setAttentionImpl(AttentionImpl impl) {
+    for (auto &&block : this->transformer_blocks) {
+        block->attnImpl = impl;
+    }
+    for (auto &&block : this->single_transformer_blocks) {
+        block->attnImpl = impl;
+    }
 }

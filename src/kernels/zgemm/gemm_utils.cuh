@@ -188,6 +188,13 @@ static void ldmatrix(const void *ptr, uint4 &out) {
     );
 }
 
+template<typename T>
+__device__ __forceinline__
+static T movmatrix(T x) {
+    asm volatile ("movmatrix.sync.aligned.m8n8.trans.b16 %0, %1;" : "=r"(*reinterpret_cast<uint32_t *>(&x)) : "r"(*reinterpret_cast<uint32_t *>(&x)));
+    return x;
+}
+
 
 // x in low bit, y in high bit
 template<int bitwidth, bool use_unsigned>
@@ -277,6 +284,13 @@ static float cuda_cos(float x) {
     return result;
 }
 
+__device__ __forceinline__
+static float cuda_exp2(float x) {
+    float result;
+    asm ("ex2.approx.ftz.f32 %0, %1;" : "=f"(result) : "f"(x));
+    return result;
+}
+
 // https://forums.developer.nvidia.com/t/hardware-accelerated-computation-of-the-sigmoid-logistic-function/266206
 __forceinline__ __device__ 
 static float cuda_sigmoidf (float a)
@@ -362,6 +376,14 @@ static float int2float_fast(int val) {
     // fval = (val & 0x7FFFFF) ^ 0x4B400000
     asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=f"(fval) : "r"(val), "n"(0x7FFFFF), "n"(0x4B400000), "n"((0xF0 & 0xCC) ^ 0xAA));
     return fval - 12582912.0f;
+}
+
+template<typename To, typename From>
+__device__ __forceinline__
+static To bit_cast(const From &input) {
+    static_assert(sizeof(To) == sizeof(From));
+    // not safe but anyway
+    return *reinterpret_cast<const To *>(&input);
 }
 
 };  // namespace nunchaku::kernels

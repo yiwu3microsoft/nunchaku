@@ -2,7 +2,7 @@
 
 namespace nunchaku::kernels {
 
-template<typename Config>
+template<typename Config, bool USE_FP4>
 class GEMM_W4A4_Launch {
     using GEMM = GEMM_W4A4<Config>;
 //     using LoraRanks = std::integer_sequence<int, 0, 32>;
@@ -48,7 +48,11 @@ public:
         bool fuse_silu,
         bool fp4,
         float alpha,
-        Tensor wcscales       // packed ws  [N]  
+        Tensor wcscales,       // packed ws  [N]  
+        Tensor out_q,          // packed attention [B, H, M, D]
+        Tensor out_k,          // packed attention [B, H, M, D]
+        Tensor out_v,           // packed attention [B, H, M, D]
+        int attn_tokens
     );
     static void quantize_w4a4_act_fuse_lora(Tensor input, Tensor output, Tensor oscales, Tensor lora_down, Tensor lora_act_out, Tensor smooth, bool fuse_glu, bool fp4);
     static void quantize_w4a4_act(Tensor input, Tensor output, Tensor oscales);

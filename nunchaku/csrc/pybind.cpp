@@ -33,7 +33,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def("stopDebug", &QuantizedFluxModel::stopDebug)
         .def("getDebugResults", &QuantizedFluxModel::getDebugResults)
         .def("setLoraScale", &QuantizedFluxModel::setLoraScale)
-        .def("forceFP16Attention", &QuantizedFluxModel::forceFP16Attention)
+        .def("setAttentionImpl", &QuantizedFluxModel::setAttentionImpl)
     ;
     py::class_<QuantizedSanaModel>(m, "QuantizedSanaModel")
         .def(py::init<>())
@@ -82,14 +82,20 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ;
 
     m.def_submodule("ops")
+        .def("gemm_w4a4", nunchaku::ops::gemm_w4a4)
+        .def("attention_fp16", nunchaku::ops::attention_fp16)
         .def("gemm_awq", nunchaku::ops::gemm_awq)
         .def("gemv_awq", nunchaku::ops::gemv_awq)
+
+        .def("test_rmsnorm_rope", nunchaku::ops::test_rmsnorm_rope)
+        .def("test_pack_qkv", nunchaku::ops::test_pack_qkv)
     ;
 
     m.def_submodule("utils")
         .def("set_log_level", [](const std::string &level) {
             spdlog::set_level(spdlog::level::from_str(level));
         })
+        .def("set_cuda_stack_limit", nunchaku::utils::set_cuda_stack_limit)
         .def("disable_memory_auto_release", nunchaku::utils::disable_memory_auto_release)
         .def("trim_memory", nunchaku::utils::trim_memory)
     ;

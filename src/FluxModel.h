@@ -6,6 +6,11 @@
 #include "Linear.h"
 #include "layernorm.h"
 
+enum class AttentionImpl {
+    FlashAttention2 = 0,
+    NunchakuFP16,
+};
+
 class AdaLayerNormZeroSingle : public Module {
 public:
     static constexpr bool USE_4BIT = true;
@@ -86,6 +91,8 @@ public:
     const int num_heads;
     const int mlp_hidden_dim;
 
+    AttentionImpl attnImpl = AttentionImpl::FlashAttention2;
+
 private:
     AdaLayerNormZeroSingle norm;
     GEMM mlp_fc1;
@@ -110,6 +117,8 @@ public:
     const int num_heads;
     const bool context_pre_only;
 
+    AttentionImpl attnImpl = AttentionImpl::FlashAttention2;
+
 private:
     AdaLayerNormZero norm1;
     AdaLayerNormZero norm1_context;
@@ -130,6 +139,8 @@ class FluxModel : public Module {
 public:
     FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Device device);
     Tensor forward(Tensor hidden_states, Tensor encoder_hidden_states, Tensor temb, Tensor rotary_emb_img, Tensor rotary_emb_context, Tensor rotary_emb_single, bool skip_first_layer = false);
+
+    void setAttentionImpl(AttentionImpl impl);
 
 public:
     std::vector<std::unique_ptr<JointTransformerBlock>> transformer_blocks;
