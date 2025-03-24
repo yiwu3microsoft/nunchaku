@@ -10,6 +10,13 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["nunchaku"]
 
+[tool.ruff]
+line-length = 140
+
+[tool.ruff.lint]
+select = ["E", "W"]
+ignore = ["F401", "E501"]
+
 [project]
 dynamic = ["version"]
 name = "nunchaku"

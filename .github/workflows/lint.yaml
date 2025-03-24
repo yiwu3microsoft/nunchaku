@@ -1,0 +1,19 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install ruff yapf
+      - name: Run ruff check
+        run: ruff check nunchaku comfyui examples tests --output-format github
+      - name: Run yapf check
+        run: yapf --diff nunchaku comfyui examples tests --recursive
