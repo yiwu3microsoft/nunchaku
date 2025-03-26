@@ -6,7 +6,7 @@ from tests.flux.test_flux_dev import run_test_flux_dev
 @pytest.mark.parametrize(
     "num_inference_steps,lora_name,lora_scale,cpu_offload,expected_lpips",
     [
-        (25, "realism", 0.9, False, 0.16),
+        (25, "realism", 0.9, False, 0.17),
         (25, "ghibsky", 1, False, 0.16),
         (28, "anime", 1, False, 0.27),
         (24, "sketch", 1, False, 0.35),

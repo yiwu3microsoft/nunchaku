@@ -1,15 +1,18 @@
 import os
+import warnings
+from typing import Any, Optional
 
 import torch
 from diffusers import __version__
 from huggingface_hub import constants, hf_hub_download
-from safetensors.torch import load_file
-from typing import Optional, Any
+from torch import nn
+
+from nunchaku.utils import ceil_divide
 
 
 class NunchakuModelLoaderMixin:
     @classmethod
-    def _build_model(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
+    def _build_model(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs) -> tuple[nn.Module, str, str]:
         subfolder = kwargs.get("subfolder", None)
         if os.path.exists(pretrained_model_name_or_path):
             dirname = (
@@ -60,16 +63,13 @@ class NunchakuModelLoaderMixin:
             **kwargs,
         )
 
-        transformer = cls.from_config(config).to(kwargs.get("torch_dtype", torch.bfloat16))
-        state_dict = load_file(unquantized_part_path)
-        transformer.load_state_dict(state_dict, strict=False)
+        with torch.device("meta"):
+            transformer = cls.from_config(config).to(kwargs.get("torch_dtype", torch.bfloat16))
 
-        return transformer, transformer_block_path
+        return transformer, unquantized_part_path, transformer_block_path
 
-def ceil_div(x: int, y: int) -> int:
-    return (x + y - 1) // y
 
-def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: Any = 0) -> torch.Tensor:
+def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: Any = 0) -> torch.Tensor | None:
     if multiples <= 1:
         return tensor
     if tensor is None:
@@ -77,8 +77,26 @@ def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: A
     shape = list(tensor.shape)
     if shape[dim] % multiples == 0:
         return tensor
-    shape[dim] = ceil_div(shape[dim], multiples) * multiples
+    shape[dim] = ceil_divide(shape[dim], multiples) * multiples
     result = torch.empty(shape, dtype=tensor.dtype, device=tensor.device)
     result.fill_(fill)
     result[[slice(0, extent) for extent in tensor.shape]] = tensor
     return result
+
+
+def get_precision(precision: str, device: str | torch.device, pretrained_model_name_or_path: str | None = None) -> str:
+    assert precision in ("auto", "int4", "fp4")
+    if precision == "auto":
+        if isinstance(device, str):
+            device = torch.device(device)
+        capability = torch.cuda.get_device_capability(0 if device.index is None else device.index)
+        sm = f"{capability[0]}{capability[1]}"
+        precision = "fp4" if sm == "120" else "int4"
+    if pretrained_model_name_or_path is not None:
+        if precision == "int4":
+            if "fp4" in pretrained_model_name_or_path:
+                warnings.warn("The model may be quantized to fp4, but you are loading it with int4 precision.")
+        elif precision == "fp4":
+            if "int4" in pretrained_model_name_or_path:
+                warnings.warn("The model may be quantized to int4, but you are loading it with fp4 precision.")
+    return precision

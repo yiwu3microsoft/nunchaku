@@ -1,15 +1,13 @@
 import os
-import tempfile
 
 import pytest
 import torch
 from diffusers import FluxPipeline
 from peft.tuners import lora
-from safetensors.torch import save_file
 
 from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 from nunchaku.caching.diffusers_adapters import apply_cache_on_pipe
-from nunchaku.lora.flux import comfyui2diffusers, convert_to_nunchaku_flux_lowrank_dict, detect_format, xlab2diffusers
+from nunchaku.lora.flux import convert_to_nunchaku_flux_lowrank_dict, is_nunchaku_format, to_diffusers
 from .utils import run_pipeline
 from ..data import get_dataset
 from ..utils import already_generate, compute_lpips
@@ -98,24 +96,7 @@ def run_test_flux_dev(
             )
         if lora_name is not None:
             lora_path = LORA_PATH_MAP[lora_name]
-            lora_format = detect_format(lora_path)
-            if lora_format != "svdquant":
-                if lora_format == "comfyui":
-                    input_lora = comfyui2diffusers(lora_path)
-                elif lora_format == "xlab":
-                    input_lora = xlab2diffusers(lora_path)
-                elif lora_format == "diffusers":
-                    input_lora = lora_path
-                else:
-                    raise ValueError(f"Invalid LoRA format {lora_format}.")
-                state_dict = convert_to_nunchaku_flux_lowrank_dict(
-                    "mit-han-lab/svdq-int4-flux.1-dev/transformer_blocks.safetensors", input_lora
-                )
-                with tempfile.NamedTemporaryFile(suffix=".safetensors", delete=True) as tmp_file:
-                    save_file(state_dict, tmp_file.name)
-                    transformer.update_lora_params(tmp_file.name)
-            else:
-                transformer.update_lora_params(lora_path)
+            transformer.update_lora_params(lora_path)
             transformer.set_lora_strength(lora_scale)
 
         pipeline_init_kwargs["transformer"] = transformer

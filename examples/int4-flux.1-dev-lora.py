@@ -10,8 +10,8 @@ pipeline = FluxPipeline.from_pretrained(
 
 ### LoRA Related Code ###
 transformer.update_lora_params(
-    "mit-han-lab/svdquant-lora-collection/svdq-int4-flux.1-dev-ghibsky.safetensors"
-)  # Path to your converted LoRA safetensors, can also be a remote HuggingFace path
+    "aleksa-codes/flux-ghibsky-illustration/lora.safetensors"
+)  # Path to your LoRA safetensors, can also be a remote HuggingFace path
 transformer.set_lora_strength(1)  # Your LoRA strength here
 ### End of LoRA Related Code ###
 
