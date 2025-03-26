@@ -143,6 +143,8 @@ public:
     void setAttentionImpl(AttentionImpl impl);
 
 public:
+    const Tensor::ScalarType dtype;
+    
     std::vector<std::unique_ptr<JointTransformerBlock>> transformer_blocks;
     std::vector<std::unique_ptr<FluxSingleTransformerBlock>> single_transformer_blocks;
 

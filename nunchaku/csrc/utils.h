@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "Tensor.h"
+#include "kernels/zgemm/zgemm.h"
 
 namespace nunchaku::utils {
 
@@ -28,6 +29,11 @@ namespace nunchaku::utils {
         checkCUDA(cudaDeviceGetDefaultMemPool(&mempool, device));
         size_t bytesToKeep = 0;
         checkCUDA(cudaMemPoolTrimTo(mempool, bytesToKeep));
+    }
+
+    void set_faster_i2f_mode(std::string mode) {
+        spdlog::info("Set fasteri2f mode to {}", mode);
+        kernels::set_faster_i2f_mode(mode);
     }
 
 };

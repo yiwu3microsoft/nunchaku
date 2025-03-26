@@ -34,6 +34,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def("getDebugResults", &QuantizedFluxModel::getDebugResults)
         .def("setLoraScale", &QuantizedFluxModel::setLoraScale)
         .def("setAttentionImpl", &QuantizedFluxModel::setAttentionImpl)
+        .def("isBF16", &QuantizedFluxModel::isBF16)
     ;
     py::class_<QuantizedSanaModel>(m, "QuantizedSanaModel")
         .def(py::init<>())
@@ -98,5 +99,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def("set_cuda_stack_limit", nunchaku::utils::set_cuda_stack_limit)
         .def("disable_memory_auto_release", nunchaku::utils::disable_memory_auto_release)
         .def("trim_memory", nunchaku::utils::trim_memory)
+        .def("set_faster_i2f_mode", nunchaku::utils::set_faster_i2f_mode)
     ;
 }

@@ -60,6 +60,12 @@ public:
     using typename AttentionConfig::epilogue_half_t;
     using typename AttentionConfig::epilogue_half2_t;
 
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 800
+    static constexpr bool IS_SM80 = true;
+#else
+    static constexpr bool IS_SM80 = false;
+#endif
+
     struct GEMMConfig {
         static constexpr int BLOCK_M = AttentionConfig::BLOCK_M;
         static constexpr int BLOCK_N = AttentionConfig::HEAD_DIM;
@@ -182,33 +188,9 @@ public:
 
     __device__ __forceinline__
     static packed_fpsum_t mma_f16xf16_f16(packed_fpsum_t a, packed_fpsum_t b, packed_fpsum_t psum) {
-        asm volatile(
-            "mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 "
-            "{%0,  %1},"
-            "{%2,  %3,  %4,  %5},"
-            "{%6,  %7},"
-            "{%8,  %9};\n"
-            : 
-            "=r"(psum.x), "=r"(psum.y)
-            : 
-            "r"(a.x), "r"(a.y), "r"(a.z), "r"(a.w),
-            "r"(b.x), "r"(b.y),
-            "r"(psum.x), "r"(psum.y)
-        );
-        asm volatile(
-            "mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 "
-            "{%0,  %1},"
-            "{%2,  %3,  %4,  %5},"
-            "{%6,  %7},"
-            "{%8,  %9};\n"
-            : 
-            "=r"(psum.z), "=r"(psum.w)
-            : 
-            "r"(a.x), "r"(a.y), "r"(a.z), "r"(a.w),
-            "r"(b.z), "r"(b.w),
-            "r"(psum.z), "r"(psum.w)
-        );
-        return psum;
+        uint2 out1 = mma_m16n8k16_f16f16f16f16(a, uint2(b.x, b.y), uint2(psum.x, psum.y));
+        uint2 out2 = mma_m16n8k16_f16f16f16f16(a, uint2(b.z, b.w), uint2(psum.z, psum.w));
+        return packed_fpsum_t{out1.x, out1.y, out2.x, out2.y};
     }
 
     // set nan values to -inf
@@ -225,11 +207,26 @@ public:
     }
 
     __device__ __forceinline__
+    static float fix_nan(float input) {
+        static constexpr float neginf = -std::numeric_limits<float>::infinity();
+        return fmaxf(input, neginf);
+    }
+
+    __device__ __forceinline__
     static packed_fpsum_t fix_nan(packed_fpsum_t input) {
         input.x = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.x)));
         input.y = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.y)));
         input.z = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.z)));
         input.w = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.w)));
+        return input;
+    }
+
+    __device__ __forceinline__
+    static packed_f32psum_t fix_nan(packed_f32psum_t input) {
+    #pragma unroll
+        for (int i = 0; i < 8; i++) {
+            input.data[i] = fix_nan(input.data[i]);
+        }
         return input;
     }
 
@@ -259,8 +256,13 @@ public:
                 for (int d = 0; d < WARP_D_TILES; d++) {
                     psum = mma_f16xf16_f16(Q[m * WARP_D_TILES + d], K[k * WARP_D_TILES + d], psum);
                 }
-                psum = fix_nan(psum);
-                QK[m * WARP_K_TILES_QK + k] = packed_fp16_to_fp32(psum);
+            
+                if constexpr (IS_SM80) {
+                    psum = fix_nan(psum);
+                    QK[m * WARP_K_TILES_QK + k] = packed_fp16_to_fp32(psum);
+                } else {
+                    QK[m * WARP_K_TILES_QK + k] = fix_nan(packed_fp16_to_fp32(psum));
+                }
 #endif
                 
             }
@@ -586,7 +588,7 @@ public:
         L.fill(make_float2(0.0f, 0.0f));
         M.fill(make_float2(neginf, neginf));
 
-        static constexpr int SHMEM_TILES = 4;
+        static constexpr int SHMEM_TILES = IS_SM80 ? 4 : 7;
         static_assert(SHMEM_TILES <= Q.size());
         using q_shmem_t = packed_q_t[NUM_WARPS][SHMEM_TILES][WARP_SIZE];
         __shared__ q_shmem_t Q_shmem;
@@ -608,6 +610,12 @@ public:
         #pragma unroll
             for (int i = 0; i < SHMEM_TILES; i++) {
                 Q[Q.size() - 1 - i] = load<true>(&Q_shmem[warpId][i][laneId]);
+            }
+
+            if constexpr (!IS_SM80) {
+                if (k1 % 2 == 1) {
+                    __syncthreads();
+                }
             }
 
             if (alwaysfalse) {
@@ -638,6 +646,8 @@ public:
 
             load_k(ptr_k, k1+1, K, k1+1 < ntokens_kv / WARP_K);
 
+            
+
             // if (alwaysfalse) {
             //     dummy = clock();
             // }
@@ -666,6 +676,7 @@ public:
 
     template<typename Epilogue>
     struct attention_fp16_kernel {
+        static constexpr int MIN_ARCH = std::is_same_v<half_t, __nv_bfloat16> ? 800 : 750;
         static constexpr int SHMEM_SIZE = 0; // sizeof(q_shmem_t);
 
         __device__

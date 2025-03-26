@@ -247,6 +247,10 @@ void cast(Tensor input, Tensor output) {
     assert(output.is_contiguous());
     assert(input.shape.dataExtent == output.shape.dataExtent);
 
+    if (input.data_ptr() == output.data_ptr()) {
+        assert(input.scalar_size() == output.scalar_size());
+    }
+
     auto stream = getCurrentCUDAStream();
 
     dispatch(input.scalar_type(), [&]<typename input_t>() {

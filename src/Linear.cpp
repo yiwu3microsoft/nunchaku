@@ -52,13 +52,14 @@ void GEMV_AWQ::loadParam(std::string key, Tensor &dst, Tensor src) {
     if (key == "lora_down" || key == "lora_up") {
         assert(src.ndims() == 2);
         if (dst.shape.dataExtent != src.shape.dataExtent) {
-            dst = src.copy(this->device);
+            dst = Tensor::allocate(src.shape.dataExtent, dst.scalar_type(), this->device);
+            Module::loadParam(key, dst, src);
             if (key == "lora_down") {
                 const int new_rank = dst.shape[0];
                 this->lora_rank = new_rank;
             }
         } else {
-            dst.copy_(src);
+            Module::loadParam(key, dst, src);
         }
     } else {
         Module::loadParam(key, dst, src);
@@ -143,16 +144,18 @@ void GEMM_W4A4::loadParam(std::string key, Tensor &dst, Tensor src) {
     if (key == "lora_down" || key == "lora_up") {
         assert(src.ndims() == 2);
         if (dst.shape.dataExtent != src.shape.dataExtent) {
-            dst = src.copy(this->device);
+            dst = Tensor::allocate(src.shape.dataExtent, dst.scalar_type(), this->device);
+            Module::loadParam(key, dst, src);
             this->lora_rank = dst.shape[1];
             this->lora_scales.resize(ceilDiv(this->lora_rank, 16), 1.0f);
         } else {
-            dst.copy_(src);
+            Module::loadParam(key, dst, src);
         }
     } else if (key == "wcscales") {
         assert(src.ndims() == 1);
         assert(src.shape[0] == out_features_pad);
-        dst = src.copy(this->device);
+        dst = Tensor::allocate(src.shape.dataExtent, dst.scalar_type(), this->device);
+        Module::loadParam(key, dst, src);
     } else if (key == "wtscale") {
         assert(src.numel() == 1);
         if (src.dtype() == Tensor::BF16) {
@@ -160,7 +163,7 @@ void GEMM_W4A4::loadParam(std::string key, Tensor &dst, Tensor src) {
         } else if (src.dtype() == Tensor::FP16) {
             *dst.data_ptr<float>() = float(*src.data_ptr<half>());
         } else if (src.dtype() == Tensor::FP32) {
-            dst.copy_(src);
+            Module::loadParam(key, dst, src);
         } else {
             assert(false);
         }

@@ -3,14 +3,32 @@
 
 namespace nunchaku::kernels {
 
+// for sm_75 only
+struct FasterI2FMode {
+    enum Mode {
+        Disabled = 0,
+        Enabled,
+        Always,
+    };
+    inline static Mode mode = Disabled;
+    static bool check(bool act_unsigned);
+};
+
+
 template<typename F>
-static void invoke_launch(Tensor::ScalarType dtype, F &&launch) {
-    if (dtype == Tensor::FP16) {
-        launch.template operator()<GEMMConfig_W4A4_FP16>();
-    } else if (dtype == Tensor::BF16) {
-        launch.template operator()<GEMMConfig_W4A4_BF16>();
+static void invoke_launch(Tensor::ScalarType dtype, bool use_fp4, bool fasterI2F, F &&launch) {
+    if (fasterI2F && dtype == Tensor::FP16) {
+        launch.template operator()<GEMMConfig_W4A4_FP16_FasterI2F, false>();
     } else {
-        assert(false);
+        dispatchBool(use_fp4, [&]<bool USE_FP4>() {
+            if (dtype == Tensor::FP16) {
+                launch.template operator()<GEMMConfig_W4A4_FP16, USE_FP4>();
+            } else if (dtype == Tensor::BF16) {
+                launch.template operator()<GEMMConfig_W4A4_BF16, USE_FP4>();
+            } else {
+                assert(false);
+            }
+        });
     }
 }
 
@@ -56,72 +74,92 @@ void gemm_w4a4(
             }
         }
     }
-    invoke_launch(dtype, [&]<typename Config>() {
-        dispatchBool(fp4, [&]<bool USE_FP4>() {
-            GEMM_W4A4_Launch<Config, USE_FP4>::gemm_w4a4(
-                act,           
-                wgt,           
-                out,           
-                qout,          
-                ascales,       
-                wscales,       
-                oscales,       
-                poolout,       
-                lora_act_in,   
-                lora_up,       
-                lora_down,     
-                lora_act_out,  
-                norm_q,        
-                norm_k,        
-                rotary_emb,    
-                bias,          
-                smooth_factor,
-                out_vk,
-                out_linearattn, 
-                act_unsigned,
-                lora_scales,
-                fuse_silu,
-                fp4,
-                alpha,
-                wcscales,
-                out_q, 
-                out_k,
-                out_v,
-                attn_tokens
-            );
-        });
+    invoke_launch(dtype, fp4, FasterI2FMode::check(act_unsigned), [&]<typename Config, bool USE_FP4>() {
+        GEMM_W4A4_Launch<Config, USE_FP4>::gemm_w4a4(
+            act,           
+            wgt,           
+            out,           
+            qout,          
+            ascales,       
+            wscales,       
+            oscales,       
+            poolout,       
+            lora_act_in,   
+            lora_up,       
+            lora_down,     
+            lora_act_out,  
+            norm_q,        
+            norm_k,        
+            rotary_emb,    
+            bias,          
+            smooth_factor,
+            out_vk,
+            out_linearattn, 
+            act_unsigned,
+            lora_scales,
+            fuse_silu,
+            fp4,
+            alpha,
+            wcscales,
+            out_q, 
+            out_k,
+            out_v,
+            attn_tokens
+        );
     });
 }
 
 void linearattn_vk_mul_q(Tensor q, Tensor vk) {
-    invoke_launch(q.dtype(), [&]<typename Config>() {
+    invoke_launch(q.dtype(), false, false, [&]<typename Config, bool USE_FP4>() {
         GEMM_W4A4_Launch<Config, false>::linearattn_vk_mul_q(q, vk);
     });
 }
 
 void quantize_w4a4_act_fuse_lora(Tensor input, Tensor output, Tensor oscales, Tensor lora_down, Tensor lora_act_out, Tensor smooth, bool fuse_glu, bool fp4) {
-    invoke_launch(input.dtype(), [&]<typename Config>() {
-        dispatchBool(fp4, [&]<bool USE_FP4>() {
-            GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act_fuse_lora(
-                input, output, oscales, lora_down, lora_act_out, smooth, fuse_glu, fp4
-            );
-        });
+    invoke_launch(input.dtype(), fp4, false, [&]<typename Config, bool USE_FP4>() {
+        GEMM_W4A4_Launch<Config, USE_FP4>::quantize_w4a4_act_fuse_lora(
+            input, output, oscales, lora_down, lora_act_out, smooth, fuse_glu, fp4
+        );
     });
 }
 
 void quantize_w4a4_act(Tensor input, Tensor output, Tensor oscales) {
-    invoke_launch(input.dtype(), [&]<typename Config>() {
+    invoke_launch(input.dtype(), false, false, [&]<typename Config, bool USE_FP4>() {
         GEMM_W4A4_Launch<Config, false>::quantize_w4a4_act(
             input, output, oscales
         );
     });
 }
 void quantize_w4a4_wgt(Tensor input, Tensor output, Tensor oscales) {
-    invoke_launch(input.dtype(), [&]<typename Config>() {
+    invoke_launch(input.dtype(), false, false, [&]<typename Config, bool USE_FP4>() {
         GEMM_W4A4_Launch<Config, false>::quantize_w4a4_wgt(
             input, output, oscales
         );
     });
+}
+
+bool FasterI2FMode::check(bool act_unsigned) {
+    auto *prop = getCurrentDeviceProperties();
+    if (prop->major != 7 || prop->minor != 5) {
+        return false;
+    }
+    
+    if (mode == Always) {
+        return true;
+    } else if (mode == Enabled && !act_unsigned) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void set_faster_i2f_mode(std::string mode) {
+    static const std::map<std::string, FasterI2FMode::Mode> mapping = {
+        {"disabled", FasterI2FMode::Disabled},
+        {"enabled", FasterI2FMode::Enabled},
+        {"always", FasterI2FMode::Always},
+    };
+    FasterI2FMode::mode = mapping.at(mode);
 }
 
 };

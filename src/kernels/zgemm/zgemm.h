@@ -69,6 +69,8 @@ void attention_fp16(
     float scale
 );
 
+// EXPERIMENTAL, for sm_75
+void set_faster_i2f_mode(std::string mode);
 
 // FOR TEST ONLY
 void test_rmsnorm_rope(Tensor input, Tensor output, Tensor norm_q, Tensor norm_k, Tensor rotary_emb);

@@ -30,7 +30,7 @@ class NunchakuFluxTransformerBlocks(nn.Module):
     def __init__(self, m: QuantizedFluxModel, device: str | torch.device):
         super(NunchakuFluxTransformerBlocks, self).__init__()
         self.m = m
-        self.dtype = torch.bfloat16
+        self.dtype = torch.bfloat16 if m.isBF16() else torch.float16
         self.device = device
 
     @staticmethod
@@ -188,13 +188,13 @@ class EmbedND(nn.Module):
 
 
 def load_quantized_module(
-    path: str, device: str | torch.device = "cuda", use_fp4: bool = False, offload: bool = False
+    path: str, device: str | torch.device = "cuda", use_fp4: bool = False, offload: bool = False, bf16: bool = True
 ) -> QuantizedFluxModel:
     device = torch.device(device)
     assert device.type == "cuda"
     m = QuantizedFluxModel()
     cutils.disable_memory_auto_release()
-    m.init(use_fp4, offload, True, 0 if device.index is None else device.index)
+    m.init(use_fp4, offload, bf16, 0 if device.index is None else device.index)
     m.load(path)
     return m
 
@@ -241,6 +241,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         if isinstance(device, str):
             device = torch.device(device)
         offload = kwargs.get("offload", False)
+        torch_dtype = kwargs.get("torch_dtype", torch.bfloat16)
         precision = get_precision(kwargs.get("precision", "auto"), device, pretrained_model_name_or_path)
         transformer, unquantized_part_path, transformer_block_path = cls._build_model(
             pretrained_model_name_or_path, **kwargs
@@ -258,7 +259,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
             elif "lora" in k:
                 new_quantized_part_sd[k] = v
         transformer._quantized_part_sd = new_quantized_part_sd
-        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4", offload=offload)
+        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4", offload=offload, bf16=torch_dtype == torch.bfloat16)
         transformer.inject_quantized_module(m, device)
         transformer.to_empty(device=device)
 

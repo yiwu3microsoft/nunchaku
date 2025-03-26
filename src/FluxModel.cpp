@@ -699,7 +699,7 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
     return { hidden_states, encoder_hidden_states };
 }
 
-FluxModel::FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Device device) : offload(offload) {
+FluxModel::FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Device device) : dtype(dtype), offload(offload) {
     for (int i = 0; i < 19; i++) {
         transformer_blocks.push_back(std::make_unique<JointTransformerBlock>(3072, 24, 3072, false, use_fp4, dtype, device));
         registerChildren(*transformer_blocks.back(), format("transformer_blocks.{}", i));
