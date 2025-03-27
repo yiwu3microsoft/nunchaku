@@ -206,21 +206,21 @@ public:
         static constexpr bool is_bf16 = std::is_same_v<half_t, __nv_bfloat16>;
 
         uint4 out1 = mma_m16n8k16_f32f16f16f32<is_bf16>(
-            bit_cast<uint4>(a), 
-            bit_cast<uint2>(std::array<half2_t, 2>(b.data[0], b.data[1])), 
-            bit_cast<uint4>(float4(psum.data[0], psum.data[1], psum.data[2], psum.data[3])));
+            kernels::bit_cast<uint4>(a), 
+            kernels::bit_cast<uint2>(std::array<half2_t, 2>(b.data[0], b.data[1])), 
+            kernels::bit_cast<uint4>(float4(psum.data[0], psum.data[1], psum.data[2], psum.data[3])));
         uint4 out2 = mma_m16n8k16_f32f16f16f32<is_bf16>(
-            bit_cast<uint4>(a), 
-            bit_cast<uint2>(std::array<half2_t, 2>(b.data[2], b.data[3])), 
-            bit_cast<uint4>(float4(psum.data[4], psum.data[5], psum.data[6], psum.data[7])));
-        psum.data[0] = bit_cast<float>(out1.x);
-        psum.data[1] = bit_cast<float>(out1.y);
-        psum.data[2] = bit_cast<float>(out1.z);
-        psum.data[3] = bit_cast<float>(out1.w);
-        psum.data[4] = bit_cast<float>(out2.x);
-        psum.data[5] = bit_cast<float>(out2.y);
-        psum.data[6] = bit_cast<float>(out2.z);
-        psum.data[7] = bit_cast<float>(out2.w);
+            kernels::bit_cast<uint4>(a), 
+            kernels::bit_cast<uint2>(std::array<half2_t, 2>(b.data[2], b.data[3])), 
+            kernels::bit_cast<uint4>(float4(psum.data[4], psum.data[5], psum.data[6], psum.data[7])));
+        psum.data[0] = kernels::bit_cast<float>(out1.x);
+        psum.data[1] = kernels::bit_cast<float>(out1.y);
+        psum.data[2] = kernels::bit_cast<float>(out1.z);
+        psum.data[3] = kernels::bit_cast<float>(out1.w);
+        psum.data[4] = kernels::bit_cast<float>(out2.x);
+        psum.data[5] = kernels::bit_cast<float>(out2.y);
+        psum.data[6] = kernels::bit_cast<float>(out2.z);
+        psum.data[7] = kernels::bit_cast<float>(out2.w);
         
         return psum;
     }

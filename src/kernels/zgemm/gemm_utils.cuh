@@ -573,7 +573,7 @@ static half2 int2half2_fast_8192(int x, int y) {
     ival = ival >> 4;
     // (val & 0x03FF03FF) ^ 0x76007600
     asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x76007600), "n"((0xF0 & 0xCC) ^ 0xAA));
-    return __hadd2(bit_cast<half2>(hval), half2(-24576.0f, -24576.0f));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-24576.0f, -24576.0f));
 }
 // val in [-4096, 4095], steps of 8, round to nearest
 __device__ __forceinline__
@@ -590,7 +590,7 @@ static half2 int2half2_fast_4096_rn(int x, int y) {
     asm volatile ("prmt.b32 %0, %1, %2, %3;" : "=r"(ival) : "r"(x), "r"(y), "n"(0x7632));
     // (val & 0x03FF03FF) ^ 0x72007200
     asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x72007200), "n"((0xF0 & 0xCC) ^ 0xAA));
-    return __hadd2(bit_cast<half2>(hval), half2(-12288.0f, -12288.0f));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-12288.0f, -12288.0f));
 }
 // val in [-512, 511]
 __device__ __forceinline__
@@ -602,7 +602,7 @@ static half2 int2half2_fast_512(int x, int y) {
     asm volatile ("prmt.b32 %0, %1, %2, %3;" : "=r"(ival) : "r"(x), "r"(y), "n"(0x5410));
     // (val & 0x03FF03FF) ^ 0x66006600
     asm volatile ("lop3.b32 %0, %1, %2, %3, %4;" : "=r"(hval) : "r"(ival), "n"(0x03FF03FF), "n"(0x66006600), "n"((0xF0 & 0xCC) ^ 0xAA));
-    return __hadd2(bit_cast<half2>(hval), half2(-1536.0f, -1536.0f));
+    return __hadd2(kernels::bit_cast<half2>(hval), half2(-1536.0f, -1536.0f));
 }
 
 };  // namespace nunchaku::kernels

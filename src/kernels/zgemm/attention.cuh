@@ -126,12 +126,12 @@ public:
         for (int i = 0; i < 4; i++) {
             results[i] = float22half2<half2_t>(float2(input.data[i * 2], input.data[i * 2 + 1]));
         }
-        return bit_cast<packed_fpsum_t>(results);
+        return kernels::bit_cast<packed_fpsum_t>(results);
     }
 
     __device__ __forceinline__
     static packed_f32psum_t packed_fp16_to_fp32(packed_fpsum_t input) {
-        auto arr = bit_cast<std::array<half2_t, 4>>(input);
+        auto arr = kernels::bit_cast<std::array<half2_t, 4>>(input);
         packed_f32psum_t results;
         for (int i = 0; i < 4; i++) {
             float2 tmp = half22float2(arr[i]);
@@ -214,10 +214,10 @@ public:
 
     __device__ __forceinline__
     static packed_fpsum_t fix_nan(packed_fpsum_t input) {
-        input.x = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.x)));
-        input.y = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.y)));
-        input.z = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.z)));
-        input.w = bit_cast<int>(fix_nan(bit_cast<half2_t>(input.w)));
+        input.x = kernels::bit_cast<int>(fix_nan(kernels::bit_cast<half2_t>(input.x)));
+        input.y = kernels::bit_cast<int>(fix_nan(kernels::bit_cast<half2_t>(input.y)));
+        input.z = kernels::bit_cast<int>(fix_nan(kernels::bit_cast<half2_t>(input.z)));
+        input.w = kernels::bit_cast<int>(fix_nan(kernels::bit_cast<half2_t>(input.w)));
         return input;
     }
 

@@ -1674,7 +1674,7 @@ public:
             const int col = n * INSN_N + laneId / 16 * 8;   // lane 0-15: n*16+0, lane 16-31: n*16+8
             uint4 tmp;
             ldmatrix(shmem + col, tmp);
-            return bit_cast<packed_fpsum_t>(tmp);
+            return kernels::bit_cast<packed_fpsum_t>(tmp);
         }
 
         __device__ __forceinline__
@@ -1813,30 +1813,30 @@ public:
         __device__ __forceinline__
         static packed_qkv_t pack_q(packed_fpsum_t input) {
             packed_qkv_t output;
-            output.x = bit_cast<int>(convert_half2(input.data[0]));
-            output.y = bit_cast<int>(convert_half2(input.data[1]));
-            output.z = bit_cast<int>(convert_half2(input.data[2]));
-            output.w = bit_cast<int>(convert_half2(input.data[3]));
+            output.x = kernels::bit_cast<int>(convert_half2(input.data[0]));
+            output.y = kernels::bit_cast<int>(convert_half2(input.data[1]));
+            output.z = kernels::bit_cast<int>(convert_half2(input.data[2]));
+            output.w = kernels::bit_cast<int>(convert_half2(input.data[3]));
             return output;
         }
 
         __device__ __forceinline__
         static packed_qkv_t pack_k(packed_fpsum_t input) {
             packed_qkv_t output;
-            output.x = bit_cast<int>(convert_half2(input.data[0]));
-            output.y = bit_cast<int>(convert_half2(input.data[2]));
-            output.z = bit_cast<int>(convert_half2(input.data[1]));
-            output.w = bit_cast<int>(convert_half2(input.data[3]));
+            output.x = kernels::bit_cast<int>(convert_half2(input.data[0]));
+            output.y = kernels::bit_cast<int>(convert_half2(input.data[2]));
+            output.z = kernels::bit_cast<int>(convert_half2(input.data[1]));
+            output.w = kernels::bit_cast<int>(convert_half2(input.data[3]));
             return output;
         }
 
         __device__ __forceinline__
         static packed_qkv_t pack_v(packed_fpsum_t input) {
             packed_qkv_t output;
-            output.x = bit_cast<int>(convert_half2(movmatrix(input.data[0])));
-            output.y = bit_cast<int>(convert_half2(movmatrix(input.data[1])));
-            output.z = bit_cast<int>(convert_half2(movmatrix(input.data[2])));
-            output.w = bit_cast<int>(convert_half2(movmatrix(input.data[3])));
+            output.x = kernels::bit_cast<int>(convert_half2(movmatrix(input.data[0])));
+            output.y = kernels::bit_cast<int>(convert_half2(movmatrix(input.data[1])));
+            output.z = kernels::bit_cast<int>(convert_half2(movmatrix(input.data[2])));
+            output.w = kernels::bit_cast<int>(convert_half2(movmatrix(input.data[3])));
             return output;
         }
 
@@ -1867,7 +1867,7 @@ public:
             unrolled_loop<WARP_M_TILES>([&]<int m>() ALWAYSINLINE {
                 unrolled_loop<WARP_N_TILES>([&]<int n>() ALWAYSINLINE {
                     packed_qkv_t pack = funcPack(fpsum[m * WARP_N_TILES + n]);
-                    mask(pack, bit_cast<uint32_t>(maskVal), m, maxRows - warpId * WARP_M);
+                    mask(pack, kernels::bit_cast<uint32_t>(maskVal), m, maxRows - warpId * WARP_M);
                     store(&ptrlane[(m * WARP_N_TILES + n) * WARP_SIZE], pack);
                 });
             });
