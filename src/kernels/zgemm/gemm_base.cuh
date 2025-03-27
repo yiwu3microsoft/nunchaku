@@ -5,6 +5,7 @@
 #include "../utils.cuh"
 #include "../dispatch_utils.h"
 #include "gemm_utils.cuh"
+#include "mma_earlycuda.cuh"
 
 
 #pragma nv_diag_suppress 177
