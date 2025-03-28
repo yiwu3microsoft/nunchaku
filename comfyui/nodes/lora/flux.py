@@ -42,7 +42,7 @@ class SVDQuantFluxLoraLoader:
                 "base_model_name": (
                     base_model_paths,
                     {
-                        "tooltip": "If the lora format is SVDQuant, this field has no use. Otherwise, the base model's state dictionary is required for converting the LoRA weights to SVDQuant."
+                        "tooltip": "If the lora format is SVDQuant, this field has no use. Otherwise, the base model's state dictionary is required for converting the LoRA weights to SVDQuant."  # noqa: E501
                     },
                 ),
                 "lora_strength": (
@@ -58,7 +58,7 @@ class SVDQuantFluxLoraLoader:
                 "save_converted_lora": (
                     ["disable", "enable"],
                     {
-                        "tooltip": "If enabled, the converted LoRA will be saved as a .safetensors file in the save directory of your LoRA file."
+                        "tooltip": "If enabled, the converted LoRA will be saved as a .safetensors file in the save directory of your LoRA file."  # noqa: E501
                     },
                 ),
             }

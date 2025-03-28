@@ -13,7 +13,7 @@ def test_flux_dev_canny():
         "black-forest-labs/FLUX.1-Canny-dev", transformer=transformer, torch_dtype=torch.bfloat16
     ).to("cuda")
 
-    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."
+    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."  # noqa: E501
     control_image = load_image(
         "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png"
     )
@@ -38,7 +38,7 @@ def test_flux_dev_depth():
         torch_dtype=torch.bfloat16,
     ).to("cuda")
 
-    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."
+    prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."  # noqa: E501
     control_image = load_image(
         "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png"
     )

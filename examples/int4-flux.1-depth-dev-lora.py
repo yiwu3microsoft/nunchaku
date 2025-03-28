@@ -23,7 +23,7 @@ processor = DepthPreprocessor.from_pretrained("LiheYoung/depth-anything-large-hf
 control_image = processor(control_image)[0].convert("RGB")
 
 image = pipe(
-    prompt="A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts.",
+    prompt="A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts.",  # noqa: E501
     control_image=control_image,
     height=1024,
     width=1024,

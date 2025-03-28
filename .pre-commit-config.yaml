@@ -1,11 +1,7 @@
 repos:
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.11.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.2
     hooks:
       - id: ruff
-        args: ["check", "nunchaku", "comfyui", "examples", "tests", "--output-format", "github"]
-  - repo: https://github.com/google/yapf
-    rev: v0.43.0
-    hooks:
-      - id: yapf
-        args: ["--diff", "--recursive", "nunchaku", "comfyui", "examples", "tests" ]
+        args: ["check", "--output-format", "github"]
+        pass_filenames: true

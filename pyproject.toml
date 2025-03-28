@@ -14,8 +14,8 @@ include = ["nunchaku"]
 line-length = 140
 
 [tool.ruff.lint]
-select = ["E", "W"]
-ignore = ["F401", "E501"]
+select = ["E", "W", "F"]
+ignore = ["F401"]
 
 [project]
 dynamic = ["version"]

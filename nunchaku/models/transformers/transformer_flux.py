@@ -259,7 +259,13 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
             elif "lora" in k:
                 new_quantized_part_sd[k] = v
         transformer._quantized_part_sd = new_quantized_part_sd
-        m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4", offload=offload, bf16=torch_dtype == torch.bfloat16)
+        m = load_quantized_module(
+            transformer_block_path,
+            device=device,
+            use_fp4=precision == "fp4",
+            offload=offload,
+            bf16=torch_dtype == torch.bfloat16,
+        )
         transformer.inject_quantized_module(m, device)
         transformer.to_empty(device=device)
 

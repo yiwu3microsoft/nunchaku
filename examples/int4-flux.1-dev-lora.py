@@ -16,7 +16,7 @@ transformer.set_lora_strength(1)  # Your LoRA strength here
 ### End of LoRA Related Code ###
 
 image = pipeline(
-    "GHIBSKY style, cozy mountain cabin covered in snow, with smoke curling from the chimney and a warm, inviting light spilling through the windows",
+    "GHIBSKY style, cozy mountain cabin covered in snow, with smoke curling from the chimney and a warm, inviting light spilling through the windows",  # noqa: E501
     num_inference_steps=25,
     guidance_scale=3.5,
 ).images[0]
