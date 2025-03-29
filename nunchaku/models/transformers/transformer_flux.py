@@ -7,7 +7,7 @@ from diffusers import FluxTransformer2DModel
 from diffusers.configuration_utils import register_to_config
 from huggingface_hub import utils
 from packaging.version import Version
-from safetensors.torch import load_file
+from safetensors.torch import load_file, save_file
 from torch import nn
 
 from .utils import get_precision, NunchakuModelLoaderMixin, pad_tensor
@@ -233,6 +233,11 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         self._unquantized_part_loras: dict[str, torch.Tensor] = {}
         self._quantized_part_sd: dict[str, torch.Tensor] = {}
         self._quantized_part_vectors: dict[str, torch.Tensor] = {}
+        self._original_in_channels = in_channels
+
+        # Comfyui LoRA related
+        self.comfy_lora_meta_list = []
+        self.comfy_lora_sd_list = []
 
     @classmethod
     @utils.validate_hf_hub_args
@@ -433,3 +438,38 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         if len(self._quantized_part_vectors) > 0:
             vector_dict = fuse_vectors(self._quantized_part_vectors, self._quantized_part_sd, strength)
             block.m.loadDict(vector_dict, True)
+
+    def reset_x_embedder(self):
+        # if change the model in channels, we need to update the x_embedder
+        if self._original_in_channels != self.config.in_channels:
+            assert self._original_in_channels < self.config.in_channels
+            old_module = self.x_embedder
+            new_module = nn.Linear(
+                in_features=self._original_in_channels,
+                out_features=old_module.out_features,
+                bias=old_module.bias is not None,
+                device=old_module.weight.device,
+                dtype=old_module.weight.dtype,
+            )
+            new_module.weight.data.copy_(old_module.weight.data[: new_module.out_features, : new_module.in_features])
+            self._unquantized_part_sd["x_embedder.weight"] = new_module.weight.data.clone()
+            if new_module.bias is not None:
+                new_module.bias.data.zero_()
+                new_module.bias.data.copy_(old_module.bias.data[: new_module.out_features])
+                self._unquantized_part_sd["x_embedder.bias"] = new_module.bias.data.clone()
+            self.x_embedder = new_module
+            setattr(self.config, "in_channels", self._original_in_channels)
+
+    def reset_lora(self):
+        unquantized_part_loras = {}
+        if len(self._unquantized_part_loras) > 0 or len(unquantized_part_loras) > 0:
+            self._unquantized_part_loras = unquantized_part_loras
+            self._update_unquantized_part_lora_params(1)
+        state_dict = {k: v for k, v in self._quantized_part_sd.items() if "lora" in k}
+        quantized_part_vectors = {}
+        if len(self._quantized_part_vectors) > 0 or len(quantized_part_vectors) > 0:
+            self._quantized_part_vectors = quantized_part_vectors
+            updated_vectors = fuse_vectors(quantized_part_vectors, self._quantized_part_sd, 1)
+            state_dict.update(updated_vectors)
+        self.transformer_blocks[0].m.loadDict(state_dict, True)
+        self.reset_x_embedder()

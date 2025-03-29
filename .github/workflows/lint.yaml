@@ -20,4 +20,4 @@ jobs:
       - name: Install dependencies
         run: pip install ruff
       - name: Run ruff check
-        run: ruff check nunchaku comfyui examples tests --output-format github
+        run: ruff check nunchaku examples tests --output-format github

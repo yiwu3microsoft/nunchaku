@@ -6,7 +6,8 @@ template<typename Config, bool USE_FP4>
 class GEMM_W4A4_Launch {
     using GEMM = GEMM_W4A4<Config>;
 //     using LoraRanks = std::integer_sequence<int, 0, 32>;
-    using LoraRanks = std::integer_sequence<int, 0, 32, 48, 64, 80, 96, 112, 128, 160, 176, 224>;
+//     using LoraRanks = std::integer_sequence<int, 0, 32, 48, 64, 80, 96, 112, 128, 160, 176, 224>;
+    using LoraRanks = std::integer_sequence<int, 0, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224>;
 //     using LoraRanks = std::integer_sequence<int,
 //     0, 32, 48, 64, 80, 96, 112, 128, 144, 160,
 //     176, 192, 208, 224, 240, 256, 272, 288, 304, 320,

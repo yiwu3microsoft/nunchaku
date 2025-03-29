@@ -13,7 +13,7 @@ def to_diffusers(input_lora: str | dict[str, torch.Tensor], output_path: str | N
     if isinstance(input_lora, str):
         tensors = load_state_dict_in_safetensors(input_lora, device="cpu")
     else:
-        tensors = input_lora
+        tensors = {k: v for k, v in input_lora.items()}
     new_tensors, alphas = FluxLoraLoaderMixin.lora_state_dict(tensors, return_alphas=True)
 
     if alphas is not None and len(alphas) > 0:

@@ -28,8 +28,6 @@ def compose_lora(
                     composed[k] = previous_tensor + v * strength
             else:
                 assert v.ndim == 2
-                if "lora_A" in k:
-                    v = v * strength
                 if ".to_q." in k or ".add_q_proj." in k:  # qkv must all exist
                     if "lora_B" in k:
                         continue
