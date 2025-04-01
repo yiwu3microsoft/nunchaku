@@ -1,5 +1,6 @@
 #include "zgemm.h"
 #include "gemm_w4a4.cuh"
+#include "epilogues.cuh"
 
 namespace nunchaku::kernels {
 
@@ -10,7 +11,7 @@ void test_rmsnorm_rope(Tensor input, Tensor output, Tensor norm_q, Tensor norm_k
     assert(input.shape.dataExtent == output.shape.dataExtent);
     assert(input.scalar_type() == Tensor::FP16);
 
-    using GEMM = GEMM_W4A4<GEMMConfig_W4A4_FP16>;
+    using GEMM = Epilogues<GEMMConfig_W4A4_FP16>;
     using Epilogue = GEMM::EpilogueRMSNormRope;
 
     assert(M % GEMM::BLOCK_M == 0);
@@ -51,7 +52,7 @@ void test_pack_qkv(Tensor input, Tensor out_q, Tensor out_k, Tensor out_v, int n
 
     Tensor output = Tensor::empty_like(input);
 
-    using GEMM = GEMM_W4A4<GEMMConfig_W4A4_FP16>;
+    using GEMM = Epilogues<GEMMConfig_W4A4_FP16>;
     using Epilogue = GEMM::EpiloguePackQKV;
 
     assert(M % GEMM::BLOCK_M == 0);

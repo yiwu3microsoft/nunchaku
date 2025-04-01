@@ -256,6 +256,16 @@ public:
         return results;
     }
 
+    __device__ __forceinline__
+    static f32psum_warp packed_fp16_to_fp32(fpsum_warp input) {
+        f32psum_warp results;
+    #pragma unroll
+        for (int i = 0; i < results.size(); i++) {
+            results[i] = packed_fp16_to_fp32(input[i]);
+        }
+        return results;
+    }
+
     // activation: row major, [M / BLOCK_M, K / WARP_K, NUM_WARPS, WARP_M_TILES, WARP_SIZE] of packed_act_t
     __device__ __forceinline__ 
     static void load_act(const packed_act_t *act, int k, int K, act_warp &out, bool pred) {
@@ -570,6 +580,63 @@ public:
         }
     };
 
+    // loads act of [WARP_M, WARP_N] and stores to fpsum_warp
+    // [WARP_M, WARP_N * 2] when fuse_glu
+    template<bool fuse_glu>
+    struct load_act_to_fpsum {
+        using matrix_t = half_t[INSN_M][WARP_N + 8];
+        static constexpr size_t SHMEM_SIZE = sizeof(matrix_t);
+
+        __device__ __forceinline__
+        void operator()(const half_t *input, int stride, int maxRows, int maxCols, fpsum_warp &out, void *shmem) {
+            const int laneId = threadIdx.x % WARP_SIZE;
+
+            matrix_t &mat = *reinterpret_cast<matrix_t *>(shmem);
+
+            constexpr int PACK_SIZE = WARP_N / WARP_SIZE;
+            using packed_input = std::array<half_t, PACK_SIZE>;
+            using packed_raw_input = std::array<half2_t, PACK_SIZE>;
+
+        #pragma unroll
+            for (int m = 0; m < WARP_M_TILES; m++) {
+        #pragma unroll
+                for (int row = 0; row < INSN_M; row++) {
+                    packed_input pack;
+                    // TODO: numCols not multiples of PACK_SIZE
+                    if constexpr (fuse_glu) {
+                        packed_raw_input raw;
+                        raw.fill(half2_t(0, 0));
+                        bool pred = (m * INSN_M + row) < maxRows && laneId * PACK_SIZE * 2 < maxCols;
+                        if (pred) {
+                            raw = load(reinterpret_cast<const packed_raw_input *>(input + (m * INSN_M + row) * stride + laneId * PACK_SIZE * 2));
+                        }
+                    #pragma unroll
+                        for (int j = 0; j < PACK_SIZE; j++) {
+                            pack[j] = raw[j].x * silu(raw[j].y);
+                        }
+                    } else {
+                        pack.fill(half_t(0));
+                        bool pred = (m * INSN_M + row) < maxRows && laneId * PACK_SIZE < maxCols;
+                        if (pred) {
+                            pack = load(reinterpret_cast<const packed_input *>(input + (m * INSN_M + row) * stride + laneId * PACK_SIZE));
+                        }
+                    }
+                    store<true>(reinterpret_cast<packed_input *>(&mat[row][laneId * PACK_SIZE]), pack);
+                }
+                __syncwarp();
+
+                for (int n = 0; n < WARP_N_TILES; n++) {
+                    const int row = laneId % 16;
+                    const int col = n * INSN_N + laneId / 16 * 8;
+                    uint4 tmp;
+                    ldmatrix(&mat[row][col], tmp);
+                    *reinterpret_cast<uint4 *>(&out[m * WARP_N_TILES + n]) = tmp;
+                }
+                __syncwarp();
+            }
+        }
+    };
+
     
     template<typename F>
     __device__ __forceinline__
@@ -599,7 +666,7 @@ public:
         };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, const Arguments &args) {
             const int warpId = threadIdx.x / WARP_SIZE;
             
             __shared__ alignas(128) uint8_t shmem[NUM_WARPS][ceilDiv(unpack_fpsum::SHMEM_SIZE, 128) * 128];
@@ -632,7 +699,7 @@ public:
         struct Arguments { size_t unused; };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp fpsum, int M, int N, int K, const Arguments &args) {
         }
     };
 
@@ -696,7 +763,7 @@ public:
         }
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             const int bn = binfo.bn;
             if constexpr (USE_BIAS || USE_SCALE) {
                 apply_bias(
@@ -712,7 +779,7 @@ public:
         struct Arguments { size_t unused; };
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             fpsum = apply_act(fpsum, [](half_t x) { return silu(x); });
         }
     };
@@ -722,7 +789,7 @@ public:
         using Arguments = std::tuple<typename Epilogues::Arguments...>;
 
         __device__ __forceinline__
-        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, Arguments args) {
+        void operator()(const BlockInfo binfo, fpsum_warp &fpsum, int M, int N, int K, const Arguments &args) {
             // this function makes intellisense crashes :(
     #if __INTELLISENSE__
             __trap();   // should not happen when actually compiling

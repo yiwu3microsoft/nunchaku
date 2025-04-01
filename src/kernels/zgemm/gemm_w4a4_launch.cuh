@@ -1,18 +1,13 @@
 #include "gemm_w4a4.cuh"
+#include "epilogues.cuh"
 
 namespace nunchaku::kernels {
 
 template<typename Config, bool USE_FP4>
 class GEMM_W4A4_Launch {
     using GEMM = GEMM_W4A4<Config>;
-//     using LoraRanks = std::integer_sequence<int, 0, 32>;
-//     using LoraRanks = std::integer_sequence<int, 0, 32, 48, 64, 80, 96, 112, 128, 160, 176, 224>;
-    using LoraRanks = std::integer_sequence<int, 0, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224>;
-//     using LoraRanks = std::integer_sequence<int,
-//     0, 32, 48, 64, 80, 96, 112, 128, 144, 160,
-//     176, 192, 208, 224, 240, 256, 272, 288, 304, 320,
-//     336, 352, 368, 384, 400, 416, 432, 448, 464, 480,
-//     496, 512>;
+    using Epilogues = Epilogues<Config>;
+    using Lora = Lora<Config>;
 
     using packed_act_t    = typename GEMM::packed_act_t;
     using packed_wgt_t    = typename GEMM::packed_wgt_t;

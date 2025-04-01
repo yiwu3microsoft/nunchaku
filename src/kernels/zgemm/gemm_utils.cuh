@@ -358,6 +358,14 @@ static void reduce_add(float *addr, float val) {
     asm volatile ("red.relaxed.gpu.global.add.f32 [%0], %1;" :: "l"(addr), "f"(val));
 }
 
+__device__ __forceinline__
+static void reduce_add_pred(float *addr, float val, bool pred) {
+    asm volatile (
+        "{ .reg .pred storepred; setp.ne.b32 storepred, %0, 0;"
+        "@storepred red.relaxed.gpu.global.add.f32 [%1], %2;"
+        "}" :: "r"((int)pred), "l"(addr), "f"(val));
+}
+
 template<int cnt, typename F>
 __device__ __forceinline__
 static void unrolled_loop(F &&lambda) {
