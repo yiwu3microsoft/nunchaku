@@ -40,7 +40,7 @@ Tensor forward_fc(GEMM_W4A4 &fc, Tensor x) {
 AdaLayerNormZeroSingle::AdaLayerNormZeroSingle(int dim, Tensor::ScalarType dtype, Device device) :
     dim(dim),
     linear(dim, 3 * dim, true, dtype, device),
-    norm(dim, 1e-6, false, dtype, device) 
+    norm(dim, 1e-6, false, dtype, device)
 {
     registerChildren
         (linear, "linear")
@@ -59,12 +59,12 @@ AdaLayerNormZeroSingle::Output AdaLayerNormZeroSingle::forward(Tensor x, Tensor 
     debug("x", x);
     Tensor norm_x = norm.forward(x);
     debug("norm_x", norm_x);
-    
+
     kernels::mul_add(norm_x, scale_msa, shift_msa);
     return Output{norm_x, gate_msa};
 }
 
-AdaLayerNormZero::AdaLayerNormZero(int dim, bool pre_only, Tensor::ScalarType dtype, Device device) : 
+AdaLayerNormZero::AdaLayerNormZero(int dim, bool pre_only, Tensor::ScalarType dtype, Device device) :
     dim(dim), pre_only(pre_only),
     linear(dim, pre_only ? 2 * dim : 6 * dim, true, dtype, device),
     norm(dim, 1e-6, false, dtype, device)
@@ -91,7 +91,7 @@ AdaLayerNormZero::Output AdaLayerNormZero::forward(Tensor x, Tensor emb) {
 
         kernels::mul_add(norm_x, scale_msa, shift_msa);
         debug("norm_x_scaled", norm_x);
-        
+
         return Output{norm_x};
     } else {
         auto &&[shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp] = kernels::split_mod<6>(emb);
@@ -108,7 +108,7 @@ AdaLayerNormZero::Output AdaLayerNormZero::forward(Tensor x, Tensor emb) {
 }
 
 
-Attention::Attention(int num_heads, int dim_head, Device device) : 
+Attention::Attention(int num_heads, int dim_head, Device device) :
     num_heads(num_heads), dim_head(dim_head), force_fp16(false)
 {
     headmask_type = Tensor::allocate({num_heads}, Tensor::INT32, Device::cpu());
@@ -151,7 +151,7 @@ Tensor Attention::forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio) {
             gemm_batched_fp16(pool_q, pool_k, pool_s);
         }
     }
-    
+
     blockmask = kernels::topk(pool_score, pool_tokens * (1 - sparsityRatio));
 
     if (cu_seqlens_cpu.valid()) {
@@ -227,9 +227,9 @@ Tensor Attention::forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio) {
         false
     ).front();
 
-    Tensor raw_attn_output = mha_fwd(q, k, v, 
-        0.0f, 
-        pow(q.shape[-1], (-0.5)), 
+    Tensor raw_attn_output = mha_fwd(q, k, v,
+        0.0f,
+        pow(q.shape[-1], (-0.5)),
         false, -1, -1, false
     ).front();
 
@@ -261,7 +261,7 @@ void Attention::setForceFP16(Module *module, bool value) {
 }
 
 FluxSingleTransformerBlock::FluxSingleTransformerBlock(int dim, int num_attention_heads, int attention_head_dim, int mlp_ratio, bool use_fp4, Tensor::ScalarType dtype, Device device) :
-    dim(dim), 
+    dim(dim),
     dim_head(attention_head_dim / num_attention_heads),
     num_heads(num_attention_heads),
     mlp_hidden_dim(dim * mlp_ratio),
@@ -311,7 +311,7 @@ Tensor FluxSingleTransformerBlock::forward(Tensor hidden_states, Tensor temb, Te
         qkv_proj.forward(norm_hidden_states, qkv, {}, norm_q.weight, norm_k.weight, rotary_emb);
         debug("qkv", qkv);
         // Tensor qkv = forward_fc(qkv_proj, norm_hidden_states);
-        
+
         attn_output = attn.forward(qkv, {}, 0);
         attn_output = attn_output.reshape({batch_size, num_tokens, num_heads * dim_head});
     } else if (attnImpl == AttentionImpl::NunchakuFP16) {
@@ -340,7 +340,7 @@ Tensor FluxSingleTransformerBlock::forward(Tensor hidden_states, Tensor temb, Te
 
     debug("raw_attn_output", attn_output);
 
-    
+
 
     attn_output = forward_fc(out_proj, attn_output);
     debug("attn_output", attn_output);
@@ -350,7 +350,7 @@ Tensor FluxSingleTransformerBlock::forward(Tensor hidden_states, Tensor temb, Te
 
     hidden_states = kernels::add(attn_output, ff_output);
     debug("attn_ff_output", hidden_states);
-    
+
     kernels::mul_add(hidden_states, gate, residual);
 
     nvtxRangePop();
@@ -358,7 +358,7 @@ Tensor FluxSingleTransformerBlock::forward(Tensor hidden_states, Tensor temb, Te
     return hidden_states;
 }
 
-JointTransformerBlock::JointTransformerBlock(int dim, int num_attention_heads, int attention_head_dim, bool context_pre_only, bool use_fp4, Tensor::ScalarType dtype, Device device) : 
+JointTransformerBlock::JointTransformerBlock(int dim, int num_attention_heads, int attention_head_dim, bool context_pre_only, bool use_fp4, Tensor::ScalarType dtype, Device device) :
     dim(dim),
     dim_head(attention_head_dim / num_attention_heads),
     num_heads(num_attention_heads),
@@ -416,7 +416,7 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
 
     int num_tokens_img = hidden_states.shape[1];
     int num_tokens_txt = encoder_hidden_states.shape[1];
-    
+
     assert(hidden_states.shape[2] == dim);
     assert(encoder_hidden_states.shape[2] == dim);
 
@@ -439,7 +439,7 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
     nvtxRangePop();
 
     auto stream = getCurrentCUDAStream();
-    
+
     int num_tokens_img_pad = 0, num_tokens_txt_pad = 0;
     Tensor raw_attn_output;
 
@@ -449,66 +449,66 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
 
         Tensor concat;
         Tensor pool;
-        
+
         {
             nvtxRangePushA("qkv_proj");
-    
+
             const bool blockSparse = sparsityRatio > 0;
-    
+
             const int poolTokens = num_tokens_img / POOL_SIZE + num_tokens_txt / POOL_SIZE;
             concat = Tensor::allocate({batch_size, num_tokens_img + num_tokens_txt, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device());
-    
+
             pool = blockSparse
                 ? Tensor::allocate({batch_size, poolTokens, dim * 3}, norm1_output.x.scalar_type(), norm1_output.x.device())
                 : Tensor{};
-    
+
             for (int i = 0; i < batch_size; i++) {
                 // img first
                 Tensor qkv = concat.slice(0, i, i + 1).slice(1, 0, num_tokens_img);
                 Tensor qkv_context = concat.slice(0, i, i + 1).slice(1, num_tokens_img, num_tokens_img + num_tokens_txt);
-    
+
                 Tensor pool_qkv = pool.valid()
                     ? pool.slice(0, i, i + 1).slice(1, 0, num_tokens_img / POOL_SIZE)
                     : Tensor{};
                 Tensor pool_qkv_context = pool.valid()
                     ? concat.slice(0, i, i + 1).slice(1, num_tokens_img / POOL_SIZE, num_tokens_img / POOL_SIZE + num_tokens_txt / POOL_SIZE)
                     : Tensor{};
-    
+
                 // qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv);
                 // debug("qkv_raw", qkv);
-    
+
                 debug("rotary_emb", rotary_emb);
-    
+
                 qkv_proj.forward(norm1_output.x.slice(0, i, i + 1), qkv, pool_qkv, norm_q.weight, norm_k.weight, rotary_emb);
                 debug("qkv", qkv);
-    
+
                 // qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context);
                 // debug("qkv_context_raw", qkv_context);
-    
+
                 debug("rotary_emb_context", rotary_emb_context);
-    
+
                 qkv_proj_context.forward(norm1_context_output.x.slice(0, i, i + 1), qkv_context, pool_qkv_context, norm_added_q.weight, norm_added_k.weight, rotary_emb_context);
                 debug("qkv_context", qkv_context);
             }
-    
+
             nvtxRangePop();
         }
-    
+
         spdlog::debug("concat={}", concat.shape.str());
         debug("concat", concat);
-    
+
         assert(concat.shape[2] == num_heads * dim_head * 3);
-    
+
         nvtxRangePushA("Attention");
-    
+
         raw_attn_output = attn.forward(concat, pool, sparsityRatio);
-    
+
         nvtxRangePop();
-    
+
         spdlog::debug("raw_attn_output={}", raw_attn_output.shape.str());
-    
+
         raw_attn_output = raw_attn_output.view({batch_size, num_tokens_img + num_tokens_txt, num_heads, dim_head});
-    
+
     } else if (attnImpl == AttentionImpl::NunchakuFP16) {
         num_tokens_img_pad = ceilDiv(num_tokens_img, 256) * 256;
         num_tokens_txt_pad = ceilDiv(num_tokens_txt, 256) * 256;
@@ -517,11 +517,11 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
 
         {
             nvtxRangePushA("qkv_proj");
-    
+
             concat_q = Tensor::allocate({batch_size, num_heads, num_tokens_img_pad + num_tokens_txt_pad, dim_head}, Tensor::FP16, norm1_output.x.device());
             concat_k = Tensor::empty_like(concat_q);
             concat_v = Tensor::empty_like(concat_q);
-    
+
             for (int i = 0; i < batch_size; i++) {
                 // img first
                 auto sliceImg = [&](Tensor x) {
@@ -530,12 +530,12 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
                 auto sliceTxt = [&](Tensor x) {
                     return x.slice(0, i, i+1).slice(2, num_tokens_img_pad, num_tokens_img_pad + num_tokens_txt_pad);
                 };
-    
+
                 qkv_proj.forward(
                     norm1_output.x.slice(0, i, i + 1), {}, {}, norm_q.weight, norm_k.weight, rotary_emb,
                     sliceImg(concat_q), sliceImg(concat_k), sliceImg(concat_v), num_tokens_img
                 );
-    
+
                 qkv_proj_context.forward(
                     norm1_context_output.x.slice(0, i, i + 1), {}, {}, norm_added_q.weight, norm_added_k.weight, rotary_emb_context,
                     sliceTxt(concat_q), sliceTxt(concat_k), sliceTxt(concat_v), num_tokens_txt
@@ -545,7 +545,7 @@ std::tuple<Tensor, Tensor> JointTransformerBlock::forward(Tensor hidden_states, 
             debug("concat_q", concat_q);
             debug("concat_k", concat_k);
             debug("concat_v", concat_v);
-    
+
             nvtxRangePop();
         }
 
@@ -718,7 +718,16 @@ FluxModel::FluxModel(bool use_fp4, bool offload, Tensor::ScalarType dtype, Devic
     }
 }
 
-Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Tensor temb, Tensor rotary_emb_img, Tensor rotary_emb_context, Tensor rotary_emb_single, bool skip_first_layer) {
+Tensor FluxModel::forward(
+        Tensor hidden_states,
+        Tensor encoder_hidden_states,
+        Tensor temb,
+        Tensor rotary_emb_img,
+        Tensor rotary_emb_context,
+        Tensor rotary_emb_single,
+        Tensor controlnet_block_samples,
+        Tensor controlnet_single_block_samples,
+        bool skip_first_layer) {
     const int batch_size = hidden_states.shape[0];
     const Tensor::ScalarType dtype = hidden_states.dtype();
     const Device device = hidden_states.device();
@@ -727,6 +736,8 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
     const int img_tokens = hidden_states.shape[1];
 
     const int numLayers = transformer_blocks.size() + single_transformer_blocks.size();
+    const int num_controlnet_block_samples = controlnet_block_samples.shape[0];
+    const int num_controlnet_single_block_samples = controlnet_single_block_samples.shape[0];
 
     Tensor concat;
 
@@ -735,6 +746,14 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
         if (size_t(layer) < transformer_blocks.size()) {
             auto &block = transformer_blocks.at(layer);
             std::tie(hidden_states, encoder_hidden_states) = block->forward(hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_context, 0.0f);
+            if (controlnet_block_samples.valid()) {
+                int interval_control = ceilDiv(transformer_blocks.size(), static_cast<size_t>(num_controlnet_block_samples));
+                int block_index = layer / interval_control;
+                // Xlabs ControlNet
+                // block_index = layer % num_controlnet_block_samples;
+
+                hidden_states = kernels::add(hidden_states, controlnet_block_samples[block_index]);
+            }
         } else {
             if (size_t(layer) == transformer_blocks.size()) {
                 // txt first, same as diffusers
@@ -745,10 +764,21 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
                 }
                 hidden_states = concat;
                 encoder_hidden_states = {};
+
             }
 
             auto &block = single_transformer_blocks.at(layer - transformer_blocks.size());
             hidden_states = block->forward(hidden_states, temb, rotary_emb_single);
+            if (controlnet_single_block_samples.valid()) {
+                int interval_control = ceilDiv(single_transformer_blocks.size(), static_cast<size_t>(num_controlnet_single_block_samples));
+                int block_index = (layer - transformer_blocks.size()) / interval_control;
+                // Xlabs ControlNet
+                // block_index = layer % num_controlnet_single_block_samples
+
+                auto slice = hidden_states.slice(1, txt_tokens, txt_tokens + img_tokens);
+                slice = kernels::add(slice, controlnet_single_block_samples[block_index]);
+                hidden_states.slice(1, txt_tokens, txt_tokens + img_tokens).copy_(slice);
+            }
         }
     };
     auto load = [&](int layer) {
@@ -774,6 +804,50 @@ Tensor FluxModel::forward(Tensor hidden_states, Tensor encoder_hidden_states, Te
     helper.run();
 
     return hidden_states;
+}
+
+std::tuple<Tensor, Tensor> FluxModel::forward_layer(
+        size_t layer,
+        Tensor hidden_states,
+        Tensor encoder_hidden_states,
+        Tensor temb,
+        Tensor rotary_emb_img,
+        Tensor rotary_emb_context,
+        Tensor controlnet_block_samples,
+        Tensor controlnet_single_block_samples) {
+
+    std::tie(hidden_states, encoder_hidden_states) = transformer_blocks.at(layer)->forward(
+        hidden_states,
+        encoder_hidden_states,
+        temb,
+        rotary_emb_img,
+        rotary_emb_context, 0.0f);
+
+    const int txt_tokens = encoder_hidden_states.shape[1];
+    const int img_tokens = hidden_states.shape[1];
+
+    const int num_controlnet_block_samples = controlnet_block_samples.shape[0];
+    const int num_controlnet_single_block_samples = controlnet_single_block_samples.shape[0];
+
+    if (layer < transformer_blocks.size() && controlnet_block_samples.valid()) {
+        int interval_control = ceilDiv(transformer_blocks.size(), static_cast<size_t>(num_controlnet_block_samples));
+        int block_index = layer / interval_control;
+        // Xlabs ControlNet
+        // block_index = layer % num_controlnet_block_samples;
+
+        hidden_states = kernels::add(hidden_states, controlnet_block_samples[block_index]);
+    } else if (layer >= transformer_blocks.size() && controlnet_single_block_samples.valid()) {
+        int interval_control = ceilDiv(single_transformer_blocks.size(), static_cast<size_t>(num_controlnet_single_block_samples));
+        int block_index = (layer - transformer_blocks.size()) / interval_control;
+        // Xlabs ControlNet
+        // block_index = layer % num_controlnet_single_block_samples
+
+        auto slice = hidden_states.slice(1, txt_tokens, txt_tokens + img_tokens);
+        slice = kernels::add(slice, controlnet_single_block_samples[block_index]);
+        hidden_states.slice(1, txt_tokens, txt_tokens + img_tokens).copy_(slice);
+    }
+
+    return { hidden_states, encoder_hidden_states };
 }
 
 void FluxModel::setAttentionImpl(AttentionImpl impl) {

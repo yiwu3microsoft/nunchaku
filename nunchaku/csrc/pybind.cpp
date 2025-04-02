@@ -18,16 +18,35 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             py::arg("deviceId")
         )
         .def("reset", &QuantizedFluxModel::reset)
-        .def("load", &QuantizedFluxModel::load, 
+        .def("load", &QuantizedFluxModel::load,
             py::arg("path"),
             py::arg("partial") = false
         )
-        .def("loadDict", &QuantizedFluxModel::loadDict, 
+        .def("loadDict", &QuantizedFluxModel::loadDict,
             py::arg("dict"),
             py::arg("partial") = false
         )
-        .def("forward", &QuantizedFluxModel::forward)
-        .def("forward_layer", &QuantizedFluxModel::forward_layer)
+        .def("forward", &QuantizedFluxModel::forward,
+            py::arg("hidden_states"),
+            py::arg("encoder_hidden_states"),
+            py::arg("temb"),
+            py::arg("rotary_emb_img"),
+            py::arg("rotary_emb_context"),
+            py::arg("rotary_emb_single"),
+            py::arg("controlnet_block_samples") = py::none(),
+            py::arg("controlnet_single_block_samples") = py::none(),
+            py::arg("skip_first_layer") = false
+        )
+        .def("forward_layer", &QuantizedFluxModel::forward_layer,
+            py::arg("idx"),
+            py::arg("hidden_states"),
+            py::arg("encoder_hidden_states"),
+            py::arg("temb"),
+            py::arg("rotary_emb_img"),
+            py::arg("rotary_emb_context"),
+            py::arg("controlnet_block_samples") = py::none(),
+            py::arg("controlnet_single_block_samples") = py::none()
+        )
         .def("forward_single_layer", &QuantizedFluxModel::forward_single_layer)
         .def("startDebug", &QuantizedFluxModel::startDebug)
         .def("stopDebug", &QuantizedFluxModel::stopDebug)
@@ -46,11 +65,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             py::arg("deviceId")
         )
         .def("reset", &QuantizedSanaModel::reset)
-        .def("load", &QuantizedSanaModel::load, 
+        .def("load", &QuantizedSanaModel::load,
             py::arg("path"),
             py::arg("partial") = false
         )
-        .def("loadDict", &QuantizedSanaModel::loadDict, 
+        .def("loadDict", &QuantizedSanaModel::loadDict,
             py::arg("dict"),
             py::arg("partial") = false
         )

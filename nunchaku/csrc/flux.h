@@ -35,6 +35,8 @@ public:
         torch::Tensor rotary_emb_img,
         torch::Tensor rotary_emb_context,
         torch::Tensor rotary_emb_single,
+        std::optional<torch::Tensor> controlnet_block_samples = std::nullopt,
+        std::optional<torch::Tensor> controlnet_single_block_samples = std::nullopt,
         bool skip_first_layer = false)
     {
         checkModel();
@@ -56,6 +58,8 @@ public:
             from_torch(rotary_emb_img),
             from_torch(rotary_emb_context),
             from_torch(rotary_emb_single),
+            controlnet_block_samples.has_value() ? from_torch(controlnet_block_samples.value().contiguous()) : Tensor{},
+            controlnet_single_block_samples.has_value() ? from_torch(controlnet_single_block_samples.value().contiguous()) : Tensor{},
             skip_first_layer
         );
 
@@ -71,7 +75,9 @@ public:
         torch::Tensor encoder_hidden_states,
         torch::Tensor temb,
         torch::Tensor rotary_emb_img,
-        torch::Tensor rotary_emb_context)
+        torch::Tensor rotary_emb_context,
+        std::optional<torch::Tensor> controlnet_block_samples = std::nullopt,
+        std::optional<torch::Tensor> controlnet_single_block_samples = std::nullopt)
     {
         CUDADeviceContext ctx(deviceId);
 
@@ -83,17 +89,19 @@ public:
         rotary_emb_img = rotary_emb_img.contiguous();
         rotary_emb_context = rotary_emb_context.contiguous();
 
-        auto &&[result_img, result_txt] = net->transformer_blocks.at(idx)->forward(
+        auto &&[hidden_states_, encoder_hidden_states_] = net->forward_layer(
+            idx,
             from_torch(hidden_states),
             from_torch(encoder_hidden_states),
             from_torch(temb),
             from_torch(rotary_emb_img),
             from_torch(rotary_emb_context),
-            0.0f
+            controlnet_block_samples.has_value() ? from_torch(controlnet_block_samples.value().contiguous()) : Tensor{},
+            controlnet_single_block_samples.has_value() ? from_torch(controlnet_single_block_samples.value().contiguous()) : Tensor{}
         );
 
-        hidden_states = to_torch(result_img);
-        encoder_hidden_states = to_torch(result_txt);
+        hidden_states = to_torch(hidden_states_);
+        encoder_hidden_states = to_torch(encoder_hidden_states_);
         Tensor::synchronizeDevice();
 
         return { hidden_states, encoder_hidden_states };
