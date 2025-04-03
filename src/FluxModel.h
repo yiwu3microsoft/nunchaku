@@ -63,6 +63,7 @@ public:
     static constexpr int POOL_SIZE = 128;
 
     Attention(int num_heads, int dim_head, Device device);
+    Tensor forward(Tensor qkv);
     Tensor forward(Tensor qkv, Tensor pool_qkv, float sparsityRatio);
 
     static void setForceFP16(Module *module, bool value);
