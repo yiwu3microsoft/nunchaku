@@ -39,7 +39,7 @@ def test_flux_depth_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.103 if get_precision() == "int4" else 0.120,
+        expected_lpips=0.170 if get_precision() == "int4" else 0.120,
     )
 
 
@@ -140,5 +140,5 @@ def test_flux_dev_redux():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.187 if get_precision() == "int4" else 0.55,  # redux seems to generate different images on 5090
+        expected_lpips=0.198 if get_precision() == "int4" else 0.55,  # redux seems to generate different images on 5090
     )

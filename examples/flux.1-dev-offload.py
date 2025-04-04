@@ -10,7 +10,7 @@ transformer = NunchakuFluxTransformer2dModel.from_pretrained(
 )  # set offload to False if you want to disable offloading
 pipeline = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
-)
-pipeline.enable_sequential_cpu_offload()  # remove this line if you want to disable the CPU offloading
+)  # no need to set the device here
+pipeline.enable_sequential_cpu_offload()  # diffusers' offloading
 image = pipeline("A cat holding a sign that says hello world", num_inference_steps=50, guidance_scale=3.5).images[0]
 image.save(f"flux.1-dev-{precision}.png")
