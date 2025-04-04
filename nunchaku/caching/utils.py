@@ -94,7 +94,6 @@ def apply_prev_hidden_states_residual(
         encoder_hidden_states = encoder_hidden_states_residual + encoder_hidden_states
         encoder_hidden_states = encoder_hidden_states.contiguous()
 
-
     return hidden_states, encoder_hidden_states
 
 
@@ -108,6 +107,7 @@ def get_can_use_cache(first_hidden_states_residual, threshold, parallelized=Fals
         parallelized=parallelized,
     )
     return can_use_cache
+
 
 class SanaCachedTransformerBlocks(nn.Module):
     def __init__(
@@ -123,20 +123,20 @@ class SanaCachedTransformerBlocks(nn.Module):
         self.residual_diff_threshold = residual_diff_threshold
         self.verbose = verbose
 
-    def forward(self,
-                hidden_states,
-                attention_mask,
-                encoder_hidden_states,
-                encoder_attention_mask=None,
-                timestep=None,
-                post_patch_height=None,
-                post_patch_width=None,
-                ):
+    def forward(
+        self,
+        hidden_states,
+        attention_mask,
+        encoder_hidden_states,
+        encoder_attention_mask=None,
+        timestep=None,
+        post_patch_height=None,
+        post_patch_width=None,
+    ):
         batch_size = hidden_states.shape[0]
         if self.residual_diff_threshold <= 0.0 or batch_size > 2:
             if batch_size > 2:
-                print("Batch size > 2 (for SANA CFG)"
-                      " currently not supported")
+                print("Batch size > 2 (for SANA CFG)" " currently not supported")
 
             first_transformer_block = self.transformer_blocks[0]
             hidden_states = first_transformer_block(
@@ -199,15 +199,15 @@ class SanaCachedTransformerBlocks(nn.Module):
 
         return hidden_states
 
-
-    def call_remaining_transformer_blocks(self,
+    def call_remaining_transformer_blocks(
+        self,
         hidden_states,
         attention_mask,
         encoder_hidden_states,
         encoder_attention_mask=None,
         timestep=None,
         post_patch_height=None,
-        post_patch_width=None
+        post_patch_width=None,
     ):
         first_transformer_block = self.transformer_blocks[0]
         original_hidden_states = hidden_states
@@ -219,7 +219,7 @@ class SanaCachedTransformerBlocks(nn.Module):
             timestep=timestep,
             height=post_patch_height,
             width=post_patch_width,
-            skip_first_layer=True
+            skip_first_layer=True,
         )
         hidden_states_residual = hidden_states - original_hidden_states
 

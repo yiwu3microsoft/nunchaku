@@ -4,13 +4,18 @@ from diffusers import FluxControlPipeline
 from diffusers.utils import load_image
 
 from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku.utils import get_precision
 
-transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-canny-dev")
+precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
+transformer = NunchakuFluxTransformer2dModel.from_pretrained(f"mit-han-lab/svdq-{precision}-flux.1-canny-dev")
 pipe = FluxControlPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-Canny-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
 
-prompt = "A robot made of exotic candies and chocolates of different kinds. The background is filled with confetti and celebratory gifts."
+prompt = (
+    "A robot made of exotic candies and chocolates of different kinds. "
+    "The background is filled with confetti and celebratory gifts."
+)
 control_image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png")
 
 processor = CannyDetector()
@@ -21,4 +26,4 @@ control_image = processor(
 image = pipe(
     prompt=prompt, control_image=control_image, height=1024, width=1024, num_inference_steps=50, guidance_scale=30.0
 ).images[0]
-image.save("flux.1-canny-dev.png")
+image.save(f"flux.1-canny-dev-{precision}.png")

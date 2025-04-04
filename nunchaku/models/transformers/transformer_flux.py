@@ -13,11 +13,11 @@ from packaging.version import Version
 from safetensors.torch import load_file, save_file
 from torch import nn
 
-from .utils import get_precision, NunchakuModelLoaderMixin, pad_tensor
+from .utils import NunchakuModelLoaderMixin, pad_tensor
 from ..._C import QuantizedFluxModel, utils as cutils
 from ...lora.flux.nunchaku_converter import fuse_vectors, to_nunchaku
 from ...lora.flux.utils import is_nunchaku_format
-from ...utils import load_state_dict_in_safetensors
+from ...utils import get_precision, load_state_dict_in_safetensors
 
 SVD_RANK = 32
 
@@ -127,7 +127,7 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         image_rotary_emb: torch.Tensor,
         joint_attention_kwargs=None,
         controlnet_block_samples=None,
-        controlnet_single_block_samples=None
+        controlnet_single_block_samples=None,
     ):
         batch_size = hidden_states.shape[0]
         txt_tokens = encoder_hidden_states.shape[1]
@@ -159,8 +159,14 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         rotary_emb_img = self.pack_rotemb(pad_tensor(rotary_emb_img, 256, 1))
 
         hidden_states, encoder_hidden_states = self.m.forward_layer(
-            idx, hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_txt,
-            controlnet_block_samples, controlnet_single_block_samples
+            idx,
+            hidden_states,
+            encoder_hidden_states,
+            temb,
+            rotary_emb_img,
+            rotary_emb_txt,
+            controlnet_block_samples,
+            controlnet_single_block_samples,
         )
 
         hidden_states = hidden_states.to(original_dtype).to(original_device)
@@ -578,7 +584,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
             image_rotary_emb=image_rotary_emb,
             joint_attention_kwargs=joint_attention_kwargs,
             controlnet_block_samples=controlnet_block_samples,
-            controlnet_single_block_samples=controlnet_single_block_samples
+            controlnet_single_block_samples=controlnet_single_block_samples,
         )
         hidden_states = torch.cat([encoder_hidden_states, hidden_states], dim=1)
         hidden_states = hidden_states[:, encoder_hidden_states.shape[1] :, ...]

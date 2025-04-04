@@ -1,9 +1,12 @@
+import pytest
 import torch
 from diffusers import SanaPAGPipeline, SanaPipeline
 
 from nunchaku import NunchakuSanaTransformer2DModel
+from nunchaku.utils import get_precision, is_turing
 
 
+@pytest.mark.skipif(is_turing() or get_precision() == "fp4", reason="Skip tests due to Turing GPUs")
 def test_sana():
     transformer = NunchakuSanaTransformer2DModel.from_pretrained("mit-han-lab/svdq-int4-sana-1600m")
     pipe = SanaPipeline.from_pretrained(
@@ -28,6 +31,7 @@ def test_sana():
     image.save("sana_1600m.png")
 
 
+@pytest.mark.skipif(is_turing() or get_precision() == "fp4", reason="Skip tests due to Turing GPUs")
 def test_sana_pag():
     transformer = NunchakuSanaTransformer2DModel.from_pretrained("mit-han-lab/svdq-int4-sana-1600m", pag_layers=8)
     pipe = SanaPAGPipeline.from_pretrained(

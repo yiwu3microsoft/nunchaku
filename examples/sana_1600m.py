@@ -23,4 +23,4 @@ image = pipe(
     generator=torch.Generator().manual_seed(42),
 ).images[0]
 
-image.save("sana_1600m.png")
+image.save("sana_1600m-int4.png")

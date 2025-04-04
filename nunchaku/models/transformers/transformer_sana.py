@@ -8,7 +8,8 @@ from safetensors.torch import load_file
 from torch import nn
 from torch.nn import functional as F
 
-from .utils import get_precision, NunchakuModelLoaderMixin
+from .utils import NunchakuModelLoaderMixin
+from ...utils import get_precision
 from ..._C import QuantizedSanaModel, utils as cutils
 
 SVD_RANK = 32

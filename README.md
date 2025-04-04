@@ -4,8 +4,7 @@
 <h3 align="center">
 <a href="http://arxiv.org/abs/2411.05007"><b>Paper</b></a> | <a href="https://hanlab.mit.edu/projects/svdquant"><b>Website</b></a> | <a href="https://hanlab.mit.edu/blog/svdquant"><b>Blog</b></a> | <a href="https://svdquant.mit.edu"><b>Demo</b></a> | <a href="https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c"><b>HuggingFace</b></a> | <a href="https://modelscope.cn/collections/svdquant-468e8f780c2641"><b>ModelScope</b></a> | <a href="https://github.com/mit-han-lab/ComfyUI-nunchaku"><b>ComfyUI</b></a>
 </h3>
-
-**Nunchaku** is a high-performance inference engine optimized for 4-bit diffusion models, as introduced in our paper [SVDQuant](http://arxiv.org/abs/2411.05007). For the underlying quantization library, check out [DeepCompressor](https://github.com/mit-han-lab/deepcompressor).
+**Nunchaku** is a high-performance inference engine optimized for 4-bit neural networks, as introduced in our paper [SVDQuant](http://arxiv.org/abs/2411.05007). For the underlying quantization library, check out [DeepCompressor](https://github.com/mit-han-lab/deepcompressor).
 
 Join our user groups on [**Slack**](https://join.slack.com/t/nunchaku/shared_invite/zt-3170agzoz-NgZzWaTrEj~n2KEV3Hpl5Q) and [**WeChat**](./assets/wechat.jpg) to engage in discussions with the community! More details can be found [here](https://github.com/mit-han-lab/nunchaku/issues/149). If you have any questions, run into issues, or are interested in contributing, don’t hesitate to reach out!
 
@@ -23,9 +22,9 @@ Join our user groups on [**Slack**](https://join.slack.com/t/nunchaku/shared_inv
 
 <details>
 <summary>More</summary>
-  
+
 - **[2025-02-04]** **🚀 4-bit [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) is here!** Enjoy a **2-3× speedup** over the original models. Check out the [examples](./examples) for usage. **ComfyUI integration is coming soon!**
-- **[2025-01-23]** 🚀 **4-bit [SANA](https://nvlabs.github.io/Sana/) support is here!** Experience a 2-3× speedup compared to the 16-bit model. Check out the [usage example](./examples/int4-sana_1600m_pag.py) and the [deployment guide](app/sana/t2i) for more details. Explore our live demo at [svdquant.mit.edu](https://svdquant.mit.edu)!
+- **[2025-01-23]** 🚀 **4-bit [SANA](https://nvlabs.github.io/Sana/) support is here!** Experience a 2-3× speedup compared to the 16-bit model. Check out the [usage example](./examples/sana_1600m_pag.py) and the [deployment guide](app/sana/t2i) for more details. Explore our live demo at [svdquant.mit.edu](https://svdquant.mit.edu)!
 - **[2025-01-22]** 🎉 [**SVDQuant**](http://arxiv.org/abs/2411.05007) has been accepted to **ICLR 2025**!
 - **[2024-12-08]** Support [ComfyUI](https://github.com/comfyanonymous/ComfyUI). Please check [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) for the usage.
 - **[2024-11-07]** 🔥 Our latest **W4A4** Diffusion model quantization work [**SVDQuant**](https://hanlab.mit.edu/projects/svdquant) is publicly released! Check [**DeepCompressor**](https://github.com/mit-han-lab/deepcompressor) for the quantization library.
@@ -88,7 +87,7 @@ Once PyTorch is installed, you can directly install `nunchaku` from our [Hugging
 pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.1.4+torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
-**Note**: NVFP4 wheels are not currently available because PyTorch has not officially supported CUDA 11.8. To use NVFP4, you will need **Blackwell GPUs (e.g., 50-series GPUs)** and must **build from source**.
+**Note**: NVFP4 wheels are not currently available because PyTorch has not officially supported CUDA 12.8. To use NVFP4, you will need **Blackwell GPUs (e.g., 50-series GPUs)** and must **build from source**.
 
 ### Build from Source
 
@@ -129,7 +128,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
     cd nunchaku
     git submodule init
     git submodule update
-    pip install -e . --no-build-isolation
+    python setup.py develop
     ```
 
 **[Optional]** You can verify your installation by running: `python -m nunchaku.test`. This command will download and run our 4-bit FLUX.1-schnell model.
@@ -156,7 +155,7 @@ Specifically, `nunchaku` shares the same APIs as [diffusers](https://github.com/
 
 ### Low Memory Inference
 
-To further reduce GPU memory usage, you can use our 4-bit T5 encoder along with CPU offloading, requiring a minimum of just 4GiB of memory. The usage is also simple in the diffusers' way. For example, the [script](examples/int4-flux.1-dev-qencoder.py) for FLUX.1-dev is as follows:
+To further reduce GPU memory usage, you can use our 4-bit T5 encoder along with CPU offloading, requiring a minimum of just 4GiB of memory. The usage is also simple in the diffusers' way. For example, the [script](examples/flux.1-dev-qencoder.py) for FLUX.1-dev is as follows:
 
 ```python
 import torch
@@ -180,65 +179,41 @@ image.save("flux.1-dev.png")
 
 ![lora](./assets/lora.jpg)
 
-[SVDQuant](http://arxiv.org/abs/2411.05007) seamlessly integrates with off-the-shelf LoRAs without requiring requantization. To convert your LoRA safetensors to our format, use the following command:
-
-```shell
-python -m nunchaku.lora.flux.convert \
-  --quant-path mit-han-lab/svdq-int4-flux.1-dev/transformer_blocks.safetensors \
-  --lora-path aleksa-codes/flux-ghibsky-illustration/lora.safetensors \
-  --output-root ./nunchaku_loras \
-  --lora-name svdq-int4-flux.1-dev-ghibsky
-```
-
-Argument Details:
-
-- `--quant-path`: The path to the quantized base model. It can be a local path or a remote Hugging Face model. For example, you can use [`mit-han-lab/svdq-int4-flux.1-dev/transformer_blocks.safetensors`](https://huggingface.co/mit-han-lab/svdq-int4-flux.1-dev/blob/main/transformer_blocks.safetensors) for FLUX.1-dev.
-
-- `--lora-path`: The path to your LoRA safetensors, which can also be a local or remote Hugging Face model.
-
-- `--lora-format`: Specifies the LoRA format. Supported formats include:
-  - `auto`: The default option. Automatically detects the appropriate LoRA format.
-  - `diffusers` (e.g., [aleksa-codes/flux-ghibsky-illustration](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration))
-  - `comfyui` (e.g., [Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch](https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-Children-Simple-Sketch))
-  - `xlab` (e.g., [XLabs-AI/flux-RealismLora](https://huggingface.co/XLabs-AI/flux-RealismLora))
-  
-- `--output-root`: Specifies the output directory for the converted LoRA.
-
-- `--lora-name`: Sets the name of the converted LoRA file (without `.safetensors` extension).
-
-After converting your LoRA, you can use your converted weight with:
+[SVDQuant](http://arxiv.org/abs/2411.05007) seamlessly integrates with off-the-shelf LoRAs without requiring requantization. You can simply use your LoRA with:
 
 ```python
 transformer.update_lora_params(path_to_your_converted_lora)
 transformer.set_lora_strength(lora_strength)
 ```
 
-`path_to_your_lora` can also be a remote HuggingFace path. In [examples/int4-flux.1-dev-lora.py](examples/int4-flux.1-dev-lora.py), we provide a minimal example script for running [Ghibsky](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration) LoRA with SVDQuant's INT4 FLUX.1-dev:
+`path_to_your_lora` can also be a remote HuggingFace path. In [examples/flux.1-dev-lora.py](examples/flux.1-dev-lora.py), we provide a minimal example script for running [Ghibsky](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration) LoRA with SVDQuant's 4-bit FLUX.1-dev:
 
 ```python
 import torch
 from diffusers import FluxPipeline
 
 from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku.utils import get_precision
 
-transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
+precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
+transformer = NunchakuFluxTransformer2dModel.from_pretrained(f"mit-han-lab/svdq-{precision}-flux.1-dev")
 pipeline = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
 
 ### LoRA Related Code ###
 transformer.update_lora_params(
-    "mit-han-lab/svdquant-lora-collection/svdq-int4-flux.1-dev-ghibsky.safetensors"
-)  # Path to your converted LoRA safetensors, can also be a remote HuggingFace path
+    "aleksa-codes/flux-ghibsky-illustration/lora.safetensors"
+)  # Path to your LoRA safetensors, can also be a remote HuggingFace path
 transformer.set_lora_strength(1)  # Your LoRA strength here
 ### End of LoRA Related Code ###
 
 image = pipeline(
-    "GHIBSKY style, cozy mountain cabin covered in snow, with smoke curling from the chimney and a warm, inviting light spilling through the windows",
+    "GHIBSKY style, cozy mountain cabin covered in snow, with smoke curling from the chimney and a warm, inviting light spilling through the windows",  # noqa: E501
     num_inference_steps=25,
     guidance_scale=3.5,
 ).images[0]
-image.save("flux.1-dev-ghibsky.png")
+image.save(f"flux.1-dev-ghibsky-{precision}.png")
 ```
 
 **For ComfyUI users, we have implemented a node to convert the LoRA weights on the fly. All you need to do is specify the correct LoRA format. Please refer to [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) for more details.**

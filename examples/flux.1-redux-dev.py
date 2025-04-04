@@ -3,11 +3,13 @@ from diffusers import FluxPipeline, FluxPriorReduxPipeline
 from diffusers.utils import load_image
 
 from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku.utils import get_precision
 
+precision = get_precision()
 pipe_prior_redux = FluxPriorReduxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-Redux-dev", torch_dtype=torch.bfloat16
 ).to("cuda")
-transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
+transformer = NunchakuFluxTransformer2dModel.from_pretrained(f"mit-han-lab/svdq-{precision}-flux.1-dev")
 pipe = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev",
     text_encoder=None,
@@ -19,4 +21,4 @@ pipe = FluxPipeline.from_pretrained(
 image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png")
 pipe_prior_output = pipe_prior_redux(image)
 images = pipe(guidance_scale=2.5, num_inference_steps=50, **pipe_prior_output).images
-images[0].save("flux.1-redux-dev.png")
+images[0].save(f"flux.1-redux-dev-{precision}.png")

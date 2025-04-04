@@ -24,4 +24,4 @@ image = pipe(
     pag_scale=2.0,
     num_inference_steps=20,
 ).images[0]
-image.save("sana_1600m_pag.png")
+image.save("sana_1600m_pag-int4.png")

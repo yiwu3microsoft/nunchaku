@@ -1,5 +1,4 @@
 import os
-import warnings
 from typing import Any, Optional
 
 import torch
@@ -82,21 +81,3 @@ def pad_tensor(tensor: Optional[torch.Tensor], multiples: int, dim: int, fill: A
     result.fill_(fill)
     result[[slice(0, extent) for extent in tensor.shape]] = tensor
     return result
-
-
-def get_precision(precision: str, device: str | torch.device, pretrained_model_name_or_path: str | None = None) -> str:
-    assert precision in ("auto", "int4", "fp4")
-    if precision == "auto":
-        if isinstance(device, str):
-            device = torch.device(device)
-        capability = torch.cuda.get_device_capability(0 if device.index is None else device.index)
-        sm = f"{capability[0]}{capability[1]}"
-        precision = "fp4" if sm == "120" else "int4"
-    if pretrained_model_name_or_path is not None:
-        if precision == "int4":
-            if "fp4" in pretrained_model_name_or_path:
-                warnings.warn("The model may be quantized to fp4, but you are loading it with int4 precision.")
-        elif precision == "fp4":
-            if "int4" in pretrained_model_name_or_path:
-                warnings.warn("The model may be quantized to int4, but you are loading it with fp4 precision.")
-    return precision

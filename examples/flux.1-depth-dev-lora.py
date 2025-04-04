@@ -4,8 +4,10 @@ from diffusers.utils import load_image
 from image_gen_aux import DepthPreprocessor
 
 from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku.utils import get_precision
 
-transformer = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
+precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
+transformer = NunchakuFluxTransformer2dModel.from_pretrained(f"mit-han-lab/svdq-{precision}-flux.1-dev")
 pipe = FluxControlPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to("cuda")
@@ -31,4 +33,4 @@ image = pipe(
     guidance_scale=10.0,
     generator=torch.Generator().manual_seed(42),
 ).images[0]
-image.save("int4-flux.1-depth-dev-lora.png")
+image.save(f"flux.1-depth-dev-lora-{precision}.png")

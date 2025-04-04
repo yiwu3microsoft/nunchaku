@@ -3,6 +3,7 @@ import os
 import random
 
 import datasets
+import yaml
 from PIL import Image
 
 _CITATION = """\
@@ -32,6 +33,8 @@ IMAGE_URL = "https://huggingface.co/datasets/playgroundai/MJHQ-30K/resolve/main/
 
 META_URL = "https://huggingface.co/datasets/playgroundai/MJHQ-30K/resolve/main/meta_data.json"
 
+CONTROL_URL = "https://huggingface.co/datasets/mit-han-lab/svdquant-datasets/resolve/main/MJHQ-5000.zip"
+
 
 class MJHQConfig(datasets.BuilderConfig):
     def __init__(self, max_dataset_size: int = -1, return_gt: bool = False, **kwargs):
@@ -46,11 +49,14 @@ class MJHQConfig(datasets.BuilderConfig):
         self.return_gt = return_gt
 
 
-class DCI(datasets.GeneratorBasedBuilder):
+class MJHQ(datasets.GeneratorBasedBuilder):
     VERSION = datasets.Version("0.0.0")
 
     BUILDER_CONFIG_CLASS = MJHQConfig
-    BUILDER_CONFIGS = [MJHQConfig(name="MJHQ", version=VERSION, description="MJHQ-30K full dataset")]
+    BUILDER_CONFIGS = [
+        MJHQConfig(name="MJHQ", version=VERSION, description="MJHQ-30K full dataset"),
+        MJHQConfig(name="MJHQ-control", version=VERSION, description="MJHQ-5K with controls"),
+    ]
     DEFAULT_CONFIG_NAME = "MJHQ"
 
     def _info(self):
@@ -64,6 +70,10 @@ class DCI(datasets.GeneratorBasedBuilder):
                 "image_root": datasets.Value("string"),
                 "image_path": datasets.Value("string"),
                 "split": datasets.Value("string"),
+                "canny_image_path": datasets.Value("string"),
+                "cropped_image_path": datasets.Value("string"),
+                "depth_image_path": datasets.Value("string"),
+                "mask_image_path": datasets.Value("string"),
             }
         )
         return datasets.DatasetInfo(
@@ -71,36 +81,75 @@ class DCI(datasets.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: datasets.download.DownloadManager):
-        meta_path = dl_manager.download(META_URL)
-        image_root = dl_manager.download_and_extract(IMAGE_URL)
-        return [
-            datasets.SplitGenerator(
-                name=datasets.Split.TRAIN, gen_kwargs={"meta_path": meta_path, "image_root": image_root}
-            ),
-        ]
+        if self.config.name == "MJHQ":
+            meta_path = dl_manager.download(META_URL)
+            image_root = dl_manager.download_and_extract(IMAGE_URL)
+            return [
+                datasets.SplitGenerator(
+                    name=datasets.Split.TRAIN, gen_kwargs={"meta_path": meta_path, "image_root": image_root}
+                ),
+            ]
+        else:
+            assert self.config.name == "MJHQ-control"
+            control_root = dl_manager.download_and_extract(CONTROL_URL)
+            control_root = os.path.join(control_root, "MJHQ-5000")
+            return [
+                datasets.SplitGenerator(
+                    name=datasets.Split.TRAIN,
+                    gen_kwargs={"meta_path": os.path.join(control_root, "prompts.yaml"), "image_root": control_root},
+                ),
+            ]
 
     def _generate_examples(self, meta_path: str, image_root: str):
+        if self.config.name == "MJHQ":
+            with open(meta_path, "r") as f:
+                meta = json.load(f)
 
-        with open(meta_path, "r") as f:
-            meta = json.load(f)
+            names = list(meta.keys())
+            if self.config.max_dataset_size > 0:
+                random.Random(0).shuffle(names)
+                names = names[: self.config.max_dataset_size]
+                names = sorted(names)
 
-        names = list(meta.keys())
-        if self.config.max_dataset_size > 0:
-            random.Random(0).shuffle(names)
-            names = names[: self.config.max_dataset_size]
-            names = sorted(names)
-
-        for i, name in enumerate(names):
-            category = meta[name]["category"]
-            prompt = meta[name]["prompt"]
-            image_path = os.path.join(image_root, category, f"{name}.jpg")
-            yield i, {
-                "filename": name,
-                "category": category,
-                "image": Image.open(image_path) if self.config.return_gt else None,
-                "prompt": prompt,
-                "meta_path": meta_path,
-                "image_root": image_root,
-                "image_path": image_path,
-                "split": self.config.name,
-            }
+            for i, name in enumerate(names):
+                category = meta[name]["category"]
+                prompt = meta[name]["prompt"]
+                image_path = os.path.join(image_root, category, f"{name}.jpg")
+                yield i, {
+                    "filename": name,
+                    "category": category,
+                    "image": Image.open(image_path) if self.config.return_gt else None,
+                    "prompt": prompt,
+                    "meta_path": meta_path,
+                    "image_root": image_root,
+                    "image_path": image_path,
+                    "split": self.config.name,
+                    "canny_image_path": None,
+                    "cropped_image_path": None,
+                    "depth_image_path": None,
+                    "mask_image_path": None,
+                }
+        else:
+            assert self.config.name == "MJHQ-control"
+            meta = yaml.safe_load(open(meta_path, "r"))
+            names = list(meta.keys())
+            if self.config.max_dataset_size > 0:
+                random.Random(0).shuffle(names)
+                names = names[: self.config.max_dataset_size]
+                names = sorted(names)
+            for i, name in enumerate(names):
+                prompt = meta[name]
+                yield i, {
+                    "filename": name,
+                    "category": None,
+                    "image": None,
+                    "prompt": prompt,
+                    "meta_path": meta_path,
+                    "image_root": image_root,
+                    "image_path": os.path.join(image_root, "images", f"{name}.png"),
+                    "split": self.config.name,
+                    "canny_image_path": os.path.join(image_root, "canny_images", f"{name}.png"),
+                    "cropped_image_path": os.path.join(image_root, "cropped_images", f"{name}.png"),
+                    "depth_image_path": os.path.join(image_root, "depth_images", f"{name}.png"),
+                    "mask_image_path": os.path.join(image_root, "mask_images", f"{name}.png"),
+                }

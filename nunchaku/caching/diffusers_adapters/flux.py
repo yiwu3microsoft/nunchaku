@@ -1,8 +1,8 @@
 import functools
 import unittest
 
-import torch
 from diffusers import DiffusionPipeline, FluxTransformer2DModel
+from torch import nn
 
 from ...caching import utils
 
@@ -11,7 +11,7 @@ def apply_cache_on_transformer(transformer: FluxTransformer2DModel, *, residual_
     if getattr(transformer, "_is_cached", False):
         return transformer
 
-    cached_transformer_blocks = torch.nn.ModuleList(
+    cached_transformer_blocks = nn.ModuleList(
         [
             utils.FluxCachedTransformerBlocks(
                 transformer=transformer,
@@ -20,7 +20,7 @@ def apply_cache_on_transformer(transformer: FluxTransformer2DModel, *, residual_
             )
         ]
     )
-    dummy_single_transformer_blocks = torch.nn.ModuleList()
+    dummy_single_transformer_blocks = nn.ModuleList()
 
     original_forward = transformer.forward
 
