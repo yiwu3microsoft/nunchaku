@@ -20,10 +20,15 @@ for %%P in (%python_versions%) do (
     )
 )
 
-call scripts\build_windows_wheel.cmd 3.10 2.7 12.8
-call scripts\build_windows_wheel.cmd 3.11 2.7 12.8
-call scripts\build_windows_wheel.cmd 3.12 2.7 12.8
-call scripts\build_windows_wheel.cmd 3.13 2.7 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.10 2.7 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.11 2.7 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.12 2.7 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.13 2.7 12.8
+
+call scripts\build_windows_wheel_cu128.cmd 3.10 2.8 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.11 2.8 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.12 2.8 12.8
+call scripts\build_windows_wheel_cu128.cmd 3.13 2.8 12.8
 
 echo All builds completed successfully!
 exit /b 0

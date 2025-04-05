@@ -4,13 +4,15 @@
 <h3 align="center">
 <a href="http://arxiv.org/abs/2411.05007"><b>Paper</b></a> | <a href="https://hanlab.mit.edu/projects/svdquant"><b>Website</b></a> | <a href="https://hanlab.mit.edu/blog/svdquant"><b>Blog</b></a> | <a href="https://svdquant.mit.edu"><b>Demo</b></a> | <a href="https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c"><b>HuggingFace</b></a> | <a href="https://modelscope.cn/collections/svdquant-468e8f780c2641"><b>ModelScope</b></a> | <a href="https://github.com/mit-han-lab/ComfyUI-nunchaku"><b>ComfyUI</b></a>
 </h3>
+
+
 **Nunchaku** is a high-performance inference engine optimized for 4-bit neural networks, as introduced in our paper [SVDQuant](http://arxiv.org/abs/2411.05007). For the underlying quantization library, check out [DeepCompressor](https://github.com/mit-han-lab/deepcompressor).
 
 Join our user groups on [**Slack**](https://join.slack.com/t/nunchaku/shared_invite/zt-3170agzoz-NgZzWaTrEj~n2KEV3Hpl5Q) and [**WeChat**](./assets/wechat.jpg) to engage in discussions with the community! More details can be found [here](https://github.com/mit-han-lab/nunchaku/issues/149). If you have any questions, run into issues, or are interested in contributing, don’t hesitate to reach out!
 
 ## News
 
-- **[2025-04-05]** 🚀 **Nunchaku v0.2.0 released!** This release brings **multi-LoRA** and **ControlNet** support with even faster performance. We've also added compatibility for **20-series GPUs** — Nunchaku is now more accessible than ever!
+- **[2025-04-05]** 🚀 **Nunchaku v0.2.0 released!** This release brings [**multi-LoRA**](examples/flux.1-dev-multiple-lora.py) and [**ControlNet**](examples/flux.1-dev-controlnet-union-pro.py) support with even faster performance powered by [**FP16 attention**](#fp16-attention) and [**First-Block Cache**](#first-block-cache). We've also added compatibility for [**20-series GPUs**](examples/flux.1-dev-turing.py) — Nunchaku is now more accessible than ever!
 - **[2025-03-17]** 🚀 Released NVFP4 4-bit [Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar) and FLUX.1-tools and also upgraded the INT4 FLUX.1-tool models. Download and update your models from our [HuggingFace](https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c) or [ModelScope](https://modelscope.cn/collections/svdquant-468e8f780c2641) collections!
 - **[2025-03-13]** 📦 Separate the ComfyUI node into a [standalone repository](https://github.com/mit-han-lab/ComfyUI-nunchaku) for easier installation and release node v0.1.6! Plus, [4-bit Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar) is now fully supported!
 - **[2025-03-07]** 🚀 **Nunchaku v0.1.4 Released!** We've supported [4-bit text encoder and per-layer CPU offloading](#Low-Memory-Inference), reducing FLUX's minimum memory requirement to just **4 GiB** while maintaining a **2–3× speedup**. This update also fixes various issues related to resolution, LoRA, pin memory, and runtime stability. Check out the release notes for full details!
@@ -71,7 +73,7 @@ pip install torch==2.6 torchvision==0.21 torchaudio==2.6
 ```
 
 #### Install nunchaku
-Once PyTorch is installed, you can directly install `nunchaku` from our whell repositories [Hugging Face](https://huggingface.co/mit-han-lab/nunchaku/tree/main) or [ModelScope](https://modelscope.cn/models/Lmxyy1999/nunchaku). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
+Once PyTorch is installed, you can directly install `nunchaku` from our wheel repositories on [Hugging Face](https://huggingface.co/mit-han-lab/nunchaku/tree/main) or [ModelScope](https://modelscope.cn/models/Lmxyy1999/nunchaku) or [GitHub release](https://github.com/mit-han-lab/nunchaku/releases). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
 
 ```shell
 pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.2.0+torch2.6-cp311-cp311-linux_x86_64.whl
@@ -83,7 +85,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
 
 **Note**:
 
-*  Ensure your CUDA version is **≥ 12.2 on Linux** and **≥ 12.6 on Windows**.
+*  Make sure your CUDA version is **at least 12.2 on Linux** and **at least 12.6 on Windows**. If you're using a Blackwell GPU (e.g., 50-series GPUs), CUDA **12.8 or higher is required**.
 
 *  For Windows users, please refer to [this issue](https://github.com/mit-han-lab/nunchaku/issues/6) for the instruction. Please upgrade your MSVC compiler to the latest version.
 
@@ -141,7 +143,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
 
 ## Usage Example
 
-In [examples](examples), we provide minimal scripts for running INT4 [FLUX.1](https://github.com/black-forest-labs/flux) and [SANA](https://github.com/NVlabs/Sana) models with Nunchaku. For example, the [script](examples/flux.1-dev.py) for [FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) is as follows:
+In [examples](examples), we provide minimal scripts for running INT4 [FLUX.1](https://github.com/black-forest-labs/flux) and [SANA](https://github.com/NVlabs/Sana) models with Nunchaku. It shares the same APIs as [diffusers](https://github.com/huggingface/diffusers) and can be used in a similar way. For example, the [script](examples/flux.1-dev.py) for [FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev) is as follows:
 
 ```python
 import torch
@@ -159,35 +161,37 @@ image = pipeline("A cat holding a sign that says hello world", num_inference_ste
 image.save(f"flux.1-dev-{precision}.png")
 ```
 
-Specifically, `nunchaku` shares the same APIs as [diffusers](https://github.com/huggingface/diffusers) and can be used in a similar way.
+**Note**: If you're using a **Turing GPU (e.g., NVIDIA 20-series)**, make sure to set `torch_dtype=torch.float16` and use our `nunchaku-fp16` attention module as below. A complete example is available in [`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py).
 
-### First-Block Cache and Low-Precision Attention
+### FP16 Attention
 
+In addition to FlashAttention-2, Nunchaku introduces a custom FP16 attention implementation that achieves up to **1.2× faster performance** on NVIDIA 30-, 40-, and even 50-series GPUs—without loss in precision. To enable it, simply use:
 
+```python
+transformer.set_attention_impl("nunchaku-fp16")
+```
+
+See [`examples/flux.1-dev-fp16attn.py`](examples/flux.1-dev-fp16attn.py) for a complete example.
+
+### First-Block Cache
+
+Nunchaku supports [First-Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching) to accelerate long-step denoising. Enable it easily with:
+
+```python
+apply_cache_on_pipe(pipeline, residual_diff_threshold=0.12)
+```
+
+You can tune the `residual_diff_threshold` to balance speed and quality: larger values yield faster inference at the cost of some quality. A recommended value is `0.12`, which provides up to **2× speedup** for 50-step denoising and **1.4× speedup** for 30-step denoising. See the full example in [`examples/flux.1-dev-cache.py`](examples/flux.1-dev-cache.py).
 
 ### CPU Offloading
 
-To further reduce GPU memory usage, you can use CPU offloading, requiring a minimum of just 4GiB of memory. The usage is also simple in the diffusers' way. For example, the [script](examples/flux.1-dev-offload.py) for FLUX.1-dev is as follows:
+To minimize GPU memory usage, Nunchaku supports CPU offloading—requiring as little as **4 GiB** of GPU memory. You can enable it by setting `offload=True` when initializing `NunchakuFluxTransformer2dModel`, and then calling:
 
 ```python
-import torch
-from diffusers import FluxPipeline
-
-from nunchaku import NunchakuFluxTransformer2dModel
-from nunchaku.utils import get_precision
-
-precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
-transformer = NunchakuFluxTransformer2dModel.from_pretrained(
-    f"mit-han-lab/svdq-{precision}-flux.1-dev", offload=True
-)  # set offload to False if you want to disable offloading
-pipeline = FluxPipeline.from_pretrained(
-    "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
-)  # no need to set the device here
-pipeline.enable_sequential_cpu_offload()  # diffusers' offloading
-image = pipeline("A cat holding a sign that says hello world", num_inference_steps=50, guidance_scale=3.5).images[0]
-image.save(f"flux.1-dev-{precision}.png")
+pipeline.enable_sequential_cpu_offload()
 ```
 
+For a complete example, refer to [`examples/flux.1-dev-offload.py`](examples/flux.1-dev-offload.py).
 
 ## Customized LoRA
 
@@ -200,7 +204,7 @@ transformer.update_lora_params(path_to_your_lora)
 transformer.set_lora_strength(lora_strength)
 ```
 
-`path_to_your_lora` can also be a remote HuggingFace path. In [examples/flux.1-dev-lora.py](examples/flux.1-dev-lora.py), we provide a minimal example script for running [Ghibsky](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration) LoRA with SVDQuant's 4-bit FLUX.1-dev:
+`path_to_your_lora` can also be a remote HuggingFace path. In [`examples/flux.1-dev-lora.py`](examples/flux.1-dev-lora.py), we provide a minimal example script for running [Ghibsky](https://huggingface.co/aleksa-codes/flux-ghibsky-illustration) LoRA with SVDQuant's 4-bit FLUX.1-dev:
 
 ```python
 import torch
@@ -230,7 +234,28 @@ image = pipeline(
 image.save(f"flux.1-dev-ghibsky-{precision}.png")
 ```
 
+To compose multiple LoRAs, you can use `nunchaku.lora.flux.compose.compose_lora` to compose them. The usage is 
+
+```python
+composed_lora = compose_lora(
+    [
+        ("PATH_OR_STATE_DICT_OF_LORA1", lora_strength1),
+        ("PATH_OR_STATE_DICT_OF_LORA2", lora_strength2),
+        # Add more LoRAs as needed
+    ]
+)  # set your lora strengths here when using composed lora
+transformer.update_lora_params(composed_lora)
+```
+
+You can specify individual strengths for each LoRA in the list. For a complete example, refer to [`examples/flux.1-dev-multiple-lora.py`](examples/flux.1-dev-multiple-lora.py).
+
 **For ComfyUI users, you can directly use our LoRA loader. The converted LoRA is deprecated. Please refer to [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) for more details.**
+
+## ControlNets
+
+Nunchaku supports both the [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) and the [FLUX.1-dev-ControlNet-Union-Pro](https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro) models. Example scripts can be found in the [`examples`](examples) directory.
+
+![control](./assets/control.jpg)
 
 ## ComfyUI
 
