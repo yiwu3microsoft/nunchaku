@@ -3,9 +3,16 @@ import random
 
 import datasets
 import yaml
+from huggingface_hub import snapshot_download
+
 from nunchaku.utils import fetch_or_download
 
-__all__ = ["get_dataset"]
+__all__ = ["get_dataset", "load_dataset_yaml", "download_hf_dataset"]
+
+
+def download_hf_dataset(repo_id: str = "mit-han-lab/nunchaku-test", local_dir: str | None = None) -> str:
+    path = snapshot_download(repo_id=repo_id, repo_type="dataset", local_dir=local_dir)
+    return path
 
 
 def load_dataset_yaml(meta_path: str, max_dataset_size: int = -1, repeat: int = 4) -> dict:
@@ -46,10 +53,13 @@ def get_dataset(
     path = os.path.join(prefix, f"{name}")
     if name == "MJHQ":
         dataset = datasets.load_dataset(path, return_gt=return_gt, **kwargs)
+    elif name == "MJHQ-control":
+        kwargs["name"] = "MJHQ-control"
+        dataset = datasets.load_dataset(os.path.join(prefix, "MJHQ"), return_gt=return_gt, **kwargs)
     else:
         dataset = datasets.Dataset.from_dict(
             load_dataset_yaml(
-                fetch_or_download(f"mit-han-lab/nunchaku-test/{name}.yaml", repo_type="dataset"),
+                fetch_or_download(f"mit-han-lab/svdquant-datasets/{name}.yaml", repo_type="dataset"),
                 max_dataset_size=max_dataset_size,
                 repeat=1,
             ),
