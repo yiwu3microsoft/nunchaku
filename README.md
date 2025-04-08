@@ -73,13 +73,35 @@ pip install torch==2.6 torchvision==0.21 torchaudio==2.6
 ```
 
 #### Install nunchaku
-Once PyTorch is installed, you can directly install `nunchaku` from our wheel repositories on [Hugging Face](https://huggingface.co/mit-han-lab/nunchaku/tree/main) or [ModelScope](https://modelscope.cn/models/Lmxyy1999/nunchaku) or [GitHub release](https://github.com/mit-han-lab/nunchaku/releases). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
+Once PyTorch is installed, you can directly install `nunchaku` from [Hugging Face](https://huggingface.co/mit-han-lab/nunchaku/tree/main), [ModelScope](https://modelscope.cn/models/Lmxyy1999/nunchaku) or [GitHub release](https://github.com/mit-han-lab/nunchaku/releases). Be sure to select the appropriate wheel for your Python and PyTorch version. For example, for Python 3.11 and PyTorch 2.6:
 
 ```shell
 pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.2.0+torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
-**Note**: If you're using a Blackwell GPU (e.g., 50-series GPUs), install a wheel with PyTorch 2.7. Additionally, use **FP4 models** instead of INT4 models.
+##### For ComfyUI Users
+
+If you're using the **ComfyUI portable package**, make sure to install `nunchaku` into the correct Python environment bundled with ComfyUI. To find the right Python path, launch ComfyUI and check the log output. You'll see something like this in the first several lines:
+
+```text
+** Python executable: G:\ComfyuI\python\python.exe
+```
+
+Use that Python executable to install `nunchaku`:
+
+```shell
+"G:\ComfyUI\python\python.exe" -m pip install <your-wheel-file>.whl
+```
+
+**Example:** Installing for Python 3.11 and PyTorch 2.6:
+
+```shell
+"G:\ComfyUI\python\python.exe" -m pip install https://github.com/mit-han-lab/nunchaku/releases/download/v0.2.0/nunchaku-0.2.0+torch2.6-cp311-cp311-linux_x86_64.whl
+```
+
+##### For Blackwell GPUs (50-series)
+
+If you're using a Blackwell GPU (e.g., 50-series GPUs), install a wheel with PyTorch 2.7 and higher. Additionally, use **FP4 models** instead of INT4 models."
 
 ### Build from Source
 
@@ -315,6 +337,6 @@ For enterprises interested in adopting SVDQuant or Nunchaku, including technical
 
 We thank MIT-IBM Watson AI Lab, MIT and Amazon Science Hub, MIT AI Hardware Program, National Science Foundation, Packard Foundation, Dell, LG, Hyundai, and Samsung for supporting this research. We thank NVIDIA for donating the DGX server.
 
-We use [img2img-turbo](https://github.com/GaParmar/img2img-turbo) to train the sketch-to-image LoRA. Our text-to-image and sketch-to-image UI is built upon [playground-v.25](https://huggingface.co/spaces/playgroundai/playground-v2.5/blob/main/app.py) and [img2img-turbo](https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py), respectively. Our safety checker is borrowed from [hart](https://github.com/mit-han-lab/hart).
+We use [img2img-turbo](https://github.com/GaParmar/img2img-turbo) to train the sketch-to-image LoRA. Our text-to-image and image-to-image UI is built upon [playground-v.25](https://huggingface.co/spaces/playgroundai/playground-v2.5/blob/main/app.py) and [img2img-turbo](https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py), respectively. Our safety checker is borrowed from [hart](https://github.com/mit-han-lab/hart).
 
 Nunchaku is also inspired by many open-source libraries, including (but not limited to) [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM), [vLLM](https://github.com/vllm-project/vllm), [QServe](https://github.com/mit-han-lab/qserve), [AWQ](https://github.com/mit-han-lab/llm-awq), [FlashAttention-2](https://github.com/Dao-AILab/flash-attention), and [Atom](https://github.com/efeslab/Atom). 
