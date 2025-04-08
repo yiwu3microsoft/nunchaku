@@ -303,10 +303,10 @@ Tensor gemv_awq(
 
         constexpr int GROUP_SIZE = 64;
 
-        assert(m > 0 && m < 8);
+        assert(m > 0 && m <= 8);
         assert(group_size == GROUP_SIZE);
 
-        dispatchVal(m, std::make_integer_sequence<int, 8>(), [&]<int M>() {
+        dispatchVal(m, std::make_integer_sequence<int, 9>(), [&]<int M>() {
             if constexpr (M == 0) {
                 assert(false);
                 return;
