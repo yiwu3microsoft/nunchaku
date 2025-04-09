@@ -1,4 +1,4 @@
-name: Check Self-hosted Runner
+name: pr_test
 
 on:
   workflow_dispatch:
