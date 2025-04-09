@@ -5,7 +5,7 @@ on:
 
 jobs:
   ping-runner:
-    runs-on: Ubuntu20.04-test
+    runs-on: self-hosted
     steps:
       - name: Check runner is online
         run: echo "Self-hosted runner is online!"
