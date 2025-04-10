@@ -10,4 +10,4 @@ jobs:
       - name: Check runner is online
         run: echo "Self-hosted runner is online!"
       - name: Test creating files
-        run: echo "Self-hosted runner is online!"
+        run: touch a
