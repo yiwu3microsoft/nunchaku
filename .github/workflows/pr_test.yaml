@@ -9,5 +9,12 @@ jobs:
     steps:
       - name: Check runner is online
         run: echo "Self-hosted runner is online!"
-      - name: Test creating files
-        run: touch a && readlink -f a && echo "new version"
+  set-up-environment:
+    runs-on: self-hosted
+    needs: ping-runner
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true  # pulls submodules too
+      - name: test where am i
+        run: echo $PWD
