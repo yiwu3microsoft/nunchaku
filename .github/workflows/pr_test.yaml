@@ -46,7 +46,7 @@ jobs:
 
   clean-up:
     if: always()
-    needs: [set-up-test-env, memory-test]
+    needs: [set-up-test-env, test-flux-memory]
     runs-on: self-hosted
 
     steps:
