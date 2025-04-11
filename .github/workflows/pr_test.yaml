@@ -80,7 +80,7 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
-          pytest -v -x tests/flux/test_flux_memory.py
+          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v -x tests/flux/test_flux_memory.py
 
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
