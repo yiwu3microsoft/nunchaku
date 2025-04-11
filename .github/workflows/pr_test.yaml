@@ -17,7 +17,7 @@ jobs:
       - id: check
         run: echo "should_run=true" >> $GITHUB_OUTPUT
 
-  set-up-test-env:
+  set-up-build-env:
     runs-on: self-hosted
     needs: [check-comment]
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
@@ -43,11 +43,25 @@ jobs:
           echo "Installing dependencies"
           pip install torch torchvision torchaudio
           pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
+          
+
+  build:
+    needs: set-up-build-env
+    runs-on: self-hosted
+    timeout-minutes: 30
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run build tests
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          which python
           NUNCHAKU_INSTALL_MODE=ALL python setup.py develop
           pip install -r tests/requirements.txt
 
   test-flux-memory:
-    needs: set-up-test-env
+    needs: set-up-build-env
     runs-on: self-hosted
     timeout-minutes: 30
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
@@ -63,7 +77,7 @@ jobs:
 
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
-    needs: [set-up-test-env, test-flux-memory]
+    needs: [set-up-build-env, test-flux-memory, test-flux-memory]
     runs-on: self-hosted
 
     steps:
