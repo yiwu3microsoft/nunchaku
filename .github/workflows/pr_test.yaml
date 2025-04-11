@@ -16,5 +16,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true  # pulls submodules too
-      - name: test where am i
-        run: echo $PWD
+      - name: Set up Python
+        run: |
+          echo "Setting up Python with Conda"
+          conda create -n test_env python=3.11 -y
+          conda install -n test_env -c conda-forge gxx=11 gcc=11
+          conda activate test_env
+
+      - name: see what python version is
+        run: |
+          which python
