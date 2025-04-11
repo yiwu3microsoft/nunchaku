@@ -68,7 +68,7 @@ jobs:
           pip install -r tests/requirements.txt
 
   test-flux-memory:
-    needs: set-up-build-env
+    needs: build
     runs-on: self-hosted
     timeout-minutes: 30
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
