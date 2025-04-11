@@ -31,12 +31,25 @@ jobs:
           NUNCHAKU_INSTALL_MODE=ALL python setup.py develop
           pip install -r tests/requirements.txt
 
+  test-flux-memory:
+    needs: set-up-test-env
+    runs-on: self-hosted
+
+    steps:
+      - name: Run memory test
+        run: |
+          which python
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          which python
+          pytest -v -x tests/flux/test_flux_memory.py
+
   clean-up:
     if: always()
-    needs: set-up-test-env
+    needs: [set-up-test-env, memory-test]
     runs-on: self-hosted
 
     steps:
       - name: Clean up
         run: |
-          echo $PWD
+          rm -rf .
