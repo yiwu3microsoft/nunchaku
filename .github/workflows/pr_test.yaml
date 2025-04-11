@@ -9,7 +9,7 @@ on:
 
 jobs:
   check-comment:
-    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request) }}
     runs-on: self-hosted
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
