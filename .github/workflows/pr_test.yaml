@@ -7,6 +7,10 @@ on:
 #  issue_comment:
 #    types: [created]
 
+concurrency:
+  group: pr_test
+  cancel-in-progress: false
+
 jobs:
   check-comment:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request) }}
