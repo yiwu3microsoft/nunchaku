@@ -15,21 +15,18 @@ jobs:
 
       - name: Set up Python
         run: |
-          source $(conda info --base)/etc/profile.d/conda.sh
           which python
           echo "Setting up Python with Conda"
           conda create -n test_env python=3.11 -y
-          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
 
       - name: Install dependencies
         run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
           conda install -c conda-forge gxx=11 gcc=11
-          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           echo "Installing dependencies"
           pip install 
-      
-    
 
   clean-up:
     runs-on: self-hosted
