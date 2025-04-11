@@ -19,6 +19,7 @@ jobs:
       - name: Set up Python
         shell: bash -l {0}
         run: |
+          which python
           echo "Setting up Python with Conda"
           conda create -n test_env python=3.11 -y
           conda install -n test_env -c conda-forge gxx=11 gcc=11
