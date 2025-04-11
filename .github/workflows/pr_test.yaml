@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  ping-runner:
+  set-up-test-env:
     runs-on: self-hosted
+
     steps:
-      - name: Check runner is online
-        run: echo "Self-hosted runner is online!"
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up Python
         run: |
           which python
@@ -16,8 +18,9 @@ jobs:
           conda create -n test_env python=3.11 -y
 
       - name: see what python version is
-        shell: bash -l {0}
         run: |
-          conda activate test_env
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
           conda install -c conda-forge gxx=11 gcc=11
+          
