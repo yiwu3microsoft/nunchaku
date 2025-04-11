@@ -2,10 +2,25 @@ name: pr_test
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+  issue_comment:
+    types: [created]
 
 jobs:
+  check-comment:
+    if: ${{ github.event_name == 'issue_comment' && (github.event.comment.body == 'run tests' || github.event.comment.body == 'run test') && github.event.issue.pull_request }}
+    runs-on: self-hosted
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - id: check
+        run: echo "should_run=true" >> $GITHUB_OUTPUT
+
   set-up-test-env:
     runs-on: self-hosted
+    needs: [check-comment]
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
     steps:
       - name: Checkout
@@ -34,6 +49,8 @@ jobs:
   test-flux-memory:
     needs: set-up-test-env
     runs-on: self-hosted
+    timeout-minutes: 30
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
     steps:
       - name: Run memory test
@@ -44,9 +61,105 @@ jobs:
           which python
           pytest -v -x tests/flux/test_flux_memory.py
 
+  test-flux-cache:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux cache test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_flux_cache.py
+
+  test-flux-dev:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux dev test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_flux_dev.py
+
+  test-flux-dev-loras:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux dev loras test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_flux_dev_loras.py
+
+  test-flux-schnell:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux schnell test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_flux_schnell.py
+
+  test-flux-tools:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux tools test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_flux_tools.py
+
+  test-flux-turing:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux turing test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_turing.py
+
+  test-flux-shuttle-jaguar:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run flux shuttle jaguar test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/flux/test_shuttle_jaguar.py
+
+  test-sana-t2i:
+    needs: set-up-test-env
+    runs-on: self-hosted
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run sana t2i test
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          pytest -v -x tests/sana/test_t2i.py
+
   clean-up:
-    if: always()
-    needs: [set-up-test-env, test-flux-memory]
+    if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
+    needs: [set-up-test-env, test-flux-memory, test-flux-cache, test-flux-dev, test-flux-dev-loras, test-flux-schnell, test-flux-tools, test-flux-turing, test-flux-shuttle-jaguar, test-sana-t2i]
     runs-on: self-hosted
 
     steps:
