@@ -91,4 +91,4 @@ jobs:
       - name: Clean up
         run: |
           cd ..
-          rm -rf *
+          rm -rf *nunchaku*
