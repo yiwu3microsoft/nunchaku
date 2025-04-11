@@ -32,8 +32,9 @@ jobs:
           pip install -r tests/requirements.txt
 
   clean-up:
-    runs-on: self-hosted
+    if: always()
     needs: set-up-test-env
+    runs-on: self-hosted
 
     steps:
       - name: Clean up
