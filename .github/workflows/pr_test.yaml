@@ -26,7 +26,10 @@ jobs:
           which python
           conda install -c conda-forge gxx=11 gcc=11
           echo "Installing dependencies"
-          pip install 
+          pip install torch torchvision torchaudio
+          pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
+          NUNCHAKU_INSTALL_MODE=ALL python setup.py develop
+          pip install -r tests/requirements.txt
 
   clean-up:
     runs-on: self-hosted
