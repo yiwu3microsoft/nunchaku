@@ -1,15 +1,24 @@
 name: pr_test_linux
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "nunchaku/**"
+      - "src/**"
+      - "tests/**"
   pull_request:
-    branches: [main]
-  issue_comment:
-    types: [created]
+    branches: [ main ]
+    paths:
+      - "nunchaku/**"
+      - "src/**"
+      - "tests/**"
+  workflow_dispatch:
+
 
 concurrency:
-  group: pr_test
-  cancel-in-progress: false
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check-comment:
