@@ -61,9 +61,7 @@ def run_pipeline(dataset, batch_size: int, task: str, pipeline: FluxPipeline, sa
         assert task in ["t2i", "fill"]
         processor = None
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
-    for row in tqdm(dataloader):
+    for row in tqdm(dataset.iter(batch_size=batch_size, drop_last_batch=False)):
         filenames = row["filename"]
         prompts = row["prompt"]
 
@@ -234,6 +232,8 @@ def run_test(
         precision_str += f"-cache{cache_threshold}"
     if i2f_mode is not None:
         precision_str += f"-i2f{i2f_mode}"
+    if batch_size > 1:
+        precision_str += f"-bs{batch_size}"
 
     save_dir_4bit = os.path.join("test_results", dtype_str, precision_str, model_name, folder_name)
     if not already_generate(save_dir_4bit, max_dataset_size):
