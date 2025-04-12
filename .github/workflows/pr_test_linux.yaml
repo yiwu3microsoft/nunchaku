@@ -2,10 +2,10 @@ name: pr_test
 
 on:
   workflow_dispatch:
-#  pull_request:
-#    branches: [main]
-#  issue_comment:
-#    types: [created]
+  pull_request:
+    branches: [main]
+  issue_comment:
+    types: [created]
 
 concurrency:
   group: pr_test
@@ -30,7 +30,7 @@ jobs:
 
   set-up-build-env:
     runs-on: self-hosted
-    needs: [check-comment]
+    needs: [ check-comment ]
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
     steps:
@@ -54,7 +54,7 @@ jobs:
           echo "Installing dependencies"
           pip install torch torchvision torchaudio
           pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
-          
+  
 
   build:
     needs: set-up-build-env
@@ -78,7 +78,7 @@ jobs:
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
     steps:
-      - name: Run memory test
+      - name: Run FLUX memory test
         run: |
           which python
           source $(conda info --base)/etc/profile.d/conda.sh
@@ -86,9 +86,24 @@ jobs:
           which python
           HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v -x tests/flux/test_flux_memory.py
 
+  test-flux-other:
+    needs: build
+    runs-on: self-hosted
+    timeout-minutes: 60
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
+
+    steps:
+      - name: Run other FLUX tests
+        run: |
+          which python
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
+          which python
+          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v -x tests/flux --ignore=tests/flux/test_flux_memory.py
+
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
-    needs: [set-up-build-env, test-flux-memory, test-flux-memory]
+    needs: [ set-up-build-env, test-flux-memory, test-flux-other ]
     runs-on: self-hosted
 
     steps:
