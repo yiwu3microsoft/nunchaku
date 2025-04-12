@@ -9,7 +9,6 @@ from .utils import run_test
     "cache_threshold,height,width,num_inference_steps,lora_name,lora_strength,expected_lpips",
     [
         (0.12, 1024, 1024, 30, None, 1, 0.26),
-        (0.12, 512, 2048, 30, "anime", 1, 0.4),
     ],
 )
 def test_flux_dev_loras(

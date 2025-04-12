@@ -7,12 +7,7 @@ from huggingface_hub import snapshot_download
 
 from nunchaku.utils import fetch_or_download
 
-__all__ = ["get_dataset", "load_dataset_yaml", "download_hf_dataset"]
-
-
-def download_hf_dataset(repo_id: str = "mit-han-lab/nunchaku-test", local_dir: str | None = None) -> str:
-    path = snapshot_download(repo_id=repo_id, repo_type="dataset", local_dir=local_dir)
-    return path
+__all__ = ["get_dataset", "load_dataset_yaml"]
 
 
 def load_dataset_yaml(meta_path: str, max_dataset_size: int = -1, repeat: int = 4) -> dict:

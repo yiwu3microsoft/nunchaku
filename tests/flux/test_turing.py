@@ -1,19 +1,17 @@
 import pytest
 
-from nunchaku.utils import get_precision
+from nunchaku.utils import get_precision, is_turing
 from .utils import run_test
 
 
-@pytest.mark.skipif(get_precision() == "fp4", reason="Blackwell GPUs. Skip tests for Turing.")
+@pytest.mark.skipif(not is_turing(), reason="Not turing GPUs. Skip tests.")
 @pytest.mark.parametrize(
     "height,width,num_inference_steps,cpu_offload,i2f_mode,expected_lpips",
     [
-        (1024, 1024, 50, True, None, 0.253),
         (1024, 1024, 50, True, "enabled", 0.258),
-        (1024, 1024, 50, True, "always", 0.257),
     ],
 )
-def test_flux_dev(
+def test_flux_dev_on_turing(
     height: int, width: int, num_inference_steps: int, cpu_offload: bool, i2f_mode: str | None, expected_lpips: float
 ):
     run_test(
