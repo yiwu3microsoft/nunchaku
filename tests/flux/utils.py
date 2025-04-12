@@ -191,7 +191,7 @@ def run_test(
         if gpu_memory > 36 * 1024:
             pipeline = pipeline.to("cuda")
         else:
-            pipeline.enable_sequential_cpu_offload()
+            pipeline.enable_model_cpu_offload()
 
         if len(lora_names) > 0:
             for i, (lora_name, lora_strength) in enumerate(zip(lora_names, lora_strengths)):
