@@ -4,7 +4,7 @@ from nunchaku.utils import get_precision, is_turing
 from .utils import run_test
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 @pytest.mark.parametrize(
     "num_inference_steps,lora_name,lora_strength,cpu_offload,expected_lpips",
     [
@@ -35,7 +35,7 @@ def test_flux_dev_loras(num_inference_steps, lora_name, lora_strength, cpu_offlo
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_hypersd8_1536x2048():
     run_test(
         precision=get_precision(),
@@ -55,7 +55,7 @@ def test_flux_dev_hypersd8_1536x2048():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_turbo8_1024x1920():
     run_test(
         precision=get_precision(),
@@ -76,7 +76,7 @@ def test_flux_dev_turbo8_1024x1920():
 
 
 # lora composition
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_turbo8_yarn_2048x1024():
     run_test(
         precision=get_precision(),
@@ -96,7 +96,7 @@ def test_flux_dev_turbo8_yarn_2048x1024():
 
 
 # large rank loras
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_turbo8_yarn_1024x1024():
     run_test(
         precision=get_precision(),

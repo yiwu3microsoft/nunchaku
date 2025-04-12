@@ -6,7 +6,7 @@ from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 from nunchaku.utils import get_precision, is_turing
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 @pytest.mark.parametrize(
     "use_qencoder,cpu_offload,memory_limit",
     [

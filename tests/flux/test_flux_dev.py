@@ -4,7 +4,7 @@ from nunchaku.utils import get_precision, is_turing
 from .utils import run_test
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests for Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 @pytest.mark.parametrize(
     "height,width,num_inference_steps,attention_impl,cpu_offload,expected_lpips",
     [

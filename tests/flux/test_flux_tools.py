@@ -5,7 +5,7 @@ from nunchaku.utils import get_precision, is_turing
 from .utils import run_test
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_canny_dev():
     run_test(
         precision=get_precision(),
@@ -24,7 +24,7 @@ def test_flux_canny_dev():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_depth_dev():
     run_test(
         precision=get_precision(),
@@ -43,7 +43,7 @@ def test_flux_depth_dev():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_fill_dev():
     run_test(
         precision=get_precision(),
@@ -62,7 +62,7 @@ def test_flux_fill_dev():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_canny_lora():
     run_test(
         precision=get_precision(),
@@ -83,7 +83,7 @@ def test_flux_dev_canny_lora():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_depth_lora():
     run_test(
         precision=get_precision(),
@@ -104,7 +104,7 @@ def test_flux_dev_depth_lora():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_fill_dev_turbo():
     run_test(
         precision=get_precision(),
@@ -125,7 +125,7 @@ def test_flux_fill_dev_turbo():
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_redux():
     run_test(
         precision=get_precision(),
