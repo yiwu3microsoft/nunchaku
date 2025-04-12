@@ -1,4 +1,4 @@
-name: pr_test
+name: pr_test_linux
 
 on:
   workflow_dispatch:
