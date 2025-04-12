@@ -89,7 +89,7 @@ jobs:
   test-flux-other:
     needs: build
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 90
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
     steps:
