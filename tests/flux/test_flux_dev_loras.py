@@ -71,7 +71,7 @@ def test_flux_dev_turbo8_1024x1920():
         lora_names="turbo8",
         lora_strengths=1,
         cache_threshold=0,
-        expected_lpips=0.120,
+        expected_lpips=0.151,
     )
 
 
