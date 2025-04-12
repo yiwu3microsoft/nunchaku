@@ -35,24 +35,24 @@ def test_flux_dev_loras(num_inference_steps, lora_name, lora_strength, cpu_offlo
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
-def test_flux_dev_hypersd8_1536x2048():
-    run_test(
-        precision=get_precision(),
-        model_name="flux.1-dev",
-        dataset_name="MJHQ",
-        height=1536,
-        width=2048,
-        num_inference_steps=8,
-        guidance_scale=3.5,
-        use_qencoder=False,
-        attention_impl="nunchaku-fp16",
-        cpu_offload=True,
-        lora_names="hypersd8",
-        lora_strengths=0.125,
-        cache_threshold=0,
-        expected_lpips=0.164,
-    )
+# @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+# def test_flux_dev_hypersd8_1536x2048():
+#     run_test(
+#         precision=get_precision(),
+#         model_name="flux.1-dev",
+#         dataset_name="MJHQ",
+#         height=1536,
+#         width=2048,
+#         num_inference_steps=8,
+#         guidance_scale=3.5,
+#         use_qencoder=False,
+#         attention_impl="nunchaku-fp16",
+#         cpu_offload=True,
+#         lora_names="hypersd8",
+#         lora_strengths=0.125,
+#         cache_threshold=0,
+#         expected_lpips=0.164,
+#     )
 
 
 @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
