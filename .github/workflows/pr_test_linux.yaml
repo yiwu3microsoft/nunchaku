@@ -46,6 +46,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: true
 
       - name: Set up Python
@@ -79,6 +80,8 @@ jobs:
           which python
           NUNCHAKU_INSTALL_MODE=ALL python setup.py develop
           pip install -r tests/requirements.txt
+      - name: Show current commit
+        run: git log -1 --oneline
 
   test-flux-memory:
     needs: build
