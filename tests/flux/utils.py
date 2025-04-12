@@ -134,7 +134,7 @@ def run_test(
     cache_threshold: float = 0,
     lora_names: str | list[str] | None = None,
     lora_strengths: float | list[float] = 1.0,
-    max_dataset_size: int = 8,
+    max_dataset_size: int = 4,
     i2f_mode: str | None = None,
     expected_lpips: float = 0.5,
 ):

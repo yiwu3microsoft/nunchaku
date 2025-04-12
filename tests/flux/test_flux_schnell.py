@@ -8,10 +8,10 @@ from .utils import run_test
 @pytest.mark.parametrize(
     "height,width,attention_impl,cpu_offload,expected_lpips",
     [
-        (1024, 1024, "flashattn2", False, 0.250),
-        (1024, 1024, "nunchaku-fp16", False, 0.255),
-        (1920, 1080, "nunchaku-fp16", False, 0.253),
-        (2048, 2048, "nunchaku-fp16", True, 0.274),
+        (1024, 1024, "flashattn2", False, 0.126),
+        (1024, 1024, "nunchaku-fp16", False, 0.126),
+        (1920, 1080, "nunchaku-fp16", False, 0.141),
+        (2048, 2048, "nunchaku-fp16", True, 0.166),
     ],
 )
 def test_int4_schnell(height: int, width: int, attention_impl: str, cpu_offload: bool, expected_lpips: float):

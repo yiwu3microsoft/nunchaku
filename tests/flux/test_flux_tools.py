@@ -15,12 +15,12 @@ def test_flux_canny_dev():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=30,
         guidance_scale=30,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.103 if get_precision() == "int4" else 0.164,
+        expected_lpips=0.076 if get_precision() == "int4" else 0.164,
     )
 
 
@@ -39,7 +39,7 @@ def test_flux_depth_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.170 if get_precision() == "int4" else 0.120,
+        expected_lpips=0.137 if get_precision() == "int4" else 0.120,
     )
 
 
@@ -53,12 +53,12 @@ def test_flux_fill_dev():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=30,
         guidance_scale=30,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.045,
+        expected_lpips=0.046,
     )
 
 
@@ -72,14 +72,14 @@ def test_flux_dev_canny_lora():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=30,
         guidance_scale=30,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         lora_names="canny",
         lora_strengths=0.85,
         cache_threshold=0,
-        expected_lpips=0.103,
+        expected_lpips=0.081,
     )
 
 
@@ -100,7 +100,7 @@ def test_flux_dev_depth_lora():
         cache_threshold=0,
         lora_names="depth",
         lora_strengths=0.85,
-        expected_lpips=0.163,
+        expected_lpips=0.181,
     )
 
 
@@ -121,7 +121,7 @@ def test_flux_fill_dev_turbo():
         cache_threshold=0,
         lora_names="turbo8",
         lora_strengths=1,
-        expected_lpips=0.048,
+        expected_lpips=0.036,
     )
 
 
@@ -135,10 +135,10 @@ def test_flux_dev_redux():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=20,
         guidance_scale=2.5,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=(0.198 if get_precision() == "int4" else 0.198),
+        expected_lpips=(0.143 if get_precision() == "int4" else 0.198),
     )

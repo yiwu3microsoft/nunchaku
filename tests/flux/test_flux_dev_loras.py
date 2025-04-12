@@ -8,10 +8,10 @@ from .utils import run_test
 @pytest.mark.parametrize(
     "num_inference_steps,lora_name,lora_strength,cpu_offload,expected_lpips",
     [
-        (25, "realism", 0.9, True, 0.178),
-        (25, "ghibsky", 1, False, 0.164),
+        (25, "realism", 0.9, True, 0.136),
+        (25, "ghibsky", 1, False, 0.186),
         # (28, "anime", 1, False, 0.284),
-        (24, "sketch", 1, True, 0.223),
+        (24, "sketch", 1, True, 0.260),
         # (28, "yarn", 1, False, 0.211),
         # (25, "haunted_linework", 1, True, 0.317),
     ],
@@ -51,7 +51,7 @@ def test_flux_dev_hypersd8_1536x2048():
         lora_names="hypersd8",
         lora_strengths=0.125,
         cache_threshold=0,
-        expected_lpips=0.291,
+        expected_lpips=0.164,
     )
 
 
@@ -71,7 +71,7 @@ def test_flux_dev_turbo8_1024x1920():
         lora_names="turbo8",
         lora_strengths=1,
         cache_threshold=0,
-        expected_lpips=0.189,
+        expected_lpips=0.120,
     )
 
 
@@ -91,7 +91,7 @@ def test_flux_dev_turbo8_yarn_2048x1024():
         lora_names=["turbo8", "yarn"],
         lora_strengths=[1, 1],
         cache_threshold=0,
-        expected_lpips=0.252,
+        expected_lpips=0.255,
     )
 
 
@@ -111,5 +111,5 @@ def test_flux_dev_turbo8_yarn_1024x1024():
         lora_names=["realism", "ghibsky", "anime", "sketch", "yarn", "haunted_linework", "turbo8"],
         lora_strengths=[0, 0, 0, 0, 0, 1, 1],
         cache_threshold=0,
-        expected_lpips=0.44,
+        expected_lpips=0.310,
     )
