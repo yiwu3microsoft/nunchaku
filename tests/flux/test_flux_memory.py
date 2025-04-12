@@ -38,7 +38,7 @@ def test_flux_schnell_memory(use_qencoder: bool, cpu_offload: bool, memory_limit
         pipeline = pipeline.to("cuda")
 
     pipeline(
-        "A cat holding a sign that says hello world", width=1024, height=1024, num_inference_steps=50, guidance_scale=0
+        "A cat holding a sign that says hello world", width=1024, height=1024, num_inference_steps=4, guidance_scale=0
     )
     memory = torch.cuda.max_memory_reserved(0) / 1024**3
     assert memory < memory_limit
