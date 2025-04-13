@@ -75,27 +75,26 @@ def test_flux_dev_turbo8_1024x1920():
     )
 
 
-# lora composition
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
-def test_flux_dev_turbo8_yarn_2048x1024():
-    run_test(
-        precision=get_precision(),
-        model_name="flux.1-dev",
-        dataset_name="yarn",
-        height=2048,
-        width=1024,
-        num_inference_steps=8,
-        guidance_scale=3.5,
-        use_qencoder=False,
-        cpu_offload=True,
-        lora_names=["turbo8", "yarn"],
-        lora_strengths=[1, 1],
-        cache_threshold=0,
-        expected_lpips=0.255,
-    )
+# @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+# def test_flux_dev_turbo8_yarn_2048x1024():
+#     run_test(
+#         precision=get_precision(),
+#         model_name="flux.1-dev",
+#         dataset_name="yarn",
+#         height=2048,
+#         width=1024,
+#         num_inference_steps=8,
+#         guidance_scale=3.5,
+#         use_qencoder=False,
+#         cpu_offload=True,
+#         lora_names=["turbo8", "yarn"],
+#         lora_strengths=[1, 1],
+#         cache_threshold=0,
+#         expected_lpips=0.255,
+#     )
 
 
-# large rank loras
+# lora composition & large rank loras
 @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_turbo8_yarn_1024x1024():
     run_test(

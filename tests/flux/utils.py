@@ -4,6 +4,7 @@ import os
 import torch
 from controlnet_aux import CannyDetector
 from diffusers import FluxControlPipeline, FluxFillPipeline, FluxPipeline, FluxPriorReduxPipeline
+from diffusers.hooks import apply_group_offloading
 from diffusers.utils import load_image
 from image_gen_aux import DepthPreprocessor
 from tqdm import tqdm
@@ -13,7 +14,6 @@ from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 from nunchaku.lora.flux.compose import compose_lora
 from ..data import get_dataset
 from ..utils import already_generate, compute_lpips, hash_str_to_int
-from diffusers.hooks import apply_group_offloading
 
 ORIGINAL_REPO_MAP = {
     "flux.1-schnell": "black-forest-labs/FLUX.1-schnell",
@@ -198,6 +198,14 @@ def run_test(
         gpu_properties = torch.cuda.get_device_properties(0)
         gpu_memory = gpu_properties.total_memory / (1024**2)
 
+        if len(lora_names) > 0:
+            for i, (lora_name, lora_strength) in enumerate(zip(lora_names, lora_strengths)):
+                lora_path = LORA_PATH_MAP[lora_name]
+                pipeline.load_lora_weights(
+                    os.path.dirname(lora_path), weight_name=os.path.basename(lora_path), adapter_name=f"lora_{i}"
+                )
+            pipeline.set_adapters([f"lora_{i}" for i in range(len(lora_names))], lora_strengths)
+
         if gpu_memory > 36 * 1024:
             pipeline = pipeline.to("cuda")
         elif gpu_memory < 26 * 1024:
@@ -207,24 +215,18 @@ def run_test(
                 offload_type="leaf_level",
                 use_stream=True,
             )
-            pipeline.text_encoder.to("cuda")
-            apply_group_offloading(
-                pipeline.text_encoder_2,
-                onload_device=torch.device("cuda"),
-                offload_type="block_level",
-                num_blocks_per_group=2,
-            )
+            if pipeline.text_encoder is not None:
+                pipeline.text_encoder.to("cuda")
+            if pipeline.text_encoder_2 is not None:
+                apply_group_offloading(
+                    pipeline.text_encoder_2,
+                    onload_device=torch.device("cuda"),
+                    offload_type="block_level",
+                    num_blocks_per_group=2,
+                )
             pipeline.vae.to("cuda")
         else:
             pipeline.enable_model_cpu_offload()
-
-        if len(lora_names) > 0:
-            for i, (lora_name, lora_strength) in enumerate(zip(lora_names, lora_strengths)):
-                lora_path = LORA_PATH_MAP[lora_name]
-                pipeline.load_lora_weights(
-                    os.path.dirname(lora_path), weight_name=os.path.basename(lora_path), adapter_name=f"lora_{i}"
-                )
-            pipeline.set_adapters([f"lora_{i}" for i in range(len(lora_names))], lora_strengths)
 
         run_pipeline(
             batch_size=batch_size,

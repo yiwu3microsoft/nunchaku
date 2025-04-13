@@ -5,7 +5,7 @@ from diffusers.utils import load_image
 
 from nunchaku import NunchakuFluxTransformer2dModel
 from nunchaku.caching.diffusers_adapters.flux import apply_cache_on_pipe
-from nunchaku.utils import get_precision
+from nunchaku.utils import get_gpu_memory, get_precision
 
 base_model = "black-forest-labs/FLUX.1-dev"
 controlnet_model_union = "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro"
@@ -14,14 +14,21 @@ controlnet_union = FluxControlNetModel.from_pretrained(controlnet_model_union, t
 controlnet = FluxMultiControlNetModel([controlnet_union])  # we always recommend loading via FluxMultiControlNetModel
 
 precision = get_precision()
+need_offload = get_gpu_memory() < 36
 transformer = NunchakuFluxTransformer2dModel.from_pretrained(
-    f"mit-han-lab/svdq-{precision}-flux.1-dev", torch_dtype=torch.bfloat16
+    f"mit-han-lab/svdq-{precision}-flux.1-dev", torch_dtype=torch.bfloat16, offload=need_offload
 )
 transformer.set_attention_impl("nunchaku-fp16")
 
 pipeline = FluxControlNetPipeline.from_pretrained(
     base_model, transformer=transformer, controlnet=controlnet, torch_dtype=torch.bfloat16
-).to("cuda")
+)
+
+if need_offload:
+    pipeline.enable_sequential_cpu_offload()
+else:
+    pipeline = pipeline.to("cuda")
+
 # apply_cache_on_pipe(
 #     pipeline, residual_diff_threshold=0.1
 # )  # Uncomment this line to enable first-block cache to speedup generation

@@ -105,3 +105,26 @@ def is_turing(device: str | torch.device = "cuda") -> bool:
     capability = torch.cuda.get_device_capability(device_id)
     sm = f"{capability[0]}{capability[1]}"
     return sm == "75"
+
+
+def get_gpu_memory(device: str | torch.device = "cuda", unit: str = "GiB") -> int:
+    """Get the GPU memory of the current device.
+
+    Args:
+        device (`str` | `torch.device`, optional, defaults to `"cuda"`):
+            device.
+
+    Returns:
+        `int`:
+            GPU memory in bytes.
+    """
+    if isinstance(device, str):
+        device = torch.device(device)
+    assert unit in ("GiB", "MiB", "B")
+    memory = torch.cuda.get_device_properties(device).total_memory
+    if unit == "GiB":
+        return memory // (1024**3)
+    elif unit == "MiB":
+        return memory // (1024**2)
+    else:
+        return memory
