@@ -1,3 +1,4 @@
+import gc
 import os
 
 import torch
@@ -12,6 +13,7 @@ from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 from nunchaku.lora.flux.compose import compose_lora
 from ..data import get_dataset
 from ..utils import already_generate, compute_lpips, hash_str_to_int
+from diffusers.hooks import apply_group_offloading
 
 ORIGINAL_REPO_MAP = {
     "flux.1-schnell": "black-forest-labs/FLUX.1-schnell",
@@ -61,7 +63,13 @@ def run_pipeline(dataset, batch_size: int, task: str, pipeline: FluxPipeline, sa
         assert task in ["t2i", "fill"]
         processor = None
 
-    for row in tqdm(dataset.iter(batch_size=batch_size, drop_last_batch=False)):
+    for row in tqdm(
+        dataset.iter(batch_size=batch_size, drop_last_batch=False),
+        desc="Batch",
+        total=len(dataset),
+        position=0,
+        leave=False,
+    ):
         filenames = row["filename"]
         prompts = row["prompt"]
 
@@ -138,6 +146,8 @@ def run_test(
     i2f_mode: str | None = None,
     expected_lpips: float = 0.5,
 ):
+    gc.collect()
+    torch.cuda.empty_cache()
     if isinstance(dtype, str):
         dtype_str = dtype
         if dtype == "bf16":
@@ -190,6 +200,21 @@ def run_test(
 
         if gpu_memory > 36 * 1024:
             pipeline = pipeline.to("cuda")
+        elif gpu_memory < 26 * 1024:
+            pipeline.transformer.enable_group_offload(
+                onload_device=torch.device("cuda"),
+                offload_device=torch.device("cpu"),
+                offload_type="leaf_level",
+                use_stream=True,
+            )
+            pipeline.text_encoder.to("cuda")
+            apply_group_offloading(
+                pipeline.text_encoder_2,
+                onload_device=torch.device("cuda"),
+                offload_type="block_level",
+                num_blocks_per_group=2,
+            )
+            pipeline.vae.to("cuda")
         else:
             pipeline.enable_model_cpu_offload()
 
@@ -216,6 +241,7 @@ def run_test(
         )
         del pipeline
         # release the gpu memory
+        gc.collect()
         torch.cuda.empty_cache()
 
     precision_str = precision
@@ -290,6 +316,7 @@ def run_test(
         del transformer
         del pipeline
         # release the gpu memory
+        gc.collect()
         torch.cuda.empty_cache()
     lpips = compute_lpips(save_dir_16bit, save_dir_4bit)
     print(f"lpips: {lpips}")

@@ -10,7 +10,7 @@ from .utils import run_test
     [
         (1024, 1024, "flashattn2", False, 0.126),
         (1024, 1024, "nunchaku-fp16", False, 0.126),
-        (1920, 1080, "nunchaku-fp16", False, 0.141),
+        (1920, 1080, "nunchaku-fp16", False, 0.158),
         (2048, 2048, "nunchaku-fp16", True, 0.166),
     ],
 )

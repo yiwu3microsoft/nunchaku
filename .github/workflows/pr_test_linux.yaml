@@ -8,12 +8,14 @@ on:
       - "src/**"
       - "tests/**"
   pull_request:
-    branches: [ main ]
+    types: [ opened, synchronize, reopened, edited ]
     paths:
       - "nunchaku/**"
       - "src/**"
       - "tests/**"
   workflow_dispatch:
+  issue_comment:
+    types: [ created ]
 
 
 concurrency:
@@ -46,7 +48,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          #          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: true
 
       - name: Show current commit
@@ -98,7 +100,7 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
-          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -s tests/flux/test_flux_memory.py
+          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v tests/flux/test_flux_memory.py
 
   test-flux-other:
     needs: build
@@ -113,7 +115,7 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
-          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -s tests/flux --ignore=tests/flux/test_flux_memory.py
+          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v tests/flux --ignore=tests/flux/test_flux_memory.py
 
   test-sana:
     needs: build
@@ -128,7 +130,7 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
-          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -s tests/sana
+          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v tests/sana
 
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
