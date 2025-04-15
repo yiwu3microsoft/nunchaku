@@ -11,7 +11,7 @@ from .utils import run_test
         (0.12, 1024, 1024, 30, None, 1, 0.212),
     ],
 )
-def test_flux_dev_loras(
+def test_flux_dev_cache(
     cache_threshold: float,
     height: int,
     width: int,
