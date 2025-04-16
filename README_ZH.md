@@ -9,27 +9,27 @@
 <a href="https://github.com/mit-han-lab/nunchaku/blob/main/README.md"><b>English</b></a> | <a href="https://github.com/mit-han-lab/nunchaku/blob/main/README_ZH.md"><b>中文</b></a>
 </h3>
 
-**Nunchaku** 是一款专为4位神经网络优化的高性能推理引擎，基于我们的论文 [SVDQuant](http://arxiv.org/abs/2411.05007) 提出。底层量化库请参考 [DeepCompressor](https://github.com/mit-han-lab/deepcompressor)。
+**Nunchaku** 是一款专为4-bit神经网络优化的高性能推理引擎，基于我们的论文 [SVDQuant](http://arxiv.org/abs/2411.05007) 提出。底层量化库请参考 [DeepCompressor](https://github.com/mit-han-lab/deepcompressor)。
 
 欢迎加入我们的用户群：[**Slack**](https://join.slack.com/t/nunchaku/shared_invite/zt-3170agzoz-NgZzWaTrEj~n2KEV3Hpl5Q)、[**Discord**](https://discord.gg/Wk6PnwX9Sm) 和 [**微信**](./assets/wechat.jpg)，与社区交流！更多详情请见[此处](https://github.com/mit-han-lab/nunchaku/issues/149)。如有任何问题、建议或贡献意向，欢迎随时联系！
 
 ## 最新动态
 
 - **[2025-04-09]** 📢 发布[四月开发路线图](https://github.com/mit-han-lab/nunchaku/issues/266)和[常见问题解答](https://github.com/mit-han-lab/nunchaku/discussions/262)，帮助社区快速上手并了解Nunchaku最新进展。
-- **[2025-04-05]** 🚀 **Nunchaku v0.2.0 发布！** 支持[**多LoRA融合**](examples/flux.1-dev-multiple-lora.py)和[**ControlNet**](examples/flux.1-dev-controlnet-union-pro.py)，通过[**FP16注意力**](#fp16-注意力)和[**首块缓存**](#首块缓存)实现更快的推理速度。新增[**20系显卡支持**](examples/flux.1-dev-turing.py)，覆盖更多用户！
-- **[2025-03-17]** 🚀 发布NVFP4 4位量化版[Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)和FLUX.1工具集，升级INT4 FLUX.1工具模型。从[HuggingFace](https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c)或[ModelScope](https://modelscope.cn/collections/svdquant-468e8f780c2641)下载更新！
-- **[2025-03-13]** 📦 ComfyUI节点[独立仓库](https://github.com/mit-han-lab/ComfyUI-nunchaku)发布，安装更便捷！节点版本v0.1.6上线，全面支持[4位Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)！
-- **[2025-03-07]** 🚀 **Nunchaku v0.1.4 发布！** 支持[4位文本编码器和分层CPU卸载](#低显存推理)，FLUX最低显存需求降至**4 GiB**，同时保持**2–3倍加速**。修复分辨率、LoRA、内存锁定等稳定性问题，详情见更新日志！
-- **[2025-02-20]** 🚀 发布[预编译wheel包](https://huggingface.co/mit-han-lab/nunchaku)，简化安装步骤！查看[安装指南](#安装)！
+- **[2025-04-05]** 🚀 **Nunchaku v0.2.0 发布！** 支持[**多LoRA融合**](examples/flux.1-dev-multiple-lora.py)和[**ControlNet**](examples/flux.1-dev-controlnet-union-pro.py)，通过[**FP16 attention**](#fp16-attention)和[**First-Block Cache**](#first-block-cache)实现更快的推理速度。新增[**20系显卡支持**](examples/flux.1-dev-turing.py)，覆盖更多用户！
+- **[2025-03-17]** 🚀 发布NVFP4 4-bit量化版[Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)和FLUX.1工具集，升级INT4 FLUX.1工具模型。从[HuggingFace](https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c)或[ModelScope](https://modelscope.cn/collections/svdquant-468e8f780c2641)下载更新！
+- **[2025-03-13]** 📦 ComfyUI节点[独立仓库](https://github.com/mit-han-lab/ComfyUI-nunchaku)发布，安装更便捷！节点版本v0.1.6上线，全面支持[4-bit Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)！
+- **[2025-03-07]** 🚀 **Nunchaku v0.1.4 发布！** 支持4-bit文本编码器和分层CPU offloading，FLUX最低显存需求降至**4 GiB**，同时保持**2–3倍加速**。修复分辨率、LoRA、内存锁定等稳定性问题，详情见更新日志！
+- **[2025-02-20]** 🚀 发布[预编译wheel包](https://huggingface.co/mit-han-lab/nunchaku)，简化安装步骤！查看[安装指南](#安装指南)！
 - **[2025-02-20]** 🚀 **NVIDIA RTX 5090支持NVFP4精度！** 相比INT4，NVFP4画质更优，在RTX 5090上比BF16快**约3倍**。[博客详解](https://hanlab.mit.edu/blog/svdquant-nvfp4)，[示例代码](./examples)及[在线演示](https://svdquant.mit.edu/flux1-schnell/)已上线！
 - **[2025-02-18]** 🔥 新增[自定义LoRA转换](#自定义lora)和[模型量化](#自定义模型量化)指南！[ComfyUI](./comfyui)工作流支持**自定义LoRA**及**FLUX.1工具集**！
-- **[2025-02-11]** 🎉 **[SVDQuant](http://arxiv.org/abs/2411.05007)入选ICLR 2025 Spotlight！FLUX.1工具集Gradio演示上线！** [使用指南](#gradio演示)已更新！[深度图生成演示](https://svdquant.mit.edu/flux1-depth-dev/)同步开放！
+- **[2025-02-11]** 🎉 **[SVDQuant](http://arxiv.org/abs/2411.05007)入选ICLR 2025 Spotlight！FLUX.1工具集使用演示上线！** [使用演示](#使用演示)已更新！[深度图生成演示](https://svdquant.mit.edu/flux1-depth-dev/)同步开放！
 
 <details>
 <summary>更多动态</summary>
 
-- **[2025-02-04]** **🚀 4位量化版[FLUX.1工具集](https://blackforestlabs.ai/flux-1-tools/)发布！** 相比原模型提速**2-3倍**。[示例代码](./examples)已更新，**ComfyUI支持即将到来！**
-- **[2025-01-23]** 🚀 **支持4位量化[SANA](https://nvlabs.github.io/Sana/)！** 相比16位模型提速2-3倍。[使用示例](./examples/sana_1600m_pag.py)和[部署指南](app/sana/t2i)已发布，体验[在线演示](https://svdquant.mit.edu)！
+- **[2025-02-04]** **🚀 4-bit量化版[FLUX.1工具集](https://blackforestlabs.ai/flux-1-tools/)发布！** 相比原模型提速**2-3倍**。[示例代码](./examples)已更新，**ComfyUI支持即将到来！**
+- **[2025-01-23]** 🚀 **支持4-bit量化[SANA](https://nvlabs.github.io/Sana/)！** 相比16位模型提速2-3倍。[使用示例](./examples/sana_1600m_pag.py)和[部署指南](app/sana/t2i)已发布，体验[在线演示](https://svdquant.mit.edu)！
 - **[2025-01-22]** 🎉 [**SVDQuant**](http://arxiv.org/abs/2411.05007) 被 **ICLR 2025** 接收！
 - **[2024-12-08]** 支持 [ComfyUI](https://github.com/comfyanonymous/ComfyUI)，详情见 [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku)。
 - **[2024-11-07]** 🔥 最新 **W4A4** 扩散模型量化工作 [**SVDQuant**](https://hanlab.mit.edu/projects/svdquant) 开源！量化库 [**DeepCompressor**](https://github.com/mit-han-lab/deepcompressor) 同步发布。
@@ -39,11 +39,11 @@
 ## 项目概览
 
 ![teaser](./assets/teaser.jpg)
-SVDQuant 是一种支持4位权重和激活的后训练量化技术，能有效保持视觉质量。在12B FLUX.1-dev模型上，相比BF16模型实现了3.6倍内存压缩。通过消除CPU卸载，在16GB笔记本RTX 4090上比16位模型快8.7倍，比NF4 W4A16基线快3倍。在PixArt-∑模型上，其视觉质量显著优于其他W4A4甚至W4A8方案。"E2E"表示包含文本编码器和VAE解码器的端到端延迟。
+SVDQuant 是一种支持4-bit权重和激活的后训练量化技术，能有效保持视觉质量。在12B FLUX.1-dev模型上，相比BF16模型实现了3.6倍内存压缩。通过消除CPU offloading，在16GB笔记本RTX 4090上比16位模型快8.7倍，比NF4 W4A16基线快3倍。在PixArt-∑模型上，其视觉质量显著优于其他W4A4甚至W4A8方案。"E2E"表示包含文本编码器和VAE解码器的端到端延迟。
 
-**SVDQuant: 通过低秩分量吸收异常值实现4位扩散模型量化**<br>
+**SVDQuant: 通过低秩分量吸收异常值实现4-bit扩散模型量化**<br>
 [Muyang Li](https://lmxyy.me)\*, [Yujun Lin](https://yujunlin.com)\*, [Zhekai Zhang](https://hanlab.mit.edu/team/zhekai-zhang)\*, [Tianle Cai](https://www.tianle.website/#/), [Xiuyu Li](https://xiuyuli.com), [Junxian Guo](https://github.com/JerryGJX), [Enze Xie](https://xieenze.github.io), [Chenlin Meng](https://cs.stanford.edu/~chenlin/), [Jun-Yan Zhu](https://www.cs.cmu.edu/~junyanz/), [Song Han](https://hanlab.mit.edu/songhan) <br>
-*麻省理工学院、英伟达、卡内基梅隆大学、普林斯顿大学、加州大学伯克利分校、上海交通大学、Pika Labs* <br>
+*麻省理工学院、英伟达、卡内基梅隆大学、普林斯顿大学、加州大学伯克利分校、上海交通大学、pika实验室* <br>
 
 <p align="center">
   <img src="assets/demo.gif" width="100%"/>
@@ -53,15 +53,15 @@ SVDQuant 是一种支持4位权重和激活的后训练量化技术，能有效�
 
 #### 量化方法 -- SVDQuant
 
-![intuition](./assets/intuition.gif)SVDQuant三阶段示意图。阶段1：原始激活$\boldsymbol{X}$和权重$\boldsymbol{W}$均含异常值，4位量化困难。阶段2：将激活异常值迁移至权重，得到更易量化的激活$\hat{\boldsymbol{X}}$和更难量化的权重$\hat{\boldsymbol{W}}$。阶段3：通过SVD将$\hat{\boldsymbol{W}}$分解为低秩分量$\boldsymbol{L}_1\boldsymbol{L}_2$和残差$\hat{\boldsymbol{W}}-\boldsymbol{L}_1\boldsymbol{L}_2$，低秩分支以16位精度运行缓解量化难度。
+![intuition](./assets/intuition.gif)SVDQuant三阶段示意图。阶段1：原始激活 $\boldsymbol{X}$ 和权重 $\boldsymbol{W}$ 均含异常值，4-bit量化困难。阶段2：将激活异常值迁移至权重，得到更易量化的激活 $\hat{\boldsymbol{X}}$ 和更难量化的权重 $\hat{\boldsymbol{W}}$ 。阶段3：通过SVD将 $\hat{\boldsymbol{W}}$ 分解为低秩分量 $\boldsymbol{L}_1\boldsymbol{L}_2$ 和残差 $\hat{\boldsymbol{W}}-\boldsymbol{L}_1\boldsymbol{L}_2$ ，低秩分支以16位精度运行缓解量化难度。
 
 #### Nunchaku引擎设计
 
-![engine](./assets/engine.jpg) (a) 原始低秩分支（秩32）因额外读写16位数据引入57%延迟。Nunchaku通过核融合优化。(b) 将下投影与量化、上投影与4位计算分别融合，减少数据搬运。
+![engine](./assets/engine.jpg) (a) 原始低秩分支（秩32）因额外读写16位数据引入57%的延迟。Nunchaku通过核融合优化。(b) 将下投影与量化、上投影与4-bit计算分别融合，减少数据搬运。
 
 ## 性能表现
 
-![efficiency](./assets/efficiency.jpg)SVDQuant将12B FLUX.1模型尺寸压缩3.6倍。Nunchaku在桌面和笔记本RTX 4090上，相比NF4 W4A16基线分别实现3.5倍显存节省和3.0倍加速。笔记本端通过消除CPU卸载实现总计10.1倍加速。
+![efficiency](./assets/efficiency.jpg)SVDQuant将12B FLUX.1模型尺寸压缩3.6倍。Nunchaku在桌面和笔记本RTX 4090上，相比NF4 W4A16基线分别实现3.5倍显存节省和3.0倍加速。笔记本端通过消除CPU offloading实现总计10.1倍加速。
 
 ## 安装指南
 
@@ -111,7 +111,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
 
 * Linux需CUDA≥12.2，Windows需CUDA≥12.6。Blackwell显卡需CUDA≥12.8。
 * Windows用户请参考[此问题](https://github.com/mit-han-lab/nunchaku/issues/6)升级MSVC编译器。
-* 支持SM_75（图灵：RTX 2080）、SM_86（安培：RTX 3090）、SM_89（Ada：RTX 4090）、SM_80（A100）架构显卡，详见[此问题](https://github.com/mit-han-lab/nunchaku/issues/1)。
+* 支持SM_75（Turing：RTX 2080）、SM_86（Ampere：RTX 3090）、SM_89（Ada：RTX 4090）、SM_80（A100）架构显卡，详见[此问题](https://github.com/mit-han-lab/nunchaku/issues/1)。
 
 1. 安装依赖：
 
@@ -160,11 +160,11 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
 
 ### Docker支持（即将推出）
 
-**[可选]** 运行`python -m nunchaku.test`验证安装，将下载并运行4位FLUX.1-schnell模型。
+**[可选]** 运行`python -m nunchaku.test`验证安装，将下载并运行4-bitFLUX.1-schnell模型。
 
 ## 使用示例
 
-[examples](examples)目录提供了运行4位[FLUX.1](https://github.com/black-forest-labs/flux)和[SANA](https://github.com/NVlabs/Sana)模型的极简脚本，API与[diffusers](https://github.com/huggingface/diffusers)兼容。例如[FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev)脚本：
+在[示例](examples)中，我们提供了运行4-bit[FLUX.1](https://github.com/black-forest-labs/flux)和[SANA](https://github.com/NVlabs/Sana)模型的极简脚本，API与[diffusers](https://github.com/huggingface/diffusers)兼容。例如[FLUX.1-dev](https://huggingface.co/black-forest-labs/FLUX.1-dev)脚本：
 
 ```python
 import torch
@@ -182,11 +182,11 @@ image = pipeline("举着'Hello World'标牌的猫咪", num_inference_steps=50, g
 image.save(f"flux.1-dev-{precision}.png")
 ```
 
-**注意**：**图灵显卡用户（如20系列）**需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
+**注意**：*Turing显卡用户（如20系列）**需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
 
-### FP16注意力
+### FP16 Attention
 
-除FlashAttention-2外，Nunchaku提供定制FP16注意力实现，在30/40/50系显卡上提速**1.2倍**且无损精度。启用方式：
+除FlashAttention-2外，Nunchaku提供定制FP16 Attention实现，在30/40/50系显卡上提速**1.2倍**且无损精度。启用方式：
 
 ```python
 transformer.set_attention_impl("nunchaku-fp16")
@@ -194,9 +194,9 @@ transformer.set_attention_impl("nunchaku-fp16")
 
 完整示例见[`examples/flux.1-dev-fp16attn.py`](examples/flux.1-dev-fp16attn.py)。
 
-### 首块缓存
+### First-Block Cache
 
-Nunchaku支持[首块缓存](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching)加速长步去噪。启用方式：
+Nunchaku支持[First-Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching)加速长步去噪。启用方式：
 
 ```python
 apply_cache_on_pipe(pipeline, residual_diff_threshold=0.12)
@@ -204,9 +204,9 @@ apply_cache_on_pipe(pipeline, residual_diff_threshold=0.12)
 
 `residual_diff_threshold`越大速度越快但可能影响质量，推荐值`0.12`，50步推理提速2倍，30步提速1.4倍。完整示例见[`examples/flux.1-dev-cache.py`](examples/flux.1-dev-cache.py)。
 
-### CPU卸载
+### CPU offloading
 
-最小化显存占用至**4 GiB**，设置`offload=True`并启用CPU卸载：
+最小化显存占用至**4 GiB**，设置`offload=True`并启用CPU offloading：
 
 ```python
 pipeline.enable_sequential_cpu_offload()
@@ -270,7 +270,7 @@ transformer.update_lora_params(composed_lora)
 
 你可以为列表中的每个 LoRA 指定单独的强度。完整的示例请参考 [`examples/flux.1-dev-multiple-lora.py`](examples/flux.1-dev-multiple-lora.py)。
 
-**对于 ComfyUI 用户，你可以直接使用我们的 LoRA 加载器。已转换的 LoRA 已被弃用，请参考 [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) 获取更多详细信息。**
+**对于 ComfyUI 用户，你可以直接使用我们的 LoRA 加载器。转换后的 LoRA 已被弃用，请参考 [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) 获取更多详细信息。**
 
 ## ControlNets
 
@@ -282,7 +282,7 @@ Nunchaku 支持 [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) 和 [FL
 
 请参考 [mit-han-lab/ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku) 获取在 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 中的使用方法。
 
-## Gradio 演示
+## 使用演示
 
 * FLUX.1 模型
   * 文生图：见 [`app/flux.1/t2i`](app/flux.1/t2i)。
@@ -335,7 +335,7 @@ Nunchaku 支持 [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) 和 [FL
 
 ## 致谢
 
-感谢 MIT-IBM Watson AI 实验室、MIT 和亚马逊科学中心、MIT AI 硬件计划、国家科学基金会、帕卡德基金会、戴尔、LG、现代和三星对本研究的支持。感谢 NVIDIA 捐赠 DGX 服务器。
+感谢 MIT-IBM Watson AI Lab、MIT 和Amazon Science Hub、MIT AI Hardware Program、National Science Foundation、Packard Foundation、Dell、LG、Hyundai和Samsung对本研究的支持。感谢 NVIDIA 捐赠 DGX 服务器。
 
 我们使用 [img2img-turbo](https://github.com/GaParmar/img2img-turbo) 训练草图生成图像的 LoRA。我们的文生图和图像生成用户界面基于 [playground-v.25](https://huggingface.co/spaces/playgroundai/playground-v2.5/blob/main/app.py) 和 [img2img-turbo](https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py) 构建。我们的安全检查器来自 [hart](https://github.com/mit-han-lab/hart)。
 
