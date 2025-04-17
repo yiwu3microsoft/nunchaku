@@ -65,7 +65,7 @@ SVDQuant 是一种支持4-bit权重和激活的后训练量化技术，能有效
 
 ## 安装指南
 
-我们提供了在 Windows 上安装和使用 Nunchaku 的教学视频，支持[**英文**](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0)和[**中文**](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee)两个版本。同时，你也可以参考对应的图文教程 [`docs/setup_windows.md`](docs/setup_windows.md)。如果在安装过程中遇到问题，这些资源是很好的起点。
+我们提供了在 Windows 上安装和使用 Nunchaku 的教学视频，支持[**英文**](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0)和[**中文**](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee)两个版本。同时，你也可以参考对应的图文教程 [`docs/setup_windows.md`](docs/setup_windows.md)。如果在安装过程中遇到问题，建议优先查阅这些资源。
 
 ### Wheel包安装
 
