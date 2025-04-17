@@ -157,6 +157,14 @@ Please use CMD instead of PowerShell for building.
     "G:\ComfyuI\python\python.exe" -m nunchaku.test
     ```
     
+- (Optional) Step 5: Building wheel for Portable Python
+
+    If building directly with portable Python fails, you can first build the wheel in a working Conda environment, then install the `.whl` file using your portable Python:
+
+    ```shell
+    set NUNCHAKU_INSTALL_MODE=ALL
+    "G:\ComfyuI\python\python.exe" python -m build --wheel --no-isolation
+    ```
 
 # Use Nunchaku in ComfyUI
 
@@ -209,7 +217,7 @@ Alternatively, install using [ComfyUI-Manager](https://github.com/Comfy-Org/Comf
 
 ## 3. Set Up Workflows
 
-To use the official workflows, download them from the [ComfyUI-nunchaku repository](https://github.com/mit-han-lab/ComfyUI-nunchaku/tree/main/workflows) and place them in your `ComfyUI/user/default/workflows` directory. The command can be 
+To use the official workflows, download them from the [ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku/tree/main/workflows) and place them in your `ComfyUI/user/default/workflows` directory. The command can be 
 
 ```bash
 # From the root of your ComfyUI folder

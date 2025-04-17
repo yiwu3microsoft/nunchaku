@@ -6,15 +6,15 @@
 </h3>
 
 <h3 align="center"> 
-<a href="https://github.com/mit-han-lab/nunchaku/blob/main/README.md"><b>English</b></a> | <a href="https://github.com/mit-han-lab/nunchaku/blob/main/README_ZH.md"><b>中文</b></a>
+<a href="README.md"><b>English</b></a> | <a href="README_ZH.md"><b>中文</b></a>
 </h3>
-
 **Nunchaku** 是一款专为4-bit神经网络优化的高性能推理引擎，基于我们的论文 [SVDQuant](http://arxiv.org/abs/2411.05007) 提出。底层量化库请参考 [DeepCompressor](https://github.com/mit-han-lab/deepcompressor)。
 
 欢迎加入我们的用户群：[**Slack**](https://join.slack.com/t/nunchaku/shared_invite/zt-3170agzoz-NgZzWaTrEj~n2KEV3Hpl5Q)、[**Discord**](https://discord.gg/Wk6PnwX9Sm) 和 [**微信**](./assets/wechat.jpg)，与社区交流！更多详情请见[此处](https://github.com/mit-han-lab/nunchaku/issues/149)。如有任何问题、建议或贡献意向，欢迎随时联系！
 
 ## 最新动态
 
+- **[2025-04-09]** 🎥 发布了[**英文**](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0)和[**中文**](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee)教程视频，协助安装和使用Nunchaku。
 - **[2025-04-09]** 📢 发布[四月开发路线图](https://github.com/mit-han-lab/nunchaku/issues/266)和[常见问题解答](https://github.com/mit-han-lab/nunchaku/discussions/262)，帮助社区快速上手并了解Nunchaku最新进展。
 - **[2025-04-05]** 🚀 **Nunchaku v0.2.0 发布！** 支持[**多LoRA融合**](examples/flux.1-dev-multiple-lora.py)和[**ControlNet**](examples/flux.1-dev-controlnet-union-pro.py)，通过[**FP16 attention**](#fp16-attention)和[**First-Block Cache**](#first-block-cache)实现更快的推理速度。新增[**20系显卡支持**](examples/flux.1-dev-turing.py)，覆盖更多用户！
 - **[2025-03-17]** 🚀 发布NVFP4 4-bit量化版[Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)和FLUX.1工具集，升级INT4 FLUX.1工具模型。从[HuggingFace](https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c)或[ModelScope](https://modelscope.cn/collections/svdquant-468e8f780c2641)下载更新！
@@ -61,9 +61,11 @@ SVDQuant 是一种支持4-bit权重和激活的后训练量化技术，能有效
 
 ## 性能表现
 
-![efficiency](./assets/efficiency.jpg)SVDQuant将12B FLUX.1模型尺寸压缩3.6倍。Nunchaku在桌面和笔记本RTX 4090上，相比NF4 W4A16基线分别实现3.5倍显存节省和3.0倍加速。笔记本端通过消除CPU offloading实现总计10.1倍加速。
+![efficiency](./assets/efficiency.jpg)SVDQuant 将12B FLUX.1模型的体积压缩了3.6倍，同时将原始16位模型的显存占用减少了3.5倍。借助Nunchaku，我们的INT4模型在桌面和笔记本的NVIDIA RTX 4090 GPU上比NF4 W4A16基线快了3.0倍。值得一提的是，在笔记本4090上，通过消除CPU offloading，总体加速达到了10.1倍。我们的NVFP4模型在RTX 5090 GPU上也比BF16和NF4快了3.1倍。
 
 ## 安装指南
+
+我们提供了在 Windows 上安装和使用 Nunchaku 的教学视频，支持[**英文**](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0)和[**中文**](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee)两个版本。同时，你也可以参考对应的图文教程 [`docs/setup_windows.md`](docs/setup_windows.md)。如果在安装过程中遇到问题，这些资源是很好的起点。
 
 ### Wheel包安装
 
@@ -139,7 +141,7 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
     ```
 
     Windows用户请安装最新[Visual Studio](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false)。
-    
+   
     编译命令：
 
     ```shell
@@ -149,18 +151,14 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
     git submodule update
     python setup.py develop
     ```
-    
+   
     打包wheel：
 
     ```shell
     NUNCHAKU_INSTALL_MODE=ALL NUNCHAKU_BUILD_WHEELS=1 python -m build --wheel --no-isolation
     ```
-    
+   
     设置`NUNCHAKU_INSTALL_MODE=ALL`确保wheel支持所有显卡架构。
-
-### Docker支持（即将推出）
-
-**[可选]** 运行`python -m nunchaku.test`验证安装，将下载并运行4-bitFLUX.1-schnell模型。
 
 ## 使用示例
 
@@ -182,7 +180,7 @@ image = pipeline("举着'Hello World'标牌的猫咪", num_inference_steps=50, g
 image.save(f"flux.1-dev-{precision}.png")
 ```
 
-**注意**：*Turing显卡用户（如20系列）**需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
+**注意**：**Turing显卡用户（如20系列）**需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
 
 ### FP16 Attention
 
