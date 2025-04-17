@@ -162,7 +162,7 @@ jobs:
 
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
-    needs: [ set-up-build-env, test-flux-memory, test-flux-other ]
+    needs: [ set-up-build-env, test-flux-memory, test-flux-other, test-sana ]
     runs-on: self-hosted
 
     steps:
