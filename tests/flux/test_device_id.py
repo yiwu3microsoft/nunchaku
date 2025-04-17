@@ -11,7 +11,7 @@ from nunchaku.utils import get_precision, is_turing
 )
 def test_device_id():
     precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
-    torch_dtype = torch.float16 if is_turing("cuda:1") else torch.float32
+    torch_dtype = torch.float16 if is_turing("cuda:1") else torch.bfloat16
     transformer = NunchakuFluxTransformer2dModel.from_pretrained(
         f"mit-han-lab/svdq-{precision}-flux.1-schnell", torch_dtype=torch_dtype, device="cuda:1"
     )

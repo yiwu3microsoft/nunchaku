@@ -1,4 +1,5 @@
 import gc
+import math
 import os
 
 import torch
@@ -66,7 +67,7 @@ def run_pipeline(dataset, batch_size: int, task: str, pipeline: FluxPipeline, sa
     for row in tqdm(
         dataset.iter(batch_size=batch_size, drop_last_batch=False),
         desc="Batch",
-        total=len(dataset),
+        total=math.ceil(len(dataset) // batch_size),
         position=0,
         leave=False,
     ):
