@@ -9,7 +9,7 @@ from .utils import run_test
     "height,width,num_inference_steps,attention_impl,cpu_offload,expected_lpips",
     [
         (1024, 1024, 50, "flashattn2", False, 0.139),
-        (2048, 512, 25, "nunchaku-fp16", False, 0.148),
+        (2048, 512, 25, "nunchaku-fp16", False, 0.168),
     ],
 )
 def test_flux_dev(

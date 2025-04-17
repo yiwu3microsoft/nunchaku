@@ -180,7 +180,7 @@ def run_test(
         for lora_name, lora_strength in zip(lora_names, lora_strengths):
             folder_name += f"-{lora_name}_{lora_strength}"
 
-    ref_root = os.path.join("test_results", "ref")
+    ref_root = os.environ.get("NUNCHAKU_TEST_CACHE_ROOT", os.path.join("test_results", "ref"))
     save_dir_16bit = os.path.join(ref_root, dtype_str, model_name, folder_name)
 
     if task in ["t2i", "redux"]:

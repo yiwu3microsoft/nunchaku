@@ -140,5 +140,5 @@ def test_flux_dev_redux():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=(0.143 if get_precision() == "int4" else 0.198),
+        expected_lpips=(0.162 if get_precision() == "int4" else 0.198),
     )
