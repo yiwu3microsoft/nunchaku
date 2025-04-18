@@ -1,4 +1,4 @@
-name: pr_test_5090
+name: pr_test_blackwell
 
 on:
   workflow_dispatch:
@@ -44,7 +44,7 @@ concurrency:
 jobs:
   check-comment:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request && !github.event.pull_request.draft) }}
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
@@ -59,7 +59,7 @@ jobs:
           fi
 
   set-up-build-env:
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     needs: [ check-comment ]
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
@@ -95,13 +95,13 @@ jobs:
           which python
           conda install -c conda-forge gxx=11 gcc=11
           echo "Installing dependencies"
-          pip install torch torchvision torchaudio
+          pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
           pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
   
 
   build:
     needs: set-up-build-env
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     timeout-minutes: 30
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
@@ -117,7 +117,7 @@ jobs:
 
   test-flux-memory:
     needs: build
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     timeout-minutes: 30
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
@@ -132,7 +132,7 @@ jobs:
 
   test-flux-other:
     needs: build
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     timeout-minutes: 150
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
@@ -147,7 +147,7 @@ jobs:
 
   test-sana:
     needs: build
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
     timeout-minutes: 60
     if: ${{ github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true' }}
 
@@ -163,7 +163,7 @@ jobs:
   clean-up:
     if: always() && (github.event_name != 'issue_comment' || needs.check-comment.outputs.should_run == 'true')
     needs: [ set-up-build-env, test-flux-memory, test-flux-other, test-sana ]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, blackwell ]
 
     steps:
       - name: Clean up
