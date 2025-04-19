@@ -3,20 +3,8 @@ PYTHON_VERSION=$1
 TORCH_VERSION=$2
 CUDA_VERSION=$3
 NUNCHAKU_VERSION=$4
-
-# Check if TORCH_VERSION is 2.5 or 2.6 and set the corresponding versions for TORCHVISION and TORCHAUDIO
-if [ "$TORCH_VERSION" == "2.5" ]; then
-  TORCHVISION_VERSION="0.20"
-  TORCHAUDIO_VERSION="2.5"
-  echo "TORCH_VERSION is 2.5, setting TORCHVISION_VERSION to $TORCHVISION_VERSION and TORCHAUDIO_VERSION to $TORCHAUDIO_VERSION"
-elif [ "$TORCH_VERSION" == "2.6" ]; then
-  TORCHVISION_VERSION="0.21"
-  TORCHAUDIO_VERSION="2.6"
-  echo "TORCH_VERSION is 2.6, setting TORCHVISION_VERSION to $TORCHVISION_VERSION and TORCHAUDIO_VERSION to $TORCHAUDIO_VERSION"
-else
-  echo "TORCH_VERSION is not 2.5 or 2.6. Exit."
-  exit 2
-fi
+TORCHVISION_VERSION=""
+TORCHAUDIO_VERSION=""
 
 if [ "$CUDA_VERSION" == "12.8" ]; then
   CUDA_IMAGE="12.8.1-devel-ubuntu24.04"
@@ -29,7 +17,7 @@ else
   exit 2
 fi
 
-docker build -f docker/Dockerfile --no-cache \
+docker build -f docker/Dockerfile.torch27 --no-cache \
 --build-arg PYTHON_VERSION=${PYTHON_VERSION} \
 --build-arg CUDA_SHORT_VERSION=${CUDA_VERSION//.} \
 --build-arg CUDA_IMAGE=${CUDA_IMAGE} \

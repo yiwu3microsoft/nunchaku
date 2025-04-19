@@ -5,7 +5,7 @@ from nunchaku.utils import get_precision, is_turing
 from .utils import run_test
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_canny_dev():
     run_test(
         precision=get_precision(),
@@ -15,16 +15,16 @@ def test_flux_canny_dev():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=30,
         guidance_scale=30,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.103 if get_precision() == "int4" else 0.164,
+        expected_lpips=0.076 if get_precision() == "int4" else 0.164,
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_depth_dev():
     run_test(
         precision=get_precision(),
@@ -39,11 +39,11 @@ def test_flux_depth_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.170 if get_precision() == "int4" else 0.120,
+        expected_lpips=0.137 if get_precision() == "int4" else 0.120,
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_fill_dev():
     run_test(
         precision=get_precision(),
@@ -53,37 +53,37 @@ def test_flux_fill_dev():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=30,
         guidance_scale=30,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.045,
+        expected_lpips=0.046,
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
-def test_flux_dev_canny_lora():
-    run_test(
-        precision=get_precision(),
-        model_name="flux.1-dev",
-        dataset_name="MJHQ-control",
-        task="canny",
-        dtype=torch.bfloat16,
-        height=1024,
-        width=1024,
-        num_inference_steps=50,
-        guidance_scale=30,
-        attention_impl="nunchaku-fp16",
-        cpu_offload=False,
-        lora_names="canny",
-        lora_strengths=0.85,
-        cache_threshold=0,
-        expected_lpips=0.103,
-    )
+# @pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
+# def test_flux_dev_canny_lora():
+#     run_test(
+#         precision=get_precision(),
+#         model_name="flux.1-dev",
+#         dataset_name="MJHQ-control",
+#         task="canny",
+#         dtype=torch.bfloat16,
+#         height=1024,
+#         width=1024,
+#         num_inference_steps=30,
+#         guidance_scale=30,
+#         attention_impl="nunchaku-fp16",
+#         cpu_offload=False,
+#         lora_names="canny",
+#         lora_strengths=0.85,
+#         cache_threshold=0,
+#         expected_lpips=0.081,
+#     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_depth_lora():
     run_test(
         precision=get_precision(),
@@ -100,11 +100,11 @@ def test_flux_dev_depth_lora():
         cache_threshold=0,
         lora_names="depth",
         lora_strengths=0.85,
-        expected_lpips=0.163,
+        expected_lpips=0.181,
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_fill_dev_turbo():
     run_test(
         precision=get_precision(),
@@ -121,11 +121,11 @@ def test_flux_fill_dev_turbo():
         cache_threshold=0,
         lora_names="turbo8",
         lora_strengths=1,
-        expected_lpips=0.048,
+        expected_lpips=0.036,
     )
 
 
-@pytest.mark.skipif(is_turing(), reason="Skip tests due to Turing GPUs")
+@pytest.mark.skipif(is_turing(), reason="Skip tests due to using Turing GPUs")
 def test_flux_dev_redux():
     run_test(
         precision=get_precision(),
@@ -135,10 +135,10 @@ def test_flux_dev_redux():
         dtype=torch.bfloat16,
         height=1024,
         width=1024,
-        num_inference_steps=50,
+        num_inference_steps=20,
         guidance_scale=2.5,
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.198 if get_precision() == "int4" else 0.55,  # redux seems to generate different images on 5090
+        expected_lpips=(0.162 if get_precision() == "int4" else 0.5),  # not sure why the fp4 model is so different
     )

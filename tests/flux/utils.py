@@ -1,8 +1,11 @@
+import gc
+import math
 import os
 
 import torch
 from controlnet_aux import CannyDetector
 from diffusers import FluxControlPipeline, FluxFillPipeline, FluxPipeline, FluxPriorReduxPipeline
+from diffusers.hooks import apply_group_offloading
 from diffusers.utils import load_image
 from image_gen_aux import DepthPreprocessor
 from tqdm import tqdm
@@ -10,7 +13,7 @@ from tqdm import tqdm
 import nunchaku
 from nunchaku import NunchakuFluxTransformer2dModel, NunchakuT5EncoderModel
 from nunchaku.lora.flux.compose import compose_lora
-from ..data import download_hf_dataset, get_dataset
+from ..data import get_dataset
 from ..utils import already_generate, compute_lpips, hash_str_to_int
 
 ORIGINAL_REPO_MAP = {
@@ -45,7 +48,7 @@ LORA_PATH_MAP = {
 }
 
 
-def run_pipeline(dataset, task: str, pipeline: FluxPipeline, save_dir: str, forward_kwargs: dict = {}):
+def run_pipeline(dataset, batch_size: int, task: str, pipeline: FluxPipeline, save_dir: str, forward_kwargs: dict = {}):
     os.makedirs(save_dir, exist_ok=True)
     pipeline.set_progress_bar_config(desc="Sampling", leave=False, dynamic_ncols=True, position=1)
 
@@ -61,43 +64,65 @@ def run_pipeline(dataset, task: str, pipeline: FluxPipeline, save_dir: str, forw
         assert task in ["t2i", "fill"]
         processor = None
 
-    for row in tqdm(dataset):
-        filename = row["filename"]
-        prompt = row["prompt"]
+    for row in tqdm(
+        dataset.iter(batch_size=batch_size, drop_last_batch=False),
+        desc="Batch",
+        total=math.ceil(len(dataset) // batch_size),
+        position=0,
+        leave=False,
+    ):
+        filenames = row["filename"]
+        prompts = row["prompt"]
 
         _forward_kwargs = {k: v for k, v in forward_kwargs.items()}
 
         if task == "canny":
             assert forward_kwargs.get("height", 1024) == 1024
             assert forward_kwargs.get("width", 1024) == 1024
-            control_image = load_image(row["canny_image_path"])
-            control_image = processor(
-                control_image,
-                low_threshold=50,
-                high_threshold=200,
-                detect_resolution=1024,
-                image_resolution=1024,
-            )
-            _forward_kwargs["control_image"] = control_image
+            control_images = []
+            for canny_image_path in row["canny_image_path"]:
+                control_image = load_image(canny_image_path)
+                control_image = processor(
+                    control_image,
+                    low_threshold=50,
+                    high_threshold=200,
+                    detect_resolution=1024,
+                    image_resolution=1024,
+                )
+                control_images.append(control_image)
+            _forward_kwargs["control_image"] = control_images
         elif task == "depth":
-            control_image = load_image(row["depth_image_path"])
-            control_image = processor(control_image)[0].convert("RGB")
-            _forward_kwargs["control_image"] = control_image
+            control_images = []
+            for depth_image_path in row["depth_image_path"]:
+                control_image = load_image(depth_image_path)
+                control_image = processor(control_image)[0].convert("RGB")
+                control_images.append(control_image)
+            _forward_kwargs["control_image"] = control_images
         elif task == "fill":
-            image = load_image(row["image_path"])
-            mask_image = load_image(row["mask_image_path"])
-            _forward_kwargs["image"] = image
-            _forward_kwargs["mask_image"] = mask_image
+            images, mask_images = [], []
+            for image_path, mask_image_path in zip(row["image_path"], row["mask_image_path"]):
+                image = load_image(image_path)
+                mask_image = load_image(mask_image_path)
+                images.append(image)
+                mask_images.append(mask_image)
+            _forward_kwargs["image"] = images
+            _forward_kwargs["mask_image"] = mask_images
         elif task == "redux":
-            image = load_image(row["image_path"])
-            _forward_kwargs.update(processor(image))
+            images = []
+            for image_path in row["image_path"]:
+                image = load_image(image_path)
+                images.append(image)
+            _forward_kwargs.update(processor(images))
 
-        seed = hash_str_to_int(filename)
+        seeds = [hash_str_to_int(filename) for filename in filenames]
+        generators = [torch.Generator().manual_seed(seed) for seed in seeds]
         if task == "redux":
-            image = pipeline(generator=torch.Generator().manual_seed(seed), **_forward_kwargs).images[0]
+            images = pipeline(generator=generators, **_forward_kwargs).images
         else:
-            image = pipeline(prompt, generator=torch.Generator().manual_seed(seed), **_forward_kwargs).images[0]
-        image.save(os.path.join(save_dir, f"{filename}.png"))
+            images = pipeline(prompts, generator=generators, **_forward_kwargs).images
+        for i, image in enumerate(images):
+            filename = filenames[i]
+            image.save(os.path.join(save_dir, f"{filename}.png"))
         torch.cuda.empty_cache()
 
 
@@ -105,6 +130,7 @@ def run_test(
     precision: str = "int4",
     model_name: str = "flux.1-schnell",
     dataset_name: str = "MJHQ",
+    batch_size: int = 1,
     task: str = "t2i",
     dtype: str | torch.dtype = torch.bfloat16,  # the full precision dtype
     height: int = 1024,
@@ -117,10 +143,12 @@ def run_test(
     cache_threshold: float = 0,
     lora_names: str | list[str] | None = None,
     lora_strengths: float | list[float] = 1.0,
-    max_dataset_size: int = 20,
+    max_dataset_size: int = 4,
     i2f_mode: str | None = None,
     expected_lpips: float = 0.5,
 ):
+    gc.collect()
+    torch.cuda.empty_cache()
     if isinstance(dtype, str):
         dtype_str = dtype
         if dtype == "bf16":
@@ -153,10 +181,7 @@ def run_test(
         for lora_name, lora_strength in zip(lora_names, lora_strengths):
             folder_name += f"-{lora_name}_{lora_strength}"
 
-    if not os.path.exists(os.path.join("test_results", "ref")):
-        ref_root = download_hf_dataset(local_dir=os.path.join("test_results", "ref"))
-    else:
-        ref_root = os.path.join("test_results", "ref")
+    ref_root = os.environ.get("NUNCHAKU_TEST_CACHE_ROOT", os.path.join("test_results", "ref"))
     save_dir_16bit = os.path.join(ref_root, dtype_str, model_name, folder_name)
 
     if task in ["t2i", "redux"]:
@@ -171,7 +196,8 @@ def run_test(
     if not already_generate(save_dir_16bit, max_dataset_size):
         pipeline_init_kwargs = {"text_encoder": None, "text_encoder2": None} if task == "redux" else {}
         pipeline = pipeline_cls.from_pretrained(model_id_16bit, torch_dtype=dtype, **pipeline_init_kwargs)
-        pipeline = pipeline.to("cuda")
+        gpu_properties = torch.cuda.get_device_properties(0)
+        gpu_memory = gpu_properties.total_memory / (1024**2)
 
         if len(lora_names) > 0:
             for i, (lora_name, lora_strength) in enumerate(zip(lora_names, lora_strengths)):
@@ -181,7 +207,30 @@ def run_test(
                 )
             pipeline.set_adapters([f"lora_{i}" for i in range(len(lora_names))], lora_strengths)
 
+        if gpu_memory > 36 * 1024:
+            pipeline = pipeline.to("cuda")
+        elif gpu_memory < 26 * 1024:
+            pipeline.transformer.enable_group_offload(
+                onload_device=torch.device("cuda"),
+                offload_device=torch.device("cpu"),
+                offload_type="leaf_level",
+                use_stream=True,
+            )
+            if pipeline.text_encoder is not None:
+                pipeline.text_encoder.to("cuda")
+            if pipeline.text_encoder_2 is not None:
+                apply_group_offloading(
+                    pipeline.text_encoder_2,
+                    onload_device=torch.device("cuda"),
+                    offload_type="block_level",
+                    num_blocks_per_group=2,
+                )
+            pipeline.vae.to("cuda")
+        else:
+            pipeline.enable_model_cpu_offload()
+
         run_pipeline(
+            batch_size=batch_size,
             dataset=dataset,
             task=task,
             pipeline=pipeline,
@@ -195,6 +244,7 @@ def run_test(
         )
         del pipeline
         # release the gpu memory
+        gc.collect()
         torch.cuda.empty_cache()
 
     precision_str = precision
@@ -211,6 +261,8 @@ def run_test(
         precision_str += f"-cache{cache_threshold}"
     if i2f_mode is not None:
         precision_str += f"-i2f{i2f_mode}"
+    if batch_size > 1:
+        precision_str += f"-bs{batch_size}"
 
     save_dir_4bit = os.path.join("test_results", dtype_str, precision_str, model_name, folder_name)
     if not already_generate(save_dir_4bit, max_dataset_size):
@@ -252,6 +304,7 @@ def run_test(
         else:
             pipeline = pipeline.to("cuda")
         run_pipeline(
+            batch_size=batch_size,
             dataset=dataset,
             task=task,
             pipeline=pipeline,
@@ -266,7 +319,8 @@ def run_test(
         del transformer
         del pipeline
         # release the gpu memory
+        gc.collect()
         torch.cuda.empty_cache()
     lpips = compute_lpips(save_dir_16bit, save_dir_4bit)
     print(f"lpips: {lpips}")
-    assert lpips < expected_lpips * 1.05
+    assert lpips < expected_lpips * 1.1

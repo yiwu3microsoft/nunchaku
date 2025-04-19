@@ -29,7 +29,7 @@ else
   exit 2
 fi
 
-docker build -f docker/Dockerfile --no-cache \
+docker build -f docker/Dockerfile.torch28 --no-cache \
 --build-arg PYTHON_VERSION=${PYTHON_VERSION} \
 --build-arg CUDA_SHORT_VERSION=${CUDA_VERSION//.} \
 --build-arg CUDA_IMAGE=${CUDA_IMAGE} \

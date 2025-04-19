@@ -129,7 +129,7 @@ If you're using a Blackwell GPU (e.g., 50-series GPUs), install a wheel with PyT
    pip install ninja wheel diffusers transformers accelerate sentencepiece protobuf huggingface_hub
    
    # For gradio demos
-   pip install peft opencv-python gradio spaces GPUtil  
+   pip install peft opencv-python gradio spaces GPUtil
    ```
 
    To enable NVFP4 on Blackwell GPUs (e.g., 50-series GPUs), please install nightly PyTorch with CUDA 12.8. The installation command can be:
@@ -342,3 +342,7 @@ We thank MIT-IBM Watson AI Lab, MIT and Amazon Science Hub, MIT AI Hardware Prog
 We use [img2img-turbo](https://github.com/GaParmar/img2img-turbo) to train the sketch-to-image LoRA. Our text-to-image and image-to-image UI is built upon [playground-v.25](https://huggingface.co/spaces/playgroundai/playground-v2.5/blob/main/app.py) and [img2img-turbo](https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py), respectively. Our safety checker is borrowed from [hart](https://github.com/mit-han-lab/hart).
 
 Nunchaku is also inspired by many open-source libraries, including (but not limited to) [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM), [vLLM](https://github.com/vllm-project/vllm), [QServe](https://github.com/mit-han-lab/qserve), [AWQ](https://github.com/mit-han-lab/llm-awq), [FlashAttention-2](https://github.com/Dao-AILab/flash-attention), and [Atom](https://github.com/efeslab/Atom). 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mit-han-lab/nunchaku&type=Date)](https://www.star-history.com/#mit-han-lab/nunchaku&Date)

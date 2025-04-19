@@ -9,6 +9,7 @@ from ...caching import utils
 
 def apply_cache_on_transformer(transformer: FluxTransformer2DModel, *, residual_diff_threshold=0.12):
     if getattr(transformer, "_is_cached", False):
+        transformer.cached_transformer_blocks[0].update_threshold(residual_diff_threshold)
         return transformer
 
     cached_transformer_blocks = nn.ModuleList(

@@ -180,7 +180,7 @@ std::array<Tensor, N> split_mod(Tensor input) {
 
     auto stream = getCurrentCUDAStream();
 
-    auto shapeOut = input.shape;
+    auto shapeOut = TensorShape(input.shape.dataExtent);
     shapeOut[-1] /= N;
 
     std::array<Tensor, N> out;
