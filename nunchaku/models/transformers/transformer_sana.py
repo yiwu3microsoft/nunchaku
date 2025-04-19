@@ -130,7 +130,8 @@ class NunchakuSanaTransformerBlocks(nn.Module):
             .to(original_dtype)
             .to(original_device)
         )
-
+    def __del__(self):
+        self.m.reset()
 
 class NunchakuSanaTransformer2DModel(SanaTransformer2DModel, NunchakuModelLoaderMixin):
     @classmethod
