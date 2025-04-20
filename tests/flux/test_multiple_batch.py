@@ -9,8 +9,8 @@ from .utils import run_test
 @pytest.mark.parametrize(
     "height,width,attention_impl,cpu_offload,expected_lpips,batch_size",
     [
-        (1024, 1024, "nunchaku-fp16", False, 0.140, 2),
-        (1920, 1080, "flashattn2", False, 0.160, 4),
+        (1024, 1024, "nunchaku-fp16", False, 0.140 if get_precision() == "int4" else 0.118, 2),
+        (1920, 1080, "flashattn2", False, 0.160 if get_precision() == "int4" else 0.123, 4),
     ],
 )
 def test_int4_schnell(

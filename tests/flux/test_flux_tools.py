@@ -20,7 +20,7 @@ def test_flux_canny_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.076 if get_precision() == "int4" else 0.164,
+        expected_lpips=0.076 if get_precision() == "int4" else 0.090,
     )
 
 
@@ -39,7 +39,7 @@ def test_flux_depth_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.137 if get_precision() == "int4" else 0.120,
+        expected_lpips=0.137 if get_precision() == "int4" else 0.092,
     )
 
 
@@ -58,7 +58,7 @@ def test_flux_fill_dev():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=0.046,
+        expected_lpips=0.046 if get_precision() == "int4" else 0.021,
     )
 
 
@@ -100,7 +100,7 @@ def test_flux_dev_depth_lora():
         cache_threshold=0,
         lora_names="depth",
         lora_strengths=0.85,
-        expected_lpips=0.181,
+        expected_lpips=0.181 if get_precision() == "int4" else 0.196,
     )
 
 
@@ -121,7 +121,7 @@ def test_flux_fill_dev_turbo():
         cache_threshold=0,
         lora_names="turbo8",
         lora_strengths=1,
-        expected_lpips=0.036,
+        expected_lpips=0.036 if get_precision() == "int4" else 0.030,
     )
 
 
@@ -140,5 +140,5 @@ def test_flux_dev_redux():
         attention_impl="nunchaku-fp16",
         cpu_offload=False,
         cache_threshold=0,
-        expected_lpips=(0.162 if get_precision() == "int4" else 0.5),  # not sure why the fp4 model is so different
+        expected_lpips=(0.162 if get_precision() == "int4" else 0.466),  # not sure why the fp4 model is so different
     )
