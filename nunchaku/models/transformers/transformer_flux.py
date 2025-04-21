@@ -180,7 +180,8 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         encoder_hidden_states = encoder_hidden_states.to(original_dtype).to(original_device)
 
         return encoder_hidden_states, hidden_states
-
+    def __del__(self):
+        self.m.reset()
 
 ## copied from diffusers 0.30.3
 def rope(pos: torch.Tensor, dim: int, theta: int) -> torch.Tensor:
