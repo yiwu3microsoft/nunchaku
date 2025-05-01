@@ -1,7 +1,6 @@
-from typing import Any, Dict, Optional, Union
-
 import logging
 import os
+from typing import Any, Dict, Optional, Union
 
 import diffusers
 import torch
@@ -10,14 +9,15 @@ from diffusers.configuration_utils import register_to_config
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
 from huggingface_hub import utils
 from packaging.version import Version
-from safetensors.torch import load_file, save_file
+from safetensors.torch import load_file
 from torch import nn
 
-from .utils import NunchakuModelLoaderMixin, pad_tensor
-from ..._C import QuantizedFluxModel, utils as cutils
+from ..._C import QuantizedFluxModel
+from ..._C import utils as cutils
 from ...lora.flux.nunchaku_converter import fuse_vectors, to_nunchaku
 from ...lora.flux.utils import is_nunchaku_format
 from ...utils import get_precision, load_state_dict_in_safetensors
+from .utils import NunchakuModelLoaderMixin, pad_tensor
 
 SVD_RANK = 32
 
@@ -64,6 +64,8 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         temb: torch.Tensor,
         encoder_hidden_states: torch.Tensor,
         image_rotary_emb: torch.Tensor,
+        id_embeddings=None,
+        id_weight=None,
         joint_attention_kwargs=None,
         controlnet_block_samples=None,
         controlnet_single_block_samples=None,
@@ -72,6 +74,12 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         # batch_size = hidden_states.shape[0]
         txt_tokens = encoder_hidden_states.shape[1]
         img_tokens = hidden_states.shape[1]
+
+        self.id_embeddings = id_embeddings
+        self.id_weight = id_weight
+        self.pulid_ca_idx = 0
+        if self.id_embeddings is not None:
+            self.set_residual_callback()
 
         original_dtype = hidden_states.dtype
         original_device = hidden_states.device
@@ -117,6 +125,9 @@ class NunchakuFluxTransformerBlocks(nn.Module):
             controlnet_single_block_samples,
             skip_first_layer,
         )
+
+        if self.id_embeddings is not None:
+            self.reset_residual_callback()
 
         hidden_states = hidden_states.to(original_dtype).to(original_device)
 
@@ -180,8 +191,36 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         encoder_hidden_states = encoder_hidden_states.to(original_dtype).to(original_device)
 
         return encoder_hidden_states, hidden_states
+
+    def set_residual_callback(self):
+        id_embeddings = self.id_embeddings
+        pulid_ca = self.pulid_ca
+        pulid_ca_idx = [self.pulid_ca_idx]
+        id_weight = self.id_weight
+
+        def callback(hidden_states):
+            ip = id_weight * pulid_ca[pulid_ca_idx[0]](id_embeddings, hidden_states.to("cuda"))
+            pulid_ca_idx[0] += 1
+            return ip
+
+        self.callback_holder = callback
+        self.m.set_residual_callback(callback)
+
+    def reset_residual_callback(self):
+        self.callback_holder = None
+        self.m.set_residual_callback(None)
+
     def __del__(self):
         self.m.reset()
+
+    def norm1(
+        self,
+        hidden_states: torch.Tensor,
+        emb: torch.Tensor,
+        idx: int = 0,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        return self.m.norm_one_forward(idx, hidden_states, emb)
+
 
 ## copied from diffusers 0.30.3
 def rope(pos: torch.Tensor, dim: int, theta: int) -> torch.Tensor:
@@ -442,6 +481,8 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
 
         if len(self._unquantized_part_loras) > 0 or len(unquantized_part_loras) > 0:
             self._unquantized_part_loras = unquantized_part_loras
+
+            self._unquantized_part_sd = {k: v for k, v in self._unquantized_part_sd.items() if "pulid_ca" not in k}
             self._update_unquantized_part_lora_params(1)
 
         quantized_part_vectors = {}
