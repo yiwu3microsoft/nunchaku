@@ -924,7 +924,7 @@ std::tuple<Tensor, Tensor> FluxModel::forward_layer(size_t layer,
             hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_context, 0.0f);
     } else {
         std::tie(hidden_states, encoder_hidden_states) =
-            single_transformer_blocks.at(layer - transformer_blocks.size())
+            transformer_blocks.at(layer - transformer_blocks.size())
                 ->forward(hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_context, 0.0f);
     }
 
