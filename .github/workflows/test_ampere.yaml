@@ -1,4 +1,4 @@
-name: pr_test_ampere
+name: test_ampere
 
 on:
   workflow_dispatch:
