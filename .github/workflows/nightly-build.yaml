@@ -103,3 +103,45 @@ jobs:
         run: |
           cd ..
           rm -rf *nunchaku*
+
+  windows-wheels:
+    name: Build the windows nightly wheels
+    runs-on: [self-hosted, windows-build]
+    needs: tag
+    if: needs.tag.outputs.is_dev == 'true'
+    steps:
+      - name: Checkout to the tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.tag.outputs.tag_name }}
+          submodules: true
+
+      - name: Show current commit
+        run: git log -1 --oneline
+
+      - name: Build wheels
+        run: |
+          C:\Users\muyang\miniconda3\condabin\activate.bat activate
+          scripts\build_all_windows_wheels.cmd
+
+      - name: Upload wheels to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.whl
+          name: Nunchaku Nightly ${{ needs.tag.outputs.tag_name }}
+          tag_name: ${{ needs.tag.outputs.tag_name }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  windows-clean-up:
+    if: always()
+    needs: [ windows-wheels ]
+    runs-on: [ self-hosted, windows-build ]
+
+    steps:
+      - name: Clean up
+        run: |
+          cd ..
+          powershell -Command "Remove-Item -Recurse -Force *nunchaku*"
