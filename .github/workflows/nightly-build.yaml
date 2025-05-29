@@ -64,7 +64,7 @@ jobs:
     name: Build the linux nightly wheels
     runs-on: [self-hosted, linux-build]
     needs: tag
-    if: needs.tag.outputs.is_dev == 'true'
+    if: needs.tag.outputs.is_dev == 'true' && github.repository == 'mit-han-lab/nunchaku'
     steps:
       - name: Checkout to the tag
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
         run: bash scripts/linux_cleanup.sh
 
   linux-clean-up:
-    if: always()
+    if: always() && github.repository == 'mit-han-lab/nunchaku'
     needs: [ linux-wheels ]
     runs-on: [ self-hosted, linux-build ]
 
@@ -108,7 +108,7 @@ jobs:
     name: Build the windows nightly wheels
     runs-on: [self-hosted, windows-build]
     needs: tag
-    if: needs.tag.outputs.is_dev == 'true'
+    if: needs.tag.outputs.is_dev == 'true' && github.repository == 'mit-han-lab/nunchaku'
     steps:
       - name: Checkout to the tag
         uses: actions/checkout@v4
@@ -136,7 +136,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   windows-clean-up:
-    if: always()
+    if: always() && github.repository == 'mit-han-lab/nunchaku'
     needs: [ windows-wheels ]
     runs-on: [ self-hosted, windows-build ]
 
