@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/mit-han-lab/nunchaku/477953fa1dd6f082fbec201cea7c7430117a810e/assets/nunchaku.svg" alt="logo" width="220"></img>
 </div>
 <h3 align="center">
-<a href="http://arxiv.org/abs/2411.05007"><b>论文</b></a> | <a href="https://hanlab.mit.edu/projects/svdquant"><b>官网</b></a> | <a href="https://hanlab.mit.edu/blog/svdquant"><b>博客</b></a> | <a href="https://svdquant.mit.edu"><b>演示</b></a> | <a href="https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c"><b>HuggingFace</b></a> | <a href="https://modelscope.cn/collections/svdquant-468e8f780c2641"><b>ModelScope</b></a> | <a href="https://github.com/mit-han-lab/ComfyUI-nunchaku"><b>ComfyUI</b></a>
+<a href="http://arxiv.org/abs/2411.05007"><b>论文</b></a> | <a href="https://hanlab.mit.edu/projects/svdquant"><b>官网</b></a> | <a href="https://hanlab.mit.edu/blog/svdquant"><b>博客</b></a> | <a href="https://svdquant.mit.edu"><b>演示</b></a> | <a href="https://huggingface.co/collections/mit-han-lab/nunchaku-6837e7498f680552f7bbb5ad"><b>HuggingFace</b></a> | <a href="https://modelscope.cn/collections/Nunchaku-519fed7f9de94e"><b>ModelScope</b></a> | <a href="https://github.com/mit-han-lab/ComfyUI-nunchaku"><b>ComfyUI</b></a>
 </h3>
 
 <h3 align="center">
@@ -18,13 +18,10 @@
 - **[2025-04-09]** 🎥 发布了[**英文**](https://youtu.be/YHAVe-oM7U8?si=cM9zaby_aEHiFXk0)和[**中文**](https://www.bilibili.com/video/BV1BTocYjEk5/?share_source=copy_web&vd_source=8926212fef622f25cc95380515ac74ee)教程视频，协助安装和使用Nunchaku。
 - **[2025-04-09]** 📢 发布[四月开发路线图](https://github.com/mit-han-lab/nunchaku/issues/266)和[常见问题解答](https://github.com/mit-han-lab/nunchaku/discussions/262)，帮助社区快速上手并了解Nunchaku最新进展。
 - **[2025-04-05]** 🚀 **Nunchaku v0.2.0 发布！** 支持[**多LoRA融合**](examples/flux.1-dev-multiple-lora.py)和[**ControlNet**](examples/flux.1-dev-controlnet-union-pro.py)，通过[**FP16 attention**](#fp16-attention)和[**First-Block Cache**](#first-block-cache)实现更快的推理速度。新增[**20系显卡支持**](examples/flux.1-dev-turing.py)，覆盖更多用户！
-- **[2025-03-17]** 🚀 发布NVFP4 4-bit量化版[Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)和FLUX.1工具集，升级INT4 FLUX.1工具模型。从[HuggingFace](https://huggingface.co/collections/mit-han-lab/svdquant-67493c2c2e62a1fc6e93f45c)或[ModelScope](https://modelscope.cn/collections/svdquant-468e8f780c2641)下载更新！
-- **[2025-03-13]** 📦 ComfyUI节点[独立仓库](https://github.com/mit-han-lab/ComfyUI-nunchaku)发布，安装更便捷！节点版本v0.1.6上线，全面支持[4-bit Shuttle-Jaguar](https://huggingface.co/mit-han-lab/svdq-int4-shuttle-jaguar)！
 - **[2025-03-07]** 🚀 **Nunchaku v0.1.4 发布！** 支持4-bit文本编码器和分层CPU offloading，FLUX最低显存需求降至**4 GiB**，同时保持**2–3倍加速**。修复分辨率、LoRA、内存锁定等稳定性问题，详情见更新日志！
-- **[2025-02-20]** 🚀 发布[预编译wheel包](https://huggingface.co/mit-han-lab/nunchaku)，简化安装步骤！查看[安装指南](#安装指南)！
 - **[2025-02-20]** 🚀 **NVIDIA RTX 5090支持NVFP4精度！** 相比INT4，NVFP4画质更优，在RTX 5090上比BF16快**约3倍**。[博客详解](https://hanlab.mit.edu/blog/svdquant-nvfp4)，[示例代码](./examples)及[在线演示](https://svdquant.mit.edu/flux1-schnell/)已上线！
-- **[2025-02-18]** 🔥 新增[自定义LoRA转换](#自定义lora)和[模型量化](#自定义模型量化)指南！[ComfyUI](./comfyui)工作流支持**自定义LoRA**及**FLUX.1工具集**！
-- **[2025-02-11]** 🎉 **[SVDQuant](http://arxiv.org/abs/2411.05007)入选ICLR 2025 Spotlight！FLUX.1工具集使用演示上线！** [使用演示](#使用演示)已更新！[深度图生成演示](https://svdquant.mit.edu/flux1-depth-dev/)同步开放！
+- **[2025-02-18]** 🔥 新增[自定义LoRA转换](#%E8%87%AA%E5%AE%9A%E4%B9%89lora)和[模型量化](#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%9E%8B%E9%87%8F%E5%8C%96)指南！[ComfyUI](./comfyui)工作流支持**自定义LoRA**及**FLUX.1工具集**！
+- **[2025-02-11]** 🎉 **[SVDQuant](http://arxiv.org/abs/2411.05007)入选ICLR 2025 Spotlight！FLUX.1工具集使用演示上线！** [使用演示](#%E4%BD%BF%E7%94%A8%E6%BC%94%E7%A4%BA)已更新！[深度图生成演示](https://svdquant.mit.edu/flux1-depth-dev/)同步开放！
 
 <details>
 <summary>更多动态</summary>
@@ -52,7 +49,7 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 
 #### 量化方法 -- SVDQuant
 
-![intuition](https://huggingface.co/mit-han-lab/nunchaku-artifacts/resolve/main/nunchaku/assets/intuition.gif)SVDQuant三阶段示意图。阶段1：原始激活 $\boldsymbol{X}$ 和权重 $\boldsymbol{W}$ 均含异常值，4-bit量化困难。阶段2：将激活异常值迁移至权重，得到更易量化的激活 $\hat{\boldsymbol{X}}$ 和更难量化的权重 $\hat{\boldsymbol{W}}$ 。阶段3：通过SVD将 $\hat{\boldsymbol{W}}$ 分解为低秩分量 $\boldsymbol{L}_1\boldsymbol{L}_2$ 和残差 $\hat{\boldsymbol{W}}-\boldsymbol{L}_1\boldsymbol{L}_2$ ，低秩分支以16位精度运行缓解量化难度。
+![intuition](https://huggingface.co/mit-han-lab/nunchaku-artifacts/resolve/main/nunchaku/assets/intuition.gif)SVDQuant三阶段示意图。阶段1：原始激活 $\\boldsymbol{X}$ 和权重 $\\boldsymbol{W}$ 均含异常值，4-bit量化困难。阶段2：将激活异常值迁移至权重，得到更易量化的激活 $\\hat{\\boldsymbol{X}}$ 和更难量化的权重 $\\hat{\\boldsymbol{W}}$ 。阶段3：通过SVD将 $\\hat{\\boldsymbol{W}}$ 分解为低秩分量 $\\boldsymbol{L}\_1\\boldsymbol{L}\_2$ 和残差 $\\hat{\\boldsymbol{W}}-\\boldsymbol{L}\_1\\boldsymbol{L}\_2$ ，低秩分支以16位精度运行缓解量化难度。
 
 #### Nunchaku引擎设计
 
@@ -69,6 +66,7 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 ### Wheel包安装
 
 #### 前置条件
+
 确保已安装 [PyTorch>=2.5](https://pytorch.org/)。例如：
 
 ```shell
@@ -76,6 +74,7 @@ pip install torch==2.6 torchvision==0.21 torchaudio==2.6
 ```
 
 #### 安装nunchaku
+
 从[Hugging Face](https://huggingface.co/mit-han-lab/nunchaku/tree/main)、[ModelScope](https://modelscope.cn/models/Lmxyy1999/nunchaku)或[GitHub release](https://github.com/mit-han-lab/nunchaku/releases)选择对应Python和PyTorch版本的wheel。例如Python 3.11和PyTorch 2.6：
 
 ```shell
@@ -110,9 +109,9 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
 
 **注意**：
 
-* Linux需CUDA≥12.2，Windows需CUDA≥12.6。Blackwell显卡需CUDA≥12.8。
-* Windows用户请参考[此问题](https://github.com/mit-han-lab/nunchaku/issues/6)升级MSVC编译器。
-* 支持SM_75（Turing：RTX 2080）、SM_86（Ampere：RTX 3090）、SM_89（Ada：RTX 4090）、SM_80（A100）架构显卡，详见[此问题](https://github.com/mit-han-lab/nunchaku/issues/1)。
+- Linux需CUDA≥12.2，Windows需CUDA≥12.6。Blackwell显卡需CUDA≥12.8。
+- Windows用户请参考[此问题](https://github.com/mit-han-lab/nunchaku/issues/6)升级MSVC编译器。
+- 支持SM_75（Turing：RTX 2080）、SM_86（Ampere：RTX 3090）、SM_89（Ada：RTX 4090）、SM_80（A100）架构显卡，详见[此问题](https://github.com/mit-han-lab/nunchaku/issues/1)。
 
 1. 安装依赖：
 
@@ -132,32 +131,32 @@ pip install https://huggingface.co/mit-han-lab/nunchaku/resolve/main/nunchaku-0.
    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
    ```
 
-2. 编译安装：
+1. 编译安装：
    确保`gcc/g++≥11`。Linux用户可通过Conda安装：
 
-    ```shell
-    conda install -c conda-forge gxx=11 gcc=11
-    ```
+   ```shell
+   conda install -c conda-forge gxx=11 gcc=11
+   ```
 
-    Windows用户请安装最新[Visual Studio](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false)。
+   Windows用户请安装最新[Visual Studio](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false)。
 
-    编译命令：
+   编译命令：
 
-    ```shell
-    git clone https://github.com/mit-han-lab/nunchaku.git
-    cd nunchaku
-    git submodule init
-    git submodule update
-    python setup.py develop
-    ```
+   ```shell
+   git clone https://github.com/mit-han-lab/nunchaku.git
+   cd nunchaku
+   git submodule init
+   git submodule update
+   python setup.py develop
+   ```
 
-    打包wheel：
+   打包wheel：
 
-    ```shell
-    NUNCHAKU_INSTALL_MODE=ALL NUNCHAKU_BUILD_WHEELS=1 python -m build --wheel --no-isolation
-    ```
+   ```shell
+   NUNCHAKU_INSTALL_MODE=ALL NUNCHAKU_BUILD_WHEELS=1 python -m build --wheel --no-isolation
+   ```
 
-    设置`NUNCHAKU_INSTALL_MODE=ALL`确保wheel支持所有显卡架构。
+   设置`NUNCHAKU_INSTALL_MODE=ALL`确保wheel支持所有显卡架构。
 
 ## 使用示例
 
@@ -179,7 +178,7 @@ image = pipeline("举着'Hello World'标牌的猫咪", num_inference_steps=50, g
 image.save(f"flux.1-dev-{precision}.png")
 ```
 
-**注意**：**Turing显卡用户（如20系列）**需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
+**注意**：\*\*Turing显卡用户（如20系列）\*\*需设置`torch_dtype=torch.float16`并使用`nunchaku-fp16`注意力模块，完整示例见[`examples/flux.1-dev-turing.py`](examples/flux.1-dev-turing.py)。
 
 ### FP16 Attention
 
@@ -281,14 +280,14 @@ Nunchaku 支持 [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) 和 [FL
 
 ## 使用演示
 
-* FLUX.1 模型
-  * 文生图：见 [`app/flux.1/t2i`](app/flux.1/t2i)。
-  * 草图生成图像 ([pix2pix-Turbo](https://github.com/GaParmar/img2img-turbo))：见 [`app/flux.1/sketch`](app/flux.1/sketch)。
-  * 深度/Canny 边缘生成图像 ([FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/))：见 [`app/flux.1/depth_canny`](app/flux.1/depth_canny)。
-  * 修复 ([FLUX.1-Fill-dev](https://huggingface.co/black-forest-labs/FLUX.1-Depth-dev))：见 [`app/flux.1/fill`](app/flux.1/fill)。
-  * Redux ([FLUX.1-Redux-dev](https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev))：见 [`app/flux.1/redux`](app/flux.1/redux)。
-* SANA：
-  * 文生图：见 [`app/sana/t2i`](app/sana/t2i)。
+- FLUX.1 模型
+  - 文生图：见 [`app/flux.1/t2i`](app/flux.1/t2i)。
+  - 草图生成图像 ([pix2pix-Turbo](https://github.com/GaParmar/img2img-turbo))：见 [`app/flux.1/sketch`](app/flux.1/sketch)。
+  - 深度/Canny 边缘生成图像 ([FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/))：见 [`app/flux.1/depth_canny`](app/flux.1/depth_canny)。
+  - 修复 ([FLUX.1-Fill-dev](https://huggingface.co/black-forest-labs/FLUX.1-Depth-dev))：见 [`app/flux.1/fill`](app/flux.1/fill)。
+  - Redux ([FLUX.1-Redux-dev](https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev))：见 [`app/flux.1/redux`](app/flux.1/redux)。
+- SANA：
+  - 文生图：见 [`app/sana/t2i`](app/sana/t2i)。
 
 ## 自定义模型量化
 
@@ -303,6 +302,7 @@ Nunchaku 支持 [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) 和 [FL
 请查看 [此处](https://github.com/mit-han-lab/nunchaku/issues/266) 获取四月的路线图。
 
 ## 贡献
+
 我们诚挚欢迎社区贡献！请参阅[贡献指南](docs/contribution_guide_ZH.md)了解如何为 Nunchaku 贡献代码。
 
 ## 问题排查
@@ -315,13 +315,13 @@ Nunchaku 支持 [FLUX.1-tools](https://blackforestlabs.ai/flux-1-tools/) 和 [FL
 
 ## 相关项目
 
-* [Efficient Spatially Sparse Inference for Conditional GANs and Diffusion Models](https://arxiv.org/abs/2211.02048), NeurIPS 2022 & T-PAMI 2023
-* [SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://arxiv.org/abs/2211.10438), ICML 2023
-* [Q-Diffusion: Quantizing Diffusion Models](https://arxiv.org/abs/2302.04304), ICCV 2023
-* [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://arxiv.org/abs/2306.00978), MLSys 2024
-* [DistriFusion: Distributed Parallel Inference for High-Resolution Diffusion Models](https://arxiv.org/abs/2402.19481), CVPR 2024
-* [QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving](https://arxiv.org/abs/2405.04532), MLSys 2025
-* [SANA: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformers](https://arxiv.org/abs/2410.10629), ICLR 2025
+- [Efficient Spatially Sparse Inference for Conditional GANs and Diffusion Models](https://arxiv.org/abs/2211.02048), NeurIPS 2022 & T-PAMI 2023
+- [SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://arxiv.org/abs/2211.10438), ICML 2023
+- [Q-Diffusion: Quantizing Diffusion Models](https://arxiv.org/abs/2302.04304), ICCV 2023
+- [AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://arxiv.org/abs/2306.00978), MLSys 2024
+- [DistriFusion: Distributed Parallel Inference for High-Resolution Diffusion Models](https://arxiv.org/abs/2402.19481), CVPR 2024
+- [QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving](https://arxiv.org/abs/2405.04532), MLSys 2025
+- [SANA: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformers](https://arxiv.org/abs/2410.10629), ICLR 2025
 
 ## 引用
 
