@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import diffusers
@@ -16,7 +18,7 @@ from ..._C import QuantizedFluxModel
 from ..._C import utils as cutils
 from ...lora.flux.nunchaku_converter import fuse_vectors, to_nunchaku
 from ...lora.flux.utils import is_nunchaku_format
-from ...utils import get_precision, load_state_dict_in_safetensors
+from ...utils import check_hardware_compatibility, get_precision, load_state_dict_in_safetensors
 from .utils import NunchakuModelLoaderMixin, pad_tensor
 
 SVD_RANK = 32
@@ -260,14 +262,21 @@ class EmbedND(nn.Module):
 
 
 def load_quantized_module(
-    path: str, device: str | torch.device = "cuda", use_fp4: bool = False, offload: bool = False, bf16: bool = True
+    path_or_state_dict: str | os.PathLike[str] | dict[str, torch.Tensor],
+    device: str | torch.device = "cuda",
+    use_fp4: bool = False,
+    offload: bool = False,
+    bf16: bool = True,
 ) -> QuantizedFluxModel:
     device = torch.device(device)
     assert device.type == "cuda"
     m = QuantizedFluxModel()
     cutils.disable_memory_auto_release()
     m.init(use_fp4, offload, bf16, 0 if device.index is None else device.index)
-    m.load(path)
+    if isinstance(path_or_state_dict, dict):
+        m.loadDict(path_or_state_dict, True)
+    else:
+        m.load(str(path_or_state_dict))
     return m
 
 
@@ -307,25 +316,45 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         self._quantized_part_vectors: dict[str, torch.Tensor] = {}
         self._original_in_channels = in_channels
 
-        # Comfyui LoRA related
+        # ComfyUI LoRA related
         self.comfy_lora_meta_list = []
         self.comfy_lora_sd_list = []
 
     @classmethod
     @utils.validate_hf_hub_args
-    def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike[str], **kwargs):
         device = kwargs.get("device", "cuda")
         if isinstance(device, str):
             device = torch.device(device)
         offload = kwargs.get("offload", False)
         torch_dtype = kwargs.get("torch_dtype", torch.bfloat16)
         precision = get_precision(kwargs.get("precision", "auto"), device, pretrained_model_name_or_path)
-        transformer, unquantized_part_path, transformer_block_path = cls._build_model(
-            pretrained_model_name_or_path, **kwargs
-        )
+        metadata = None
 
-        # get the default LoRA branch and all the vectors
-        quantized_part_sd = load_file(transformer_block_path)
+        if isinstance(pretrained_model_name_or_path, str):
+            pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
+        if pretrained_model_name_or_path.is_file() or pretrained_model_name_or_path.name.endswith(
+            (".safetensors", ".sft")
+        ):
+            transformer, model_state_dict, metadata = cls._build_model(pretrained_model_name_or_path, **kwargs)
+            quantized_part_sd = {}
+            unquantized_part_sd = {}
+            for k, v in model_state_dict.items():
+                if k.startswith(("transformer_blocks.", "single_transformer_blocks.")):
+                    quantized_part_sd[k] = v
+                else:
+                    unquantized_part_sd[k] = v
+            precision = get_precision(device=device)
+            quantization_config = json.loads(metadata["quantization_config"])
+            check_hardware_compatibility(quantization_config, device)
+        else:
+            transformer, unquantized_part_path, transformer_block_path = cls._build_model_legacy(
+                pretrained_model_name_or_path, **kwargs
+            )
+
+            # get the default LoRA branch and all the vectors
+            quantized_part_sd = load_file(transformer_block_path)
+            unquantized_part_sd = load_file(unquantized_part_path)
         new_quantized_part_sd = {}
         for k, v in quantized_part_sd.items():
             if v.ndim == 1:
@@ -348,7 +377,7 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
                 new_quantized_part_sd[k] = v
         transformer._quantized_part_sd = new_quantized_part_sd
         m = load_quantized_module(
-            transformer_block_path,
+            quantized_part_sd,
             device=device,
             use_fp4=precision == "fp4",
             offload=offload,
@@ -357,11 +386,13 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         transformer.inject_quantized_module(m, device)
         transformer.to_empty(device=device)
 
-        unquantized_part_sd = load_file(unquantized_part_path)
         transformer.load_state_dict(unquantized_part_sd, strict=False)
         transformer._unquantized_part_sd = unquantized_part_sd
 
-        return transformer
+        if kwargs.get("return_metadata", False):
+            return transformer, metadata
+        else:
+            return transformer
 
     def inject_quantized_module(self, m: QuantizedFluxModel, device: str | torch.device = "cuda"):
         print("Injecting quantized module")

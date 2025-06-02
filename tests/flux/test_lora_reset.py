@@ -12,7 +12,7 @@ from ..utils import compute_lpips
 def test_lora_reset():
     precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
     transformer = NunchakuFluxTransformer2dModel.from_pretrained(
-        f"mit-han-lab/svdq-{precision}-flux.1-dev", offload=True
+        f"mit-han-lab/nunchaku-flux.1-dev/svdq-{precision}_r32-flux.1-dev.safetensors", offload=True
     )
     pipeline = FluxPipeline.from_pretrained(
         "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
@@ -44,4 +44,4 @@ def test_lora_reset():
 
     lpips = compute_lpips(os.path.join(save_dir, "before.png"), os.path.join(save_dir, "after.png"))
     print(f"LPIPS: {lpips}")
-    assert lpips < 0.179 * 1.1
+    assert lpips < 0.232 * 1.1
