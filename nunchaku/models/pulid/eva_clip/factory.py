@@ -3,11 +3,13 @@ import logging
 import os
 import re
 from copy import deepcopy
+from os import PathLike
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import torch
 
+from ....utils import fetch_or_download
 from .constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
 from .model import CLIP, CustomCLIP, convert_to_custom_text_state_dict, get_cast_dtype
 from .pretrained import download_pretrained, get_pretrained_cfg, list_pretrained_tags_by_model
@@ -227,6 +229,7 @@ def create_model(
     pretrained_text_model: str = None,
     cache_dir: Optional[str] = None,
     skip_list: list = [],
+    pretrained_path: str | PathLike[str] = "QuanSun/EVA-CLIP/EVA02_CLIP_L_336_psz14_s6B.pt",
 ):
     model_name = model_name.replace("/", "-")  # for callers using old naming with / in ViT names
     if isinstance(device, str):
@@ -239,8 +242,35 @@ def create_model(
         if model_cfg is not None:
             logging.info(f"Loaded {model_name} model config.")
         else:
-            logging.error(f"Model config for {model_name} not found; available models {list_models()}.")
-            raise RuntimeError(f"Model config for {model_name} not found.")
+            model_cfg = {
+                "embed_dim": 768,
+                "vision_cfg": {
+                    "image_size": 336,
+                    "layers": 24,
+                    "width": 1024,
+                    "drop_path_rate": 0,
+                    "head_width": 64,
+                    "mlp_ratio": 2.6667,
+                    "patch_size": 14,
+                    "eva_model_name": "eva-clip-l-14-336",
+                    "xattn": True,
+                    "fusedLN": True,
+                    "rope": True,
+                    "pt_hw_seq_len": 16,
+                    "intp_freq": True,
+                    "naiveswiglu": True,
+                    "subln": True,
+                },
+                "text_cfg": {
+                    "context_length": 77,
+                    "vocab_size": 49408,
+                    "width": 768,
+                    "heads": 12,
+                    "layers": 12,
+                    "xattn": False,
+                    "fusedLN": True,
+                },
+            }
 
         if "rope" in model_cfg.get("vision_cfg", {}):
             if model_cfg["vision_cfg"]["rope"]:
@@ -270,12 +300,7 @@ def create_model(
 
         pretrained_cfg = {}
         if pretrained:
-            checkpoint_path = ""
-            pretrained_cfg = get_pretrained_cfg(model_name, pretrained)
-            if pretrained_cfg:
-                checkpoint_path = download_pretrained(pretrained_cfg, cache_dir=cache_dir)
-            elif os.path.exists(pretrained):
-                checkpoint_path = pretrained
+            checkpoint_path = fetch_or_download(pretrained_path)
 
             if checkpoint_path:
                 logging.info(f"Loading pretrained {model_name} weights ({pretrained}).")
@@ -379,6 +404,7 @@ def create_model_and_transforms(
     image_std: Optional[Tuple[float, ...]] = None,
     cache_dir: Optional[str] = None,
     skip_list: list = [],
+    pretrained_path: str | PathLike[str] = "QuanSun/EVA-CLIP/EVA02_CLIP_L_336_psz14_s6B.pt",
 ):
     model = create_model(
         model_name,
@@ -396,6 +422,7 @@ def create_model_and_transforms(
         pretrained_text_model=pretrained_text_model,
         cache_dir=cache_dir,
         skip_list=skip_list,
+        pretrained_path=pretrained_path,
     )
 
     image_mean = image_mean or getattr(model.visual, "image_mean", None)
