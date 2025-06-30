@@ -123,7 +123,7 @@ jobs:
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           pwd
           cd ../ComfyUI
-          python nunchaku_tests/scripts/nunchaku_flux1_dev.py
+          python nunchaku_tests/scripts/nunchaku-flux1-dev.py
           pytest -v nunchaku_tests/
       - name: Nunchaku FLUX memory tests
         run: |
