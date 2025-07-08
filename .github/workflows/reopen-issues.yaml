@@ -1,0 +1,71 @@
+name: Reopen Inactive Issues on /reopen Command
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  issues: write
+  contents: read
+jobs:
+  reopen-issue:
+    if: github.repository == 'mit-han-lab/nunchaku'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if comment is /reopen by issue creator and reopen only if issue has inactive label
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentBody = context.payload.comment.body.trim();
+            const issueNumber = context.payload.issue.number;
+            const commentAuthor = context.payload.comment.user.login;
+            const issueAuthor = context.payload.issue.user.login;
+
+            // Get current labels on the issue
+            const labels = context.payload.issue.labels.map(label => label.name);
+
+            if (commentBody === '/reopen') {
+              if (commentAuthor === issueAuthor) {
+                if (labels.includes('inactive')) {
+                  if (context.payload.issue.state === 'closed') {
+                    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+                    try {
+                      // Reopen the issue
+                      await github.rest.issues.update({
+                        owner,
+                        repo,
+                        issue_number: issueNumber,
+                        state: 'open',
+                      });
+
+                      // Remove 'inactive' label
+                      const newLabels = labels.filter(label => label !== 'inactive');
+                      await github.rest.issues.update({
+                        owner,
+                        repo,
+                        issue_number: issueNumber,
+                        labels: newLabels,
+                      });
+
+                      await github.rest.issues.createComment({
+                        owner,
+                        repo,
+                        issue_number: issueNumber,
+                        body: `Issue reopened by @${commentAuthor} via /reopen command.`,
+                      });
+
+                      console.log(`Reopened issue #${issueNumber} with 'inactive' label by issuer.`);
+                    } catch (error) {
+                      console.error(`Failed to reopen issue #${issueNumber}: ${error.message}`);
+                    }
+                  } else {
+                    console.log(`Issue #${issueNumber} is already open.`);
+                  }
+                } else {
+                  console.log(`Issue #${issueNumber} does not have 'inactive' label, skipping.`);
+                }
+              } else {
+                console.log(`Commenter @${commentAuthor} is not the issue creator @${issueAuthor}, ignoring.`);
+              }
+            } else {
+              console.log(`Comment is not /reopen, ignoring.`);
+            }
