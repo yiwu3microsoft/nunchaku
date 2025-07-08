@@ -17,7 +17,7 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+            const sixtyDaysAgo = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000);
 
             const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
             console.log(`Owner: ${owner}, Repo: ${repo}`);
@@ -70,7 +70,7 @@ jobs:
                           owner,
                           repo,
                           issue_number: issue.number,
-                          body: 'This issue has been automatically closed due to 60-day inactivity. Please feel free to reopen it if needed.'
+                          body: 'This issue has been automatically closed due to 35-day inactivity. Please feel free to reopen it if needed.'
                         });
                         console.log(`Closed issue #${issue.number} due to inactivity.`);
                       } catch (error) {
