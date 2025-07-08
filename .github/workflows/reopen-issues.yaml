@@ -50,7 +50,7 @@ jobs:
                         owner,
                         repo,
                         issue_number: issueNumber,
-                        body: `Issue reopened by @${commentAuthor} via /reopen command.`,
+                        body: `Issue reopened by @${commentAuthor} via \`/reopen\` command.`,
                       });
 
                       console.log(`Reopened issue #${issueNumber} with 'inactive' label by issuer.`);
