@@ -1,4 +1,4 @@
-name: Reopen Inactive Issues on /reopen Command
+name: Reopen Issue on /reopen Command
 on:
   issue_comment:
     types: [created]
@@ -10,7 +10,7 @@ jobs:
     if: github.repository == 'mit-han-lab/nunchaku'
     runs-on: ubuntu-latest
     steps:
-      - name: Check if comment is /reopen by issue creator and reopen only if issue has inactive label
+      - name: Check if comment is /reopen by issue creator and reopen
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -20,24 +20,22 @@ jobs:
             const commentAuthor = context.payload.comment.user.login;
             const issueAuthor = context.payload.issue.user.login;
 
-            // Get current labels on the issue
-            const labels = context.payload.issue.labels.map(label => label.name);
-
             if (commentBody === '/reopen') {
               if (commentAuthor === issueAuthor) {
-                if (labels.includes('inactive')) {
-                  if (context.payload.issue.state === 'closed') {
-                    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-                    try {
-                      // Reopen the issue
-                      await github.rest.issues.update({
-                        owner,
-                        repo,
-                        issue_number: issueNumber,
-                        state: 'open',
-                      });
+                // Only proceed if issue is currently closed
+                if (context.payload.issue.state === 'closed') {
+                  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+                  try {
+                    await github.rest.issues.update({
+                      owner,
+                      repo,
+                      issue_number: issueNumber,
+                      state: 'open',
+                    });
 
-                      // Remove 'inactive' label
+                    // Remove 'inactive' label if present
+                    const labels = context.payload.issue.labels.map(label => label.name);
+                    if (labels.includes('inactive')) {
                       const newLabels = labels.filter(label => label !== 'inactive');
                       await github.rest.issues.update({
                         owner,
@@ -45,23 +43,21 @@ jobs:
                         issue_number: issueNumber,
                         labels: newLabels,
                       });
-
-                      await github.rest.issues.createComment({
-                        owner,
-                        repo,
-                        issue_number: issueNumber,
-                        body: `Issue reopened by @${commentAuthor} via \`/reopen\` command.`,
-                      });
-
-                      console.log(`Reopened issue #${issueNumber} with 'inactive' label by issuer.`);
-                    } catch (error) {
-                      console.error(`Failed to reopen issue #${issueNumber}: ${error.message}`);
                     }
-                  } else {
-                    console.log(`Issue #${issueNumber} is already open.`);
+
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: issueNumber,
+                      body: `Issue reopened by @${commentAuthor} via \`/reopen\` command.`,
+                    });
+
+                    console.log(`Reopened issue #${issueNumber} by request of issuer.`);
+                  } catch (error) {
+                    console.error(`Failed to reopen issue #${issueNumber}: ${error.message}`);
                   }
                 } else {
-                  console.log(`Issue #${issueNumber} does not have 'inactive' label, skipping.`);
+                  console.log(`Issue #${issueNumber} is already open.`);
                 }
               } else {
                 console.log(`Commenter @${commentAuthor} is not the issue creator @${issueAuthor}, ignoring.`);
