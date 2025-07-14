@@ -66,15 +66,16 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 
 - [Installation Guide](https://nunchaku.tech/docs/nunchaku/installation/installation.html)
 - [Usage Tutorial](https://nunchaku.tech/docs/nunchaku/usage/basic_usage.html)
-- [ComfyUI Integration](https://github.com/mit-han-lab/ComfyUI-nunchaku)
-- [Custom Quantization (DeepCompressor)](https://github.com/mit-han-lab/deepcompressor)
+- [ComfyUI Plugin: ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku)
+- [Custom Model Quantization: DeepCompressor](https://github.com/mit-han-lab/deepcompressor)
 - [Gradio Demo Apps](https://github.com/mit-han-lab/nunchaku/tree/main/app)
 - [Reproduce SVDQuant Paper Results](app/flux.1/t2i)
 - [Contribution Guide](https://nunchaku.tech/docs/nunchaku/developer/contribution_guide.html)
+- [Frequently Asked Questions](https://nunchaku.tech/docs/nunchaku/faq/faq.html)
 
 ## Roadmap
 
-Please check [here](https://github.com/mit-han-lab/nunchaku/issues/431) for the roadmap for Summer.
+Please check [here](https://github.com/mit-han-lab/nunchaku/issues/431) for the roadmap for the Summer.
 
 ## Contact Us
 

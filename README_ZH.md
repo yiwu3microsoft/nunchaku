@@ -66,11 +66,12 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 
 - [安装指南](https://nunchaku.tech/docs/nunchaku/installation/installation.html)
 - [使用教程](https://nunchaku.tech/docs/nunchaku/usage/basic_usage.html)
-- [ComfyUI 集成](https://github.com/mit-han-lab/ComfyUI-nunchaku)
-- [自定义量化 (DeepCompressor)](https://github.com/mit-han-lab/deepcompressor)
+- [ComfyUI插件： ComfyUI-nunchaku](https://github.com/mit-han-lab/ComfyUI-nunchaku)
+- [自定义量化： DeepCompressor](https://github.com/mit-han-lab/deepcompressor)
 - [Gradio 演示应用](https://github.com/mit-han-lab/nunchaku/tree/main/app)
 - [复现 SVDQuant 论文结果](app/flux.1/t2i)
 - [贡献指南](https://nunchaku.tech/docs/nunchaku/developer/contribution_guide.html)
+- [常见问题](https://nunchaku.tech/docs/nunchaku/faq/faq.html)
 
 ## 路线图
 
