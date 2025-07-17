@@ -57,7 +57,7 @@ if __name__ == "__main__":
         "--repo-name",
         type=str,
         required=True,
-        help="Name of the HuggingFace repository under mit-han-lab to sync to (e.g., `nunchaku`)",
+        help="Name of the HuggingFace repository under nunchaku-tech to sync to (e.g., `nunchaku`)",
     )
     args = parser.parse_args()
-    sync_model(args.repo_name, f"mit-han-lab/{args.repo_name}", f"Lmxyy1999/{args.repo_name}")
+    sync_model(args.repo_name, f"nunchaku-tech/{args.repo_name}", f"nunchaku-tech/{args.repo_name}")
