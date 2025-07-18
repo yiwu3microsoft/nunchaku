@@ -74,7 +74,6 @@ html_theme_options = {
     "use_edit_page_button": True,
     "use_issues_button": True,
     "use_download_button": True,
-    "logo_only": False,
     "show_navbar_depth": 2,
     "home_page_in_toc": True,
     "show_toc_level": 2,
