@@ -75,7 +75,6 @@ html_theme_options = {
     "use_issues_button": True,
     "use_download_button": True,
     "show_navbar_depth": 2,
-    "home_page_in_toc": True,
     "show_toc_level": 2,
     # "announcement": "🔥 Nunchaku v1.2 released!",
 }
