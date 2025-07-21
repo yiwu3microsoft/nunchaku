@@ -109,7 +109,7 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 
 ## 致谢
 
-我们感谢 MIT-IBM Watson AI Lab、MIT 和 Amazon Science Hub、MIT AI Hardware Program、National Science Foundation、Packard Foundation、Dell、LG、现代和三星对本研究的支持。我们感谢 NVIDIA 捐赠的 DGX 服务器。
+我们感谢 MIT-IBM Watson AI Lab、MIT 和 Amazon Science Hub、MIT AI Hardware Program、National Science Foundation、Packard Foundation、Dell、LG、现代和三星对本研究的支持。我们感谢 NVIDIA 捐赠的 DGX 服务器。我们感谢 [First Intelligence](https://www.first-intelligence.com/) 和 [Yotta Labs](https://www.yottalabs.ai/) 赞助我们的计算资源。
 
 我们使用 [img2img-turbo](https://github.com/GaParmar/img2img-turbo) 训练草图到图像的 LoRA。我们的文本到图像和图像到图像 UI 分别基于 [playground-v.25](https://huggingface.co/spaces/playgroundai/playground-v2.5/blob/main/app.py) 和 [img2img-turbo](https://github.com/GaParmar/img2img-turbo/blob/main/gradio_sketch2image.py) 构建。我们的安全检查器来自 [hart](https://github.com/mit-han-lab/hart)。
 
