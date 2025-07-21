@@ -2,7 +2,7 @@ name: Synchronize HuggingFace Repos to ModelScope
 on:
   schedule:
     - cron: '0 3 * * *' # Run every day at 03:00 UTC
-  workflow_dispatch: # Allow manual trigger from GitHub UI
+      # workflow_dispatch: # Allow manual trigger from GitHub UI
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -20,6 +20,7 @@ jobs:
           - nunchaku-shuttle-jaguar
           - nunchaku-sana
           - nunchaku-flux.1-kontext-dev
+          - nunchaku-flux.1-schnell-pix2pix-turbo
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
