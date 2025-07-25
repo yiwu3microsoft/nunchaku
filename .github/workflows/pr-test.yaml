@@ -30,7 +30,8 @@ jobs:
         id: set-ref
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+            # Use the merged commit SHA for PRs
+            echo "ref=${{ github.event.pull_request.merge_commit_sha }}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
             # Use github.event.client_payload.ref if provided, else default to main
             if [[ -n "${{ github.event.client_payload.ref }}" ]]; then
