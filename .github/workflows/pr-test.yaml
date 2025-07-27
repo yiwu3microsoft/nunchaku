@@ -30,6 +30,10 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
       (github.event_name == 'workflow_dispatch')
+    env:
+      COMFYUI_MODELS_ROOT: ${{ vars.COMFYUI_MODELS_ROOT }}
+      NUNCHAKU_TEST_CACHE_ROOT: ${{ vars.NUNCHAKU_TEST_CACHE_ROOT }}
+      HF_TOKEN: ${{ vars.HF_TOKEN }}
     steps:
       - name: Determine ref
         id: set-ref
@@ -85,8 +89,8 @@ jobs:
           yes | comfy --here install --nvidia --skip-torch-or-directml --version 0.3.44
           cd ComfyUI
           rm -r models
-          mkdir -p ${{ vars.COMFYUI_MODELS_ROOT }}
-          ln -s ${{ vars.COMFYUI_MODELS_ROOT }} models
+          mkdir -p $COMFYUI_MODELS_ROOT
+          ln -s $COMFYUI_MODELS_ROOT models
           cd custom_nodes
           git clone -b dev https://github.com/mit-han-lab/ComfyUI-nunchaku.git
           cd ..
@@ -95,8 +99,8 @@ jobs:
           comfy node install comfyui-inpainteasy
           cp -r custom_nodes/ComfyUI-nunchaku/tests nunchaku_tests
           pip install -r nunchaku_tests/requirements.txt
-          HF_TOKEN=${{ vars.HF_TOKEN }} python custom_nodes/ComfyUI-nunchaku/scripts/download_models.py
-          HF_TOKEN=${{ vars.HF_TOKEN }} python custom_nodes/ComfyUI-nunchaku/scripts/download_test_data.py
+          python custom_nodes/ComfyUI-nunchaku/scripts/download_models.py
+          python custom_nodes/ComfyUI-nunchaku/scripts/download_test_data.py
       - name: Run ComfyUI tests
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh
@@ -110,8 +114,8 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
-          NUNCHAKU_TEST_CACHE_ROOT=${{ vars.NUNCHAKU_TEST_CACHE_ROOT }} HF_TOKEN=${{ vars.HF_TOKEN }} pytest -v tests/flux/test_flux_examples.py
-          NUNCHAKU_TEST_CACHE_ROOT=${{ vars.NUNCHAKU_TEST_CACHE_ROOT }} HF_TOKEN=${{ vars.HF_TOKEN }} python .github/workflows/run_all_tests.py
+          pytest -v tests/flux/test_flux_examples.py
+          python .github/workflows/run_all_tests.py
       - name: clean up
         if: always()
         run: |
