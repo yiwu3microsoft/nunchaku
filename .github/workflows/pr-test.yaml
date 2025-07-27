@@ -115,8 +115,8 @@ jobs:
           conda activate test_env || { echo "Failed to activate conda env"; exit 1; }
           which python
           echo $NUNCHAKU_TEST_CACHE_ROOT
-          HF_TOKEN=${{ secrets.HF_TOKEN }} pytest -v tests/flux/test_flux_examples.py
-          HF_TOKEN=${{ secrets.HF_TOKEN }} python .github/workflows/run_all_tests.py
+          pytest -v tests/flux/test_flux_examples.py
+          python .github/workflows/run_all_tests.py
       - name: clean up
         if: always()
         run: |
