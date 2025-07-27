@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def run_all_tests():
-    test_dir = Path(__file__).parent.parent / "tests"
+    test_dir = Path("tests")
     test_files = []
     for file_path in test_dir.rglob("test_*.py"):
         # Ignore tests/flux/test_flux_examples.py
@@ -27,6 +27,8 @@ def run_all_tests():
             failed_tests.append(test_file)
         else:
             print(f"Test passed: {test_file}")
+        if len(failed_tests) > 3:
+            break
 
     if failed_tests:
         print("Some tests failed.")
