@@ -108,7 +108,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean up
-        if: always() && github.repository == 'nunchaku-tech/nunchaku'
+        if: always()
         run: bash scripts/linux_cleanup.sh
   windows-wheels:
     name: Build the windows nightly wheels
