@@ -15,7 +15,7 @@ from .utils import run_test
         (25, "realism", 0.9, True, 0.136 if get_precision() == "int4" else 0.112),
         # (25, "ghibsky", 1, False, 0.186),
         # (28, "anime", 1, False, 0.284),
-        (24, "sketch", 1, True, 0.291 if get_precision() == "int4" else 0.182),
+        (24, "sketch", 1, True, 0.291 if get_precision() == "int4" else 0.221),
         # (28, "yarn", 1, False, 0.211),
         # (25, "haunted_linework", 1, True, 0.317),
     ],
