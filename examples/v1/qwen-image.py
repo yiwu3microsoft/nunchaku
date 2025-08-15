@@ -20,17 +20,16 @@ positive_magic = {
 }
 
 # Generate image
-prompt = """A coffee shop entrance features a chalkboard sign reading "Qwen Coffee 😊 $2 per cup," with a neon light beside it displaying "通义千问". Next to it hangs a poster showing a beautiful Chinese woman, and beneath the poster is written "π≈3.1415926-53589793-23846264-33832795-02384197". Ultra HD, 4K, cinematic composition"""
+prompt = """Bookstore window display. A sign displays “New Arrivals This Week”. Below, a shelf tag with the text “Best-Selling Novels Here”. To the side, a colorful poster advertises “Author Meet And Greet on Saturday” with a central portrait of the author. There are four books on the bookshelf, namely “The light between worlds” “When stars are scattered” “The slient patient” “The night circus”"""
 negative_prompt = " "  # using an empty string if you do not have specific concept to remove
 
 image = pipe(
-    prompt=prompt + positive_magic["en"],
+    prompt=prompt + positive_magic["eh"],
     negative_prompt=negative_prompt,
-    width=1328,
-    height=1328,
+    width=1664,
+    height=928,
     num_inference_steps=50,
     true_cfg_scale=4.0,
-    generator=torch.Generator().manual_seed(2333),
 ).images[0]
 
-image.save("qwen-image.png")
+image.save("qwen-image-r128.png")
