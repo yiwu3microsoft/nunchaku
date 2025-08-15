@@ -24,7 +24,7 @@ prompt = """Bookstore window display. A sign displays â€œNew Arrivals This Weekâ
 negative_prompt = " "  # using an empty string if you do not have specific concept to remove
 
 image = pipe(
-    prompt=prompt + positive_magic["eh"],
+    prompt=prompt + positive_magic["en"],
     negative_prompt=negative_prompt,
     width=1664,
     height=928,
