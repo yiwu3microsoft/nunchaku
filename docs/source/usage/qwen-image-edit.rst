@@ -37,6 +37,9 @@ See the example script below:
 Qwen-Image-Edit-2509
 --------------------
 
+.. image:: https://huggingface.co/datasets/nunchaku-tech/cdn/resolve/main/ComfyUI-nunchaku/workflows/nunchaku-qwen-image-edit-2509.png
+   :alt: Nunchaku-Qwen-Image-Edit-2509
+
 Qwen-Image-Edit-2509 is an monthly iteration of Qwen-Image-Edit.
 Below is a minimal example for running the 4-bit quantized `Qwen-Image-Edit-2509 <hf_qwen-image-edit-2509>`_ model with Nunchaku.
 
