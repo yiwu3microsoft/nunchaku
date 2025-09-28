@@ -84,10 +84,6 @@ https://github.com/user-attachments/assets/fdd4ab68-6489-4c65-8768-259bd866e8f8
 - [Contribution Guide](https://nunchaku.tech/docs/nunchaku/developer/contribution_guide.html)
 - [Frequently Asked Questions](https://nunchaku.tech/docs/nunchaku/faq/faq.html)
 
-## Roadmap
-
-Please check [here](https://github.com/nunchaku-tech/nunchaku/issues/431) for the roadmap for the Summer.
-
 ## Contact Us
 
 For enterprises interested in adopting SVDQuant or Nunchaku, including technical consulting, sponsorship opportunities, or partnership inquiries, please contact us at muyangli@nunchaku.tech.
