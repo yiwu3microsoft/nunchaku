@@ -2,14 +2,14 @@ import torch
 from diffusers import FluxFillPipeline
 from diffusers.utils import load_image
 
-from nunchaku import NunchakuFluxTransformer2dModel
+from nunchaku import NunchakuFluxTransformer2DModelV2
 from nunchaku.utils import get_precision
 
 image = load_image("https://huggingface.co/datasets/diffusers/diffusers-images-docs/resolve/main/cup.png")
 mask = load_image("https://huggingface.co/datasets/diffusers/diffusers-images-docs/resolve/main/cup_mask.png")
 
 precision = get_precision()  # auto-detect your precision is 'int4' or 'fp4' based on your GPU
-transformer = NunchakuFluxTransformer2dModel.from_pretrained(
+transformer = NunchakuFluxTransformer2DModelV2.from_pretrained(
     f"nunchaku-tech/nunchaku-flux.1-fill-dev/svdq-{precision}_r32-flux.1-fill-dev.safetensors"
 )
 pipe = FluxFillPipeline.from_pretrained(
