@@ -32,18 +32,22 @@ dependencies = [
   "transformers>=4.53.3",
 ]
 optional-dependencies.ci = [
+  "accelerate==1.9",
   "controlnet-aux==0.0.10",
   "datasets==3.6",
   "diffusers @ git+https://github.com/huggingface/diffusers@041501a",
   "facexlib==0.3",
+  "huggingface-hub==0.34",
   "image-gen-aux @ git+https://github.com/asomoza/image_gen_aux.git",
   "insightface==0.7.3",
   "onnxruntime==1.22.1",
   "opencv-python==4.11.0.86",
+  "peft==0.17",
   "pytest==8.4.2",
   "pytest-rerunfailures==16.0.1",
   "timm==1.0.19",
   "torchmetrics==1.8",
+  "transformers==4.53.3",
 ]
 
 optional-dependencies.demo = [
