@@ -29,7 +29,7 @@ dependencies = [
   "protobuf",
   "sentencepiece",
   "torchvision>=0.20",
-  "transformers>=4.53.3,<4.57",
+  "transformers>=4.54,<4.57",
 ]
 optional-dependencies.ci = [
   "accelerate==1.9",
@@ -38,7 +38,7 @@ optional-dependencies.ci = [
   "diffusers @ git+https://github.com/huggingface/diffusers@041501a",
   "facexlib==0.3",
   "huggingface-hub==0.34",
-  "image-gen-aux @ git+https://github.com/asomoza/image_gen_aux.git",
+  "image-gen-aux @ git+https://github.com/asomoza/image_gen_aux.git@e08ae3d",
   "insightface==0.7.3",
   "onnxruntime==1.22.1",
   "opencv-python==4.11.0.86",
@@ -47,7 +47,7 @@ optional-dependencies.ci = [
   "pytest-rerunfailures==16.0.1",
   "timm==1.0.19",
   "torchmetrics==1.8",
-  "transformers==4.53.3",
+  "transformers==4.54",
 ]
 
 optional-dependencies.demo = [
