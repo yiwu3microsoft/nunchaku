@@ -56,7 +56,8 @@ inputs = {
     "true_cfg_scale": 1.0,
     "num_inference_steps": num_inference_steps,
 }
-
+t_start = time.time()
 output = pipeline(**inputs)
+print("processing time:", time.time()-t_start)
 output_image = output.images[0]
 output_image.save(f"qwen-image-edit-2509-lightning-r{rank}-{num_inference_steps}steps_bg_replace-2.png")
