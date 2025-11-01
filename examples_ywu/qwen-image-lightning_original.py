@@ -1,6 +1,6 @@
 from diffusers import DiffusionPipeline, FlowMatchEulerDiscreteScheduler
 import torch 
-import math
+import math, time
 
 # From https://github.com/ModelTC/Qwen-Image-Lightning/blob/342260e8f5468d2f24d084ce04f55e101007118b/generate_with_diffusers.py#L82C9-L97C10
 scheduler_config = {
