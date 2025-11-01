@@ -31,7 +31,7 @@ pipeline = QwenImageEditPlusPipeline.from_pretrained(
 )
 pipeline.to("cuda:0")
 
-pipe.load_lora_weights(
+pipeline.load_lora_weights(
     "lightx2v/Qwen-Image-Lightning", weight_name=f"Qwen-Image-Edit-2509/Qwen-Image-Edit-2509-Lightning-{num_inference_steps}steps-V1.0-bf16.safetensors"
 )
 
