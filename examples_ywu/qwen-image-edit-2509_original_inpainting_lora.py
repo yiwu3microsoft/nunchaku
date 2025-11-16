@@ -15,12 +15,12 @@ pipeline.load_lora_weights(
 # pipeline.enable_model_cpu_offload()
 pipeline.set_progress_bar_config(disable=None)
 image1 = Image.open("./data/MonaLisa_green_mask.png")
-# image2 = Image.open("input2.png")
+image2 = Image.open("./data/mask.png")
 # prompt = "A man stands in front of a house for sale with a yard, creating a welcoming atmosphere. Keep the man's pose, position, and clothing the same."
 prompt = "painting of a woman wearing sunglasses"
 
 inputs = {
-    "image": [image1],
+    "image": [image1, image2],
     "prompt": prompt,
     "generator": torch.manual_seed(0),
     "true_cfg_scale": 4.0,
