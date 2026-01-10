@@ -40,9 +40,9 @@ for idx, rf in enumerate(remote_files):
         force_download=False        # default; will reuse cache
     )
 
-    print(f"Moving to {out_path} ...")
+    print(f"Copying to {out_path} ...")
     # copy to save_dir
     shutil.copy(
-        os.path.join(LOCAL_DIR, 'data', base),
+        os.path.join(LOCAL_DIR, rf),
         out_path
     )
