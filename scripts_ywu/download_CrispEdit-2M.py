@@ -20,7 +20,7 @@ remote_files = [
 os.makedirs(LOCAL_DIR, exist_ok=True)
 existing = set(os.listdir(save_dir))
 
-for idx, rf in enumarate(remote_files):
+for idx, rf in enumerate(remote_files):
     base = os.path.basename(rf)
     out_path = os.path.join(save_dir, base)
 
