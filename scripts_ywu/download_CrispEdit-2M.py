@@ -1,5 +1,5 @@
 
-import os
+import os, shutil
 from huggingface_hub import HfApi, hf_hub_download
 
 REPO_ID = "WeiChow/CrispEdit-2M"
@@ -42,7 +42,7 @@ for idx, rf in enumerate(remote_files):
 
     print(f"Moving to {out_path} ...")
     # copy to save_dir
-    os.rename(
+    shutil.copy(
         os.path.join(LOCAL_DIR, 'data', base),
         out_path
     )
