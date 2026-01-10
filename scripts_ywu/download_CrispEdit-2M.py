@@ -43,6 +43,6 @@ for idx, rf in enumerate(remote_files):
     print(f"Moving to {out_path} ...")
     # copy to save_dir
     os.rename(
-        os.path.join(LOCAL_DIR, base),
+        os.path.join(LOCAL_DIR, 'data', base),
         out_path
     )
