@@ -5,7 +5,7 @@ from huggingface_hub import HfApi, hf_hub_download
 REPO_ID = "WeiChow/CrispEdit-2M"
 REPO_TYPE = "dataset"
 REMOTE_DIR = "data"
-LOCAL_DIR = "/home/aiscuser/data/CrispEdit-2M/data"
+LOCAL_DIR = "/home/aiscuser/data/CrispEdit-2M"
 save_dir = "/tmp/output/47b53331-628a-411d-b96f-14f13b73a109_3c53764c/CrispEdit-2M/data"
 
 os.environ["HF_HUB_ENABLE_XET"] = "0"
