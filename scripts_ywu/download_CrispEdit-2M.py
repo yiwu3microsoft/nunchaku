@@ -2,7 +2,7 @@
 import os
 from huggingface_hub import HfApi, hf_hub_download
 
-REPO_ID = "ORG/CrispEdit-2M"
+REPO_ID = "WeiChow/CrispEdit-2M"
 REPO_TYPE = "dataset"
 REMOTE_DIR = "data"
 LOCAL_DIR = "/home/aiscuser/data/CrispEdit-2M/data"
